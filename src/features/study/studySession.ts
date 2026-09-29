@@ -25,6 +25,16 @@ import type { BandGateResult } from "@/lib/srs/band";
 import { deriveSkillStates } from "@/lib/srs/skillState";
 import { fatigueByCard, orderDueQueue } from "./bandQueue";
 import type { DueCard } from "./components/StudyCard";
+import { reviewLimitFor } from "@/features/home/dailyLoop";
+
+/** Freeze a finite batch; learning steps can return in a later session, never extend this one. */
+export function buildReviewBatch(queue: DueCard[], minutes = 10, reviews: ReviewRecord[] = [], now = Date.now()): DueCard[] {
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+  const completed = new Set(reviews.filter((review) => review.reviewedAt >= start.getTime() && review.reviewedAt <= now).map((review) => review.cardId)).size;
+  const limit = reviewLimitFor(minutes);
+  return queue.slice(0, limit - completed % limit);
+}
 
 /** P3 #7 — a due queue plus the band-gate verdict that decided its order. */
 export interface OrderedDueQueue {

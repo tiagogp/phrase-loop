@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import Disclosure from "@/components/ui/Disclosure";
 import { GradeButtons } from "./GradeButtons";
 import type { Grade, SrsRecord } from "@/lib/srs/fsrs";
 import type { Card as CardModel } from "@/lib/cards/schema";
@@ -162,10 +163,10 @@ export function StudyCard({
         <div className="space-y-1 py-8 text-center">
           <p className="text-sm font-medium text-ink">{t("No practice phrases yet")}</p>
           <p className="text-xs text-ink-muted">
-            {t("Start from Home with the first lesson. If you already have a source, bring it in Phrases.")}
+            {t("Start a guided lesson below, or add something you want to understand in Content.")}
           </p>
           <Button variant="secondary" size="sm" className="mt-3" onClick={onDiscover}>
-            {t("Open Phrases")}
+            {t("Add content")}
           </Button>
         </div>
       ) : !current ? (
@@ -182,7 +183,7 @@ export function StudyCard({
         <div className="space-y-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium uppercase tracking-[0.8px] text-ink-muted">
-              {current.card.concept || t("Practice phrase")}
+              {t(producing && !flipped ? "Say it in English" : current.card.concept || "Practice phrase")}
             </span>
             <span className="text-xs tabular-nums text-ink-muted">
               {t("{count} in today's queue", { count: queueLength })}
@@ -248,7 +249,7 @@ export function StudyCard({
                 {current.card.errorType && (
                   <span className="text-xs text-ink-muted">{t(errorTypeLabel(current.card.errorType))}</span>
                 )}
-                <div className="w-full">
+                <Disclosure key={current.card.id} title={t("Say it aloud (optional)")} className="w-full" nested>
                   <PronunciationCoach
                     source="study"
                     cardId={current.card.id}
@@ -256,7 +257,7 @@ export function StudyCard({
                     referenceAudioUrl={nativeClip}
                     compact
                   />
-                </div>
+                </Disclosure>
               </>
             )}
           </div>

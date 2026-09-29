@@ -4,7 +4,7 @@ import { useRef, type KeyboardEvent } from "react";
 import { cn } from "@/lib/cn";
 import { useT } from "@/i18n/I18nProvider";
 
-export type ReviewView = "review" | "progress" | "library";
+export type ReviewView = "review" | "use" | "progress" | "library";
 
 interface ReviewWorkspaceNavProps {
   value: ReviewView;
@@ -17,8 +17,9 @@ export function ReviewWorkspaceNav({ value, due, onChange }: ReviewWorkspaceNavP
   const { t } = useT();
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
   const options: { value: ReviewView; label: string; count?: number }[] = [
-    { value: "review", label: t("Review now"), count: due },
-    { value: "progress", label: t("Progress") },
+    { value: "review", label: t("Review"), count: due },
+    { value: "use", label: t("Use it") },
+    { value: "progress", label: t("Focus") },
     { value: "library", label: t("Library") },
   ];
 
@@ -43,7 +44,7 @@ export function ReviewWorkspaceNav({ value, due, onChange }: ReviewWorkspaceNavP
       <div
         role="tablist"
         aria-label={t("Review sections")}
-        className="grid grid-cols-3 gap-1 rounded-panel border border-line/75 bg-card p-1 shadow-(--shadow-soft)"
+        className="grid grid-cols-4 gap-1 rounded-panel border border-line/75 bg-card p-1 shadow-(--shadow-soft)"
       >
         {options.map((option, index) => {
           const active = option.value === value;
@@ -62,7 +63,7 @@ export function ReviewWorkspaceNav({ value, due, onChange }: ReviewWorkspaceNavP
               onClick={() => onChange(option.value)}
               onKeyDown={(event) => onKeyDown(event, index)}
               className={cn(
-                "flex min-h-10 min-w-0 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent",
+                "flex min-h-10 min-w-0 items-center justify-center gap-1 rounded-lg px-2 py-2 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent sm:gap-2 sm:px-3 sm:text-sm",
                 active
                   ? "bg-accent/10 text-ink"
                   : "text-ink-muted hover:bg-surface hover:text-ink",
@@ -72,7 +73,7 @@ export function ReviewWorkspaceNav({ value, due, onChange }: ReviewWorkspaceNavP
               {option.count !== undefined && option.count > 0 && (
                 <span
                   className={cn(
-                    "min-w-5 rounded-full px-1.5 py-0.5 text-center text-[10px] font-semibold tabular-nums",
+                    "hidden min-w-5 rounded-full px-1.5 py-0.5 text-center text-[10px] font-semibold tabular-nums sm:block",
                     active ? "bg-accent text-white" : "bg-line/70 text-ink-soft",
                   )}
                 >

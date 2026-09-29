@@ -6,7 +6,6 @@ import { getCards, getErrorEvents, getCounts } from "@/lib/store/repository";
 import { isStoreAvailable } from "@/lib/store/db";
 import { getLearningProfile, saveLearningProfile } from "@/features/settings/learningProfile";
 import { OWN_SENTENCE_CARD_PREFIX } from "@/features/learn/lessonDeck";
-import { LEVEL_RANK } from "@/features/discover/levels";
 import type { EnglishLevel } from "@/features/discover/types";
 
 export interface UnlockSignals {
@@ -41,25 +40,11 @@ export interface TabGates {
   hasEvaluator?: boolean;
 }
 
-export function tabsForUnlockTier(tier: number, gates: TabGates = {}): HomeTab[] {
-  const visible = new Set<HomeTab>(["hoje", "discover", "study"]);
-  // Speaking is the method's Rule #1: it gets a persistent home as soon as the
-  // learner has anything to say a phrase from, not only when a coach routes there.
-  if (tier >= 1) visible.add("speak");
-  if (tier >= 3) visible.add("correct");
-  // Conversation is its own tab only from C1: below that the bottleneck is still producing
-  // language at all, which the Speak tab's drill serves better. It also needs a provider —
-  // roleplay cannot run locally, and `speakSurface` sets the precedent of never routing a
-  // provider-less learner to a dead end.
-  if (gates.hasEvaluator && gates.level && LEVEL_RANK[gates.level] >= LEVEL_RANK.C1) visible.add("conversa");
-  return HOME_TABS.map((tab) => tab.id).filter((id) => visible.has(id));
-}
-
-function highestNewTab(previousTier: number, nextTier: number): HomeTab | null {
-  if (nextTier <= previousTier) return null;
-  if (nextTier >= 3 && previousTier < 3) return "correct";
-  if (nextTier >= 1 && previousTier < 1) return "speak";
-  return null;
+export function tabsForUnlockTier(tier: number, gates?: TabGates): HomeTab[] {
+  // Keep compatibility with saved tiers; the primary destinations are always available.
+  void tier;
+  void gates;
+  return HOME_TABS.map((tab) => tab.id);
 }
 
 export function useUnlockedTabs({ hasEvaluator = false }: { hasEvaluator?: boolean } = {}): {
@@ -101,12 +86,10 @@ export function useUnlockedTabs({ hasEvaluator = false }: { hasEvaluator?: boole
         { cards: counts.cards, reviews: counts.reviews, errorEvents: errors.length, ownSentences },
         profile.unlockedTabTier,
       );
-      const newlyUnlocked = highestNewTab(profile.unlockedTabTier, nextTier);
       if (nextTier > profile.unlockedTabTier) {
         saveLearningProfile({ unlockedTabTier: nextTier });
       }
       setTier(nextTier);
-      if (newlyUnlocked) setAnnouncement(newlyUnlocked);
     };
 
     const handleRefresh = () => void refresh().catch(() => undefined);

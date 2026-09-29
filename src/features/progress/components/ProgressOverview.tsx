@@ -26,6 +26,7 @@ import {
   getListeningAttempts,
   getMethodProgression,
   getProductionAttempts,
+  getProofAttempts,
   getProgressAssessments,
   getPronunciationAttempts,
   getReviews,
@@ -37,7 +38,7 @@ import {
 } from "@/lib/store/repository";
 import type { Card as PracticeCard, ErrorEvent } from "@/lib/cards/schema";
 import type { PronunciationAttempt } from "@/lib/pronunciation/types";
-import type { ListeningAttempt, ProductionAttempt, RetryOutcome } from "@/lib/performance/types";
+import type { ListeningAttempt, ProductionAttempt, ProofAttempt, RetryOutcome } from "@/lib/performance/types";
 import {
   LISTENING_STAGE_CRITERIA,
   LISTENING_STAGE_LABEL,
@@ -67,6 +68,7 @@ interface ProgressData {
   progression?: MethodProgressionState;
   assessments: StoredProgressAssessment[];
   cards: PracticeCard[];
+  proofAttempts: ProofAttempt[];
 }
 
 const EMPTY_DATA: ProgressData = {
@@ -80,6 +82,7 @@ const EMPTY_DATA: ProgressData = {
   progression: undefined,
   assessments: [],
   cards: [],
+  proofAttempts: [],
 };
 
 export function ProgressOverview({
@@ -89,31 +92,41 @@ export function ProgressOverview({
   compact?: boolean;
   showCheckIn?: boolean;
 }) {
+  const { t } = useT();
   const [data, setData] = useState<ProgressData>(EMPTY_DATA);
   const [loading, setLoading] = useState(true);
   const [available, setAvailable] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   const load = useCallback(async () => {
     if (!isStoreAvailable()) return;
-    const [reviews, errorEvents, conversations, pronunciationAttempts, listeningAttempts, productionAttempts, retryOutcomes, assessments, previousProgression, cards] = await Promise.all([
-      getReviews(),
-      getErrorEvents(),
-      getConversations(),
-      getPronunciationAttempts(),
-      getListeningAttempts(),
-      getProductionAttempts(),
-      getRetryOutcomes(),
-      getProgressAssessments(),
-      getMethodProgression(),
-      getCards(),
-    ]);
-    const progression = deriveProgressionState({
-      listeningAttempts,
-      productionAttempts,
-      retryOutcomes,
-      previous: previousProgression,
-    });
-    setData({ reviews, errorEvents, conversations, pronunciationAttempts, listeningAttempts, productionAttempts, retryOutcomes, progression, assessments, cards });
+    try {
+      const [reviews, errorEvents, conversations, pronunciationAttempts, listeningAttempts, productionAttempts, retryOutcomes, assessments, previousProgression, cards, proofAttempts] = await Promise.all([
+        getReviews(),
+        getErrorEvents(),
+        getConversations(),
+        getPronunciationAttempts(),
+        getListeningAttempts(),
+        getProductionAttempts(),
+        getRetryOutcomes(),
+        getProgressAssessments(),
+        getMethodProgression(),
+        getCards(),
+        getProofAttempts(),
+      ]);
+      const progression = deriveProgressionState({
+        listeningAttempts,
+        productionAttempts,
+        retryOutcomes,
+        previous: previousProgression,
+      });
+      setData({ reviews, errorEvents, conversations, pronunciationAttempts, listeningAttempts, productionAttempts, retryOutcomes, progression, assessments, cards, proofAttempts });
+      setLoadError(false);
+    } catch {
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -139,10 +152,12 @@ export function ProgressOverview({
     const refresh = () => void load();
     window.addEventListener("phraseloop:activity", refresh);
     window.addEventListener("phraseloop:progress-updated", refresh);
+    window.addEventListener("phraseloop:performance-evidence", refresh);
     return () => {
       cancelled = true;
       window.removeEventListener("phraseloop:activity", refresh);
       window.removeEventListener("phraseloop:progress-updated", refresh);
+      window.removeEventListener("phraseloop:performance-evidence", refresh);
     };
   }, [load]);
 
@@ -156,6 +171,7 @@ export function ProgressOverview({
   );
 
   if (!available) return null;
+  if (loadError) return <Notice tone="error">{t("Could not load your practice history.")}<Button variant="ghost" onClick={() => void load()}>{t("Try again")}</Button></Notice>;
   if (loading) {
     return (
       <Card className="p-5">
@@ -236,7 +252,7 @@ function ProgressSnapshotCard({
   const achieved = snapshot.milestones.filter((milestone) => milestone.achieved).length;
   const signals = snapshot.confidenceIndicators;
   const nextMilestone = snapshot.milestones.find((milestone) => !milestone.achieved);
-  const topSkills = [...snapshot.skills].sort((a, b) => b.score - a.score).slice(0, compact ? 3 : 6);
+  const topSkills = snapshot.skills.filter((skill) => skill.samples > 0 && ["recall", "grammar", "comprehension", "pronunciation"].includes(skill.key));
 
   return (
     <Card className={cn("p-5", compact && "p-4")}>

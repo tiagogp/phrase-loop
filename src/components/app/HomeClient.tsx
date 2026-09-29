@@ -2,23 +2,17 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { m } from "motion/react";
+import dynamic from "next/dynamic";
 import { BLUR, springSoft, TRAVEL } from "@/lib/motion";
 import AppHeader from "@/components/app/AppHeader";
 import { type HomeTab } from "@/components/app/homeTabs";
 import AppProviders from "@/components/app/AppProviders";
 import { useUnlockedTabs } from "@/components/app/useUnlockedTabs";
 import { useDockDueBadge } from "@/components/app/useDockDueBadge";
-import C1Tab from "@/features/c1/components/C1Tab";
-import ConverseTab from "@/features/converse/components/ConverseTab";
-import ConversationTab from "@/features/converse/components/ConversationTab";
-import CorrectTab from "@/features/correct/components/CorrectTab";
 import { startFirstRunActivation } from "@/features/activation/firstRun";
 import { TabErrorBoundary } from "@/components/app/TabErrorBoundary";
-import DiscoverTab from "@/features/discover/components/DiscoverTab";
 import { LEVEL_RANK } from "@/features/discover/levels";
 import { HojeHome } from "@/features/home/components/HojeHome";
-import { GuidedSpeaking } from "@/features/pronunciation/components/GuidedSpeaking";
-import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
 import { LessonView } from "@/features/learn/components/LessonView";
 import {
   firstLesson,
@@ -26,11 +20,9 @@ import {
   lessonProgressFromCardIds,
   nextLessonFor,
 } from "@/features/learn/lessonDeck";
-import SettingsScreen from "@/features/settings/components/SettingsScreen";
 import { getLearningProfile } from "@/features/settings/learningProfile";
 import OnboardingDialog from "@/features/settings/components/OnboardingDialog";
-import SpeechTab from "@/features/speech/components/SpeechTab";
-import StudyTab from "@/features/study/components/StudyTab";
+import type { ReviewView } from "@/features/study/components/ReviewWorkspaceNav";
 import { PlanOnboarding } from "@/features/plan/components/PlanOnboarding";
 import { PlanGenerationToast } from "@/features/plan/components/PlanGenerationToast";
 import { installDefaultPlan } from "@/features/plan/defaultPlans";
@@ -44,6 +36,15 @@ import { isStoreAvailable } from "@/lib/store/db";
 import { emitActivity } from "@/lib/store/activityLog";
 import { getCards } from "@/lib/store/repository";
 import { refreshMethodProgression } from "@/features/method/progressionPersistence";
+
+const C1Tab = dynamic(() => import("@/features/c1/components/C1Tab"));
+const ConversationTab = dynamic(() => import("@/features/converse/components/ConversationTab"));
+const CorrectTab = dynamic(() => import("@/features/correct/components/CorrectTab"));
+const DiscoverTab = dynamic(() => import("@/features/discover/components/DiscoverTab"));
+const SettingsScreen = dynamic(() => import("@/features/settings/components/SettingsScreen"));
+const SpeechTab = dynamic(() => import("@/features/speech/components/SpeechTab"));
+const StudyTab = dynamic(() => import("@/features/study/components/StudyTab"));
+const ProgressPage = dynamic(() => import("@/features/progress/components/ProgressPage"));
 
 async function recommendedLessonId(): Promise<string> {
   const profile = getLearningProfile();
@@ -70,6 +71,12 @@ function TabContent({
   onOpenSettings,
   onOpenDiscover,
   onOpenPractice,
+  onTransfer,
+  onProgress,
+  onTools,
+  studyView,
+  reviewRequest,
+  onStudyViewChange,
   onSpeak,
   onOpenCorrect,
   onFirstLesson,
@@ -77,8 +84,6 @@ function TabContent({
   onOpenPlanTask,
   onCreatePlan,
   onInstallDefaultPlan,
-  speakSurface,
-  onSpeakDone,
   discoverPrefill,
   kokoro,
 }: {
@@ -86,6 +91,12 @@ function TabContent({
   onOpenSettings: () => void;
   onOpenDiscover: () => void;
   onOpenPractice: () => void;
+  onTransfer: () => void;
+  onProgress: () => void;
+  onTools: () => void;
+  studyView: ReviewView;
+  reviewRequest: number;
+  onStudyViewChange: (view: ReviewView) => void;
   /** Always defined: the method requires speaking to be reachable from day 1. */
   onSpeak: () => void;
   onOpenCorrect: () => void;
@@ -94,9 +105,6 @@ function TabContent({
   onOpenPlanTask: (task: TaskItem) => void;
   onCreatePlan: () => void;
   onInstallDefaultPlan: () => void;
-  /** Which speaking surface the learner's real capability supports (see `openSpeaking`). */
-  speakSurface: "guided" | "converse";
-  onSpeakDone: () => void;
   discoverPrefill?: { url: string; nonce: number } | null;
   kokoro: LocalModelState;
 }) {
@@ -104,6 +112,9 @@ function TabContent({
     return (
       <HojeHome
         onStudy={onOpenPractice}
+        onTransfer={onTransfer}
+        onProgress={onProgress}
+        onTools={onTools}
         onDiscover={onOpenDiscover}
         onCorrect={onOpenCorrect}
         onFirstLesson={onFirstLesson}
@@ -126,52 +137,15 @@ function TabContent({
       />
     );
   }
-  if (tab === "study") return <StudyTab onDiscover={onOpenDiscover} onConversation={onSpeak} onLesson={() => onOpenLesson()} onCorrect={onOpenCorrect} />;
-  if (tab === "speak") return <SpeakTab surface={speakSurface} onOpenSettings={onOpenSettings} onDone={onSpeakDone} />;
+  if (tab === "progress") return <ProgressPage onPractice={onOpenPractice} />;
+  if (tab === "study") return <StudyTab reviewRequest={reviewRequest} onOpenSettings={onOpenSettings} view={studyView} onViewChange={onStudyViewChange} onProgress={onProgress} onDiscover={onOpenDiscover} onConversation={onSpeak} onLesson={() => onOpenLesson()} onCorrect={onOpenCorrect} />;
   if (tab === "conversa") return <ConversationTab onOpenSettings={onOpenSettings} />;
   if (tab === "correct") return <CorrectTab onOpenSettings={onOpenSettings} onStudyNow={onOpenPractice} kokoroModel={kokoro} />;
   return null;
 }
 
-/** Speaking's persistent home (tier ≥ 1). The surface mirrors `openSpeaking`:
- *  guided drill always works locally; open roleplay needs an LLM evaluator. */
-function SpeakTab({
-  surface,
-  onOpenSettings,
-  onDone,
-}: {
-  surface: "guided" | "converse";
-  onOpenSettings: () => void;
-  onDone: () => void;
-}) {
-  const { t } = useT();
-  return (
-    <div className="space-y-5">
-      <PageHeader
-        title={t("Speak")}
-        description={surface === "converse"
-          ? t("Practice a real conversation and retry the most important correction.")
-          : t("Repeat a useful phrase, then use it in a sentence of your own.")}
-      />
-      {surface === "converse" ? (
-        <ConverseTab onOpenSettings={onOpenSettings} />
-      ) : (
-        <GuidedSpeaking onDone={onDone} />
-      )}
-    </div>
-  );
-}
-
-// Conversation/VAD is demoted out of the primary tabs (W3) but stays fully
-// functional, reachable as an overlay rather than a phantom tab. C1 diagnosis (experimental,
-// experimental diagnosis follows the same pattern: never a primary tab.
-// `speak` is the beginner half of that pair — see `openSpeaking`.
-//
-// The W3 demotion holds up to B2, where producing language at all is still the bottleneck and a
-// roleplay tab would sit unused next to the drill that actually helps. From C1 it stops holding:
-// those learners can already converse, and conversation is the only surface that supplies the
-// repertoire they're short of — so it earns a real tab there. See `tabsForUnlockTier`.
-type Overlay = "settings" | "tools" | "converse" | "speak" | "c1" | null;
+// Secondary workspaces stay reachable without changing the five primary destinations.
+type Overlay = "settings" | "tools" | "correct" | "c1" | null;
 
 function OverlayHeader({
   title,
@@ -198,18 +172,16 @@ function OverlayHeader({
 function HomeContent() {
   const { t } = useT();
   const [tab, setTab] = useState<HomeTab>("hoje");
+  const [studyView, setStudyView] = useState<ReviewView>("review");
+  const [reviewRequest, setReviewRequest] = useState(0);
+  const [visitedTabs, setVisitedTabs] = useState<Set<HomeTab>>(() => new Set(["hoje"]));
   const [overlay, setOverlay] = useState<Overlay>(null);
-  // "Connect an AI" links must land on a Settings screen that actually shows
-  // the AI section, even before the tier unlock reveals it by default.
-  const [settingsAiIntent, setSettingsAiIntent] = useState(false);
   const [lessonId, setLessonId] = useState<string | null>(null);
   const [planDialogOpen, setPlanDialogOpen] = useState(false);
   const [discoverPrefill] = useState<{ url: string; nonce: number } | null>(null);
   const lessonRequestRef = useRef(0);
   const kokoro = useKokoroModel();
-  // Provider first: the Conversation tab's visibility depends on it.
-  const { hasEvaluator } = useProviderSelection({ fallbackToEvaluator: true });
-  const { tabs, tier, dueCount, announcement, clearAnnouncement } = useUnlockedTabs({ hasEvaluator });
+  const { tabs, tier, dueCount, announcement, clearAnnouncement } = useUnlockedTabs();
   const activeTab = tabs.some((item) => item.id === tab) ? tab : "hoje";
   const advancedSurfacesUnlocked = tier >= 3;
   useDockDueBadge();
@@ -241,45 +213,28 @@ function HomeContent() {
   }, [announcement, clearAnnouncement]);
 
   const changeTab = useCallback((next: HomeTab) => {
+    lessonRequestRef.current += 1;
+    setVisitedTabs((previous) => new Set([...previous, next]));
     setTab(tabs.some((item) => item.id === next) ? next : "hoje");
     setOverlay(null);
     setLessonId(null);
   }, [tabs]);
 
-  /**
-   * The method's Rule #1: speaking is present from the beginning. Which speaking surface
-   * the learner gets is decided by a real capability, not by the tier alone.
-   *
-   * `ConverseTab`'s open roleplay cannot even start without an LLM provider
-   * (`canStart = hasEvaluator`), and tier 3 is reached the moment a learner saves their
-   * first own sentence — long before most of them configure one. Routing on the tier
-   * alone would therefore drop a provider-less beginner straight onto a dead end. The
-   * guided drill runs on local Whisper + local Kokoro, so it always works; roleplay is
-   * offered only once it can actually run.
-   *
-   * From tier 1 the Speak tab is that surface's persistent home; the overlay remains
-   * only for the tier-0 learner routed here (e.g. a starter-plan converse task).
-   *
-   * Once the Talk tab exists (C1-C2 with a provider) it owns roleplay, and Speak falls back to
-   * the guided drill — otherwise the identical conversation would render in two tabs at once.
-   */
-  const hasTalkTab = tabs.some((item) => item.id === "conversa");
-  const speakSurface: "guided" | "converse" =
-    !hasTalkTab && advancedSurfacesUnlocked && hasEvaluator ? "converse" : "guided";
-  const openSpeaking = useCallback(() => {
+  const openSpeaking = useCallback(() => changeTab("conversa"), [changeTab]);
+  const openPractice = useCallback(() => {
+    setReviewRequest((request) => request + 1);
+    setStudyView("review");
+    changeTab("study");
+  }, [changeTab]);
+  const openTransfer = useCallback(() => {
+    setStudyView("use");
+    changeTab("study");
+  }, [changeTab]);
+  const openCorrect = useCallback(() => {
+    lessonRequestRef.current += 1;
     setLessonId(null);
-    // Callers here mean "go talk" (Study's conversation prompt, Hoje's speak CTA). When Talk
-    // exists it is that destination; Speak now holds the guided drill instead.
-    if (hasTalkTab) {
-      changeTab("conversa");
-      return;
-    }
-    if (tabs.some((item) => item.id === "speak")) {
-      changeTab("speak");
-      return;
-    }
-    setOverlay(speakSurface === "converse" ? "converse" : "speak");
-  }, [changeTab, hasTalkTab, speakSurface, tabs]);
+    setOverlay("correct");
+  }, []);
 
   // "Hoje" -> Start: open the learner's recommended bundled lesson through the
   // same save -> review path used after custom discovery.
@@ -307,11 +262,11 @@ function HomeContent() {
 
   const openPlanTask = useCallback((task: TaskItem) => {
     if (task.type === "discover") return changeTab("discover");
-    if (task.type === "study" || task.type === "readWrite") return changeTab("study");
-    if (task.type === "correct") return changeTab("correct");
+    if (task.type === "study" || task.type === "readWrite") return openPractice();
+    if (task.type === "correct") return openCorrect();
     if (task.type === "converse") return openSpeaking();
     return openLesson(task.lessonId);
-  }, [changeTab, openLesson, openSpeaking]);
+  }, [changeTab, openCorrect, openLesson, openPractice, openSpeaking]);
 
   const installStarterPlan = useCallback(() => {
     void installDefaultPlan(getLearningProfile()).catch(() => undefined);
@@ -329,9 +284,9 @@ function HomeContent() {
             settingsOpen={overlay === "settings"}
             onSettingsOpen={() => {
               setLessonId(null);
-              setSettingsAiIntent(false);
               setOverlay("settings");
             }}
+            onToolsOpen={() => { setLessonId(null); setOverlay("tools"); }}
             tabs={tabs}
             badges={{ study: dueCount }}
           />
@@ -355,7 +310,7 @@ function HomeContent() {
                   <LessonView
                     lessonId={lessonId}
                     onBack={() => setLessonId(null)}
-                    onStudyNow={() => changeTab("study")}
+                    onStudyNow={openPractice}
                   />
                 </m.div>
               </section>
@@ -363,10 +318,17 @@ function HomeContent() {
               <div className="h-full overflow-y-auto pb-16 app-scroll-region sm:pb-20">
                 <SettingsScreen
                   onBack={() => setOverlay(null)}
-                  onOpenTools={advancedSurfacesUnlocked ? () => setOverlay("tools") : undefined}
+                  onOpenTools={() => setOverlay("tools")}
                   onOpenC1={advancedSurfacesUnlocked ? () => setOverlay("c1") : undefined}
-                  showAdvancedAi={advancedSurfacesUnlocked || settingsAiIntent}
+                  showAdvancedAi={true}
                 />
+              </div>
+            ) : overlay === "correct" ? (
+              <div className="h-full overflow-y-auto app-scroll-region">
+                <div className="mx-auto max-w-5xl px-4 py-6">
+                  <Button variant="ghost" onClick={() => setOverlay(null)}>{t("Back")}</Button>
+                  <CorrectTab onOpenSettings={() => setOverlay("settings")} onStudyNow={openPractice} kokoroModel={kokoro} />
+                </div>
               </div>
             ) : overlay === "c1" ? (
               <div className="h-full overflow-y-auto pb-16 app-scroll-region sm:pb-20">
@@ -379,36 +341,6 @@ function HomeContent() {
                   />
                   <C1Tab
                     onOpenSettings={() => {
-                      setSettingsAiIntent(true);
-                      setOverlay("settings");
-                    }}
-                  />
-                </div>
-              </div>
-            ) : overlay === "speak" ? (
-              <div className="h-full overflow-y-auto pb-16 app-scroll-region sm:pb-20">
-                <div className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
-                  <OverlayHeader
-                    title={t("Speak")}
-                    description={t("Repeat a useful phrase, then use it in a sentence of your own.")}
-                    backLabel={t("Back")}
-                    onBack={() => setOverlay(null)}
-                  />
-                  <GuidedSpeaking onDone={() => setOverlay(null)} />
-                </div>
-              </div>
-            ) : overlay === "converse" ? (
-              <div className="h-full overflow-y-auto pb-16 app-scroll-region sm:pb-20">
-                <div className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
-                  <OverlayHeader
-                    title={t("Speak")}
-                    description={t("Practice a real conversation and retry the most important correction.")}
-                    backLabel={t("Back")}
-                    onBack={() => setOverlay(null)}
-                  />
-                  <ConverseTab
-                    onOpenSettings={() => {
-                      setSettingsAiIntent(true);
                       setOverlay("settings");
                     }}
                   />
@@ -418,16 +350,17 @@ function HomeContent() {
               <div className="h-full overflow-y-auto pb-16 app-scroll-region sm:pb-20">
                 <div className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
                   <OverlayHeader
-                    title={t("Advanced tools")}
+                    title={t("Kokoro & Anki")}
                     description={t("Export to Anki, text-to-speech, and theme phrase lists.")}
-                    backLabel={t("Back to Settings")}
-                    onBack={() => setOverlay("settings")}
+                    backLabel={t("Back")}
+                    onBack={() => setOverlay(null)}
                   />
                   <SpeechTab kokoroModel={kokoro} />
                 </div>
               </div>
-            ) : (
-              tabs.map((item) => {
+            ) : null}
+            <div hidden={lessonId !== null || overlay !== null} className="h-full">
+              {tabs.map((item) => {
                 const active = activeTab === item.id;
                 return (
                   <section
@@ -441,7 +374,7 @@ function HomeContent() {
                   >
                     {/* Mount stays alive across tab switches so each tab keeps its
                         state; only the entrance animation replays on activation. */}
-                    <m.div
+                    {visitedTabs.has(item.id) && <m.div
                       className="max-w-5xl mx-auto px-4 pt-5 pb-14 sm:pt-7 sm:pb-20"
                       initial={false}
                       animate={active ? { opacity: 1, y: 0 } : { opacity: 0, y: TRAVEL }}
@@ -451,29 +384,32 @@ function HomeContent() {
                         <TabContent
                           tab={item.id}
                           onOpenSettings={() => {
-                            setSettingsAiIntent(true);
                             setOverlay("settings");
                           }}
                           onOpenDiscover={() => changeTab("discover")}
-                          onOpenPractice={() => changeTab("study")}
+                          onOpenPractice={openPractice}
+                          onTransfer={openTransfer}
+                          onProgress={() => changeTab("progress")}
+                          onTools={() => setOverlay("tools")}
+                          studyView={studyView}
+                          reviewRequest={reviewRequest}
+                          onStudyViewChange={setStudyView}
                           onSpeak={openSpeaking}
-                          onOpenCorrect={() => changeTab("correct")}
+                          onOpenCorrect={openCorrect}
                           onFirstLesson={startFirstLesson}
                           onOpenLesson={openLesson}
                           onOpenPlanTask={openPlanTask}
                           onCreatePlan={() => setPlanDialogOpen(true)}
                           onInstallDefaultPlan={installStarterPlan}
-                          speakSurface={speakSurface}
-                          onSpeakDone={() => changeTab("hoje")}
                           discoverPrefill={discoverPrefill}
                           kokoro={kokoro}
                         />
                       </TabErrorBoundary>
-                    </m.div>
+                    </m.div>}
                   </section>
                 );
-              })
-            )}
+              })}
+            </div>
           </main>
           {/* One bottom-center stack, so a plan finishing while a section unlocks
               does not put two toasts on top of each other. */}
@@ -503,7 +439,6 @@ function HomeContent() {
             onClose={() => setPlanDialogOpen(false)}
             onOpenSettings={() => {
               setPlanDialogOpen(false);
-              setSettingsAiIntent(true);
               setOverlay("settings");
             }}
           />

@@ -1,23 +1,23 @@
 "use client";
 
 /**
- * Phase 0 #2 — honest end-of-session screen. It deliberately splits two numbers that
- * gamified apps blur together:
- *   • "Now" — how you performed in this session (accuracy). Feels good, but recognition.
- *   • "Tomorrow" — how many of those cards FSRS predicts are actually *stable* in 24h.
- * The second number is the honest one, and it's usually smaller. No streaks: the pull
- * back is tomorrowLine's concrete preview, never loss-aversion.
+ * A bounded session ends with activity and observed recall kept separate. The
+ * self-selected scheduling grade never becomes an accuracy claim. Tomorrow's
+ * preview describes the review schedule, not a prediction of proficiency.
  */
 
 import { Card } from "@/components/ui/Card";
 import { Rating, recallProbabilityAt, type Grade, type SrsRecord } from "@/lib/srs/fsrs";
 import { useT } from "@/i18n/I18nProvider";
+import type { ReviewRecord } from "@/lib/store/repository";
+import { isIndependentReview } from "@/features/progress/learningEvidence";
 
 export interface SessionResult {
   cardId: string;
   grade: Grade;
   /** SRS state *after* grading — what we predict tomorrow's recall from. */
   srs: SrsRecord;
+  review?: ReviewRecord;
 }
 
 /** What's waiting by the local end of tomorrow — the calm reason to come back. */
@@ -82,15 +82,16 @@ export function SessionSummary({
   tomorrow?: TomorrowPreview | null;
 }) {
   const { t } = useT();
-  const { reviewed, passed } = summarize(results);
-  const accuracy = reviewed ? Math.round((passed / reviewed) * 100) : 0;
+  const { reviewed } = summarize(results);
+  const observed = results.flatMap((result) => result.review && isIndependentReview(result.review) ? [result.review] : []);
+  const correct = observed.filter((review) => review.responseCorrect === true).length;
 
   return (
     <Card className="space-y-5 p-6 text-center sm:p-8">
       <div className="space-y-1">
-        <p className="text-sm font-semibold text-ink">{t("Review complete")}</p>
+        <p className="text-sm font-semibold text-ink">{t("Practice saved")}</p>
         <p className="text-xs text-ink-muted">
-          {t("{count} phrases reviewed today.", { count: reviewed })}
+          {t("{count} reviews in this session.", { count: reviewed })}
         </p>
       </div>
 
@@ -100,10 +101,11 @@ export function SessionSummary({
           <p className="mt-0.5 text-xs text-ink-muted">{t("phrases reviewed")}</p>
         </div>
         <div>
-          <p className="text-2xl font-semibold tabular-nums text-ink">{accuracy}%</p>
-          <p className="mt-0.5 text-xs text-ink-muted">{t("accuracy")}</p>
+          <p className="text-2xl font-semibold tabular-nums text-ink">{observed.length ? `${correct}/${observed.length}` : "—"}</p>
+          <p className="mt-0.5 text-xs text-ink-muted">{t("checked without hints")}</p>
         </div>
       </div>
+      <p className="text-xs leading-relaxed text-ink-muted">{t("This is today's practice. Remembering it on another day is the next step.")}</p>
 
       {tomorrow && (
         <>

@@ -1,12 +1,11 @@
+/** Stable destinations: core features never disappear behind a level or activity gate. */
 export const HOME_TABS = [
   { id: "hoje", label: "Today" },
-  { id: "study", label: "Review" },
-  { id: "speak", label: "Speak" },
-  // "Talk" rather than "Conversation": the nav truncates anything much longer, and it pairs
-  // with "Speak" the way the surfaces do — Speak drills a phrase, Talk holds a conversation.
+  { id: "study", label: "Practice" },
   { id: "conversa", label: "Talk" },
-  { id: "discover", label: "Phrases" },
-  { id: "correct", label: "Mistakes" },
+  { id: "discover", label: "Content" },
+  { id: "progress", label: "Progress" },
 ] as const;
 
-export type HomeTab = (typeof HOME_TABS)[number]["id"];
+// Legacy destinations remain valid for plan tasks and the landing preview.
+export type HomeTab = (typeof HOME_TABS)[number]["id"] | "speak" | "correct";

@@ -22,12 +22,9 @@ import { LevelTestFlow } from "@/features/levelup/components/LevelTestFlow";
 import { LocalPlacementCheck } from "@/features/levelup/components/LocalPlacementCheck";
 
 const subscribe = () => () => {};
-type Step = "level" | "welcome" | "profile" | "ai";
-/**
- * The AI step is last so that "Connect an AI" can save the profile and hand the learner
- * straight to Settings, and so the choice is made after they know what the app is for.
- */
-const STEPS: Step[] = ["level", "welcome", "profile", "ai"];
+type Step = "level" | "welcome" | "profile";
+// Start with the purpose; provider setup stays available where a feature needs it.
+const STEPS: Step[] = ["welcome", "level", "profile"];
 
 /** `objective` drives the method's study distribution; `label` is display/prompt text
  * only. Keep them separate — a translated label must never change the distribution. */
@@ -42,12 +39,13 @@ const GOAL_OPTIONS: readonly { objective: MethodObjective; label: string }[] = [
 export default function OnboardingDialog({ onOpenSettings }: Readonly<{ onOpenSettings: () => void }>) {
   const { t } = useT();
   const [dismissed, setDismissed] = useState(false);
-  const [step, setStep] = useState<Step>("level");
+  const [step, setStep] = useState<Step>("welcome");
   const [levelCheckOpen, setLevelCheckOpen] = useState<"local" | "ai" | null>(null);
   const [profile] = useState(getLearningProfile);
   const [level, setLevel] = useState<EnglishLevel>(profile.level);
   const [nativeLang, setNativeLang] = useState(profile.nativeLang);
   const [objective, setObjective] = useState<MethodObjective>(profile.objective);
+  const [dailyMinutes, setDailyMinutes] = useState(profile.dailyMinutes ?? 10);
   const { settings } = useAiSettings();
   const defaultProvider = settings.providers.find((provider) => provider.kind === settings.defaultProvider);
   // Any usable provider, not just the default one: the question here is whether the method
@@ -73,6 +71,7 @@ export default function OnboardingDialog({ onOpenSettings }: Readonly<{ onOpenSe
       objective,
       focus,
       goal: profile.goal,
+      dailyMinutes,
     });
     setDismissed(true);
   };
@@ -220,39 +219,11 @@ export default function OnboardingDialog({ onOpenSettings }: Readonly<{ onOpenSe
               }))}
             />
           </Field>
-        </div>
-      )}
-
-      {step === "ai" && (
-        <div className="space-y-4">
-          <div>
-            <p className="text-xs uppercase tracking-widest text-accent">{t("AI")}</p>
-            <h2 id="welcome-title" className="mt-1 text-xl font-semibold text-ink">
-              {aiReady ? t("An AI is connected") : t("Connect an AI to get the whole method")}
-            </h2>
-            <p className="mt-2 text-sm text-ink-soft">
-              {aiReady
-                ? t("PhraseLoop will use it to judge open answers, build listening checks from what you import, and give focused feedback.")
-                : t("PhraseLoop was built to work with an AI, not around one. It is what judges an open answer, writes a listening check from a video you import, and tells you which two mistakes matter.")}
-            </p>
-          </div>
-
-          {/* Naming what still works without AI is the honest half of asking for one — and
-              naming what does not is the other half. Neither list is marketing. */}
-          <div className="grid gap-3 sm:grid-cols-2">
-            <MethodTile
-              title={t("Works without AI")}
-              text={t("Guided lessons, spaced review, pattern drills, transfer checks and the retention proof all run on your device.")}
-            />
-            <MethodTile
-              title={t("Needs an AI")}
-              text={t("Open answers judged for meaning, free conversation, mining phrases from your own content, and listening checks on unfamiliar voices.")}
-            />
-          </div>
-
-          <p className="text-xs leading-relaxed text-ink-muted">
-            {t("A cloud AI receives the practice content you send it — phrases, mistakes, conversations. A local AI (Ollama) keeps everything on this machine. You choose which, and you can change it later.")}
-          </p>
+          <Field label={t("Time for today")} hint={t("A small review batch, then one answer of your own. Change it on Home whenever you need.")}>
+            <Segmented label={t("Time for today")} value={String(dailyMinutes)}
+              onChange={(value) => setDailyMinutes(Number(value))}
+              options={[5, 10, 20].map((value) => ({ value: String(value), label: t("{count} min", { count: value }) }))} />
+          </Field>
         </div>
       )}
 
@@ -283,7 +254,7 @@ export default function OnboardingDialog({ onOpenSettings }: Readonly<{ onOpenSe
                 </Button>
               )}
               <Button variant="primary" onClick={() => void finish()}>
-                {aiReady ? t("Start first lesson") : t("Start without AI for now")}
+                {t("Start my loop")}
               </Button>
             </>
           )}

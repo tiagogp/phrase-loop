@@ -826,7 +826,7 @@ function LessonViewContent({
               {t("Review a saved phrase to finish this lesson")}
             </p>
             <p className="mt-1 text-sm text-ink-soft">
-              {t("After the review, your own sources and extra practice will be ready in the app.")}
+              {t("Try to remember before revealing the answer. Your next reviews will bring these phrases back over time.")}
             </p>
           </div>
           {onStudyNow && (

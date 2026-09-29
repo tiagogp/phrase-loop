@@ -5,6 +5,7 @@ import Select from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { QuickPhraseForm } from "./QuickPhraseForm";
 import { WorkflowSteps } from "@/components/ui/WorkflowSteps";
 import { Field, Input } from "@/components/ui/Field";
 import { Notice } from "@/components/ui/Notice";
@@ -537,7 +538,7 @@ export default function DiscoverTab({
     <div className="space-y-5">
       <PageHeader
         eyebrow={t("Build your phrase library")}
-        title={t("Phrases")}
+        title={t("Content")}
         description={t("Bring in useful English, choose what matters, and turn it into focused daily practice.")}
       />
 
@@ -546,6 +547,8 @@ export default function DiscoverTab({
         steps={[t("Choose source"), t("Pick phrases"), t("Use one now")]}
         current={productionPrompt ? 3 : result ? 2 : 1}
       />
+
+      {!result && !loading && <QuickPhraseForm onStudy={onStudyNow} />}
 
       {(!result || loading) && <Card className="space-y-4 p-5 sm:p-6">
         <div className="space-y-1" aria-live="polite">

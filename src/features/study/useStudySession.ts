@@ -13,6 +13,7 @@ import {
   getDueCards,
   getCardsWithSrs,
   getCounts,
+  getReviews,
   getReinforcementCards,
   getReinforcementSources,
   recordReview,
@@ -53,9 +54,9 @@ import {
 import { buildLightQueue, isSaturated, type SessionMode } from "./sessionMode";
 import { deriveCyclePlan } from "./cyclePlanner";
 import { getWeeklyGoal } from "./weeklyGoal";
-import { loadOrderedDueQueue, loadStudySnapshot } from "./studySession";
+import { buildReviewBatch, loadOrderedDueQueue, loadStudySnapshot } from "./studySession";
 
-export function useStudySession() {
+export function useStudySession(reviewRequest = 0) {
   const { t } = useT();
   const { settings } = useAiSettings();
   const reviewTimer = useStageTimer("review", 1);
@@ -64,6 +65,7 @@ export function useStudySession() {
   );
   const [available, setAvailable] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [sessionError, setSessionError] = useState<string | null>(null);
   const [queue, setQueue] = useState<DueCard[]>([]);
   const [flipped, setFlipped] = useState(false);
   const [grading, setGrading] = useState(false);
@@ -108,7 +110,8 @@ export function useStudySession() {
 
   const refresh = useCallback(async () => {
     const snapshot = await loadStudySnapshot();
-    setQueue(snapshot.queue);
+    setQueue(buildReviewBatch(snapshot.queue, getLearningProfile().dailyMinutes, snapshot.reviews));
+    setSessionError(null);
     setBandGate(snapshot.gate);
     setReviews(snapshot.reviews);
     setErrorEvents(snapshot.errorEvents);
@@ -122,9 +125,9 @@ export function useStudySession() {
   }, []);
 
   const reloadStandardQueue = useCallback(async (): Promise<DueCard[]> => {
-    const { queue, gate } = await loadOrderedDueQueue();
+    const [{ queue, gate }, recentReviews] = await Promise.all([loadOrderedDueQueue(), getReviews()]);
     setBandGate(gate);
-    return queue;
+    return buildReviewBatch(queue, getLearningProfile().dailyMinutes, recentReviews);
   }, []);
 
   useEffect(() => {
@@ -137,14 +140,19 @@ export function useStudySession() {
         }
         return;
       }
-      await refresh();
-      if (!cancelled) setLoading(false);
+      try {
+        await refresh();
+      } catch {
+        if (!cancelled) setSessionError(t("Could not load your practice history."));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     };
     void load();
     return () => {
       cancelled = true;
     };
-  }, [refresh]);
+  }, [refresh, t]);
 
   // The study tab stays mounted in the background while cards are saved from
   // lessons, Discover, or Correct. Pick those up when they happen — but only
@@ -219,10 +227,10 @@ export function useStudySession() {
       if (!current || gradingRef.current) return;
       gradingRef.current = true;
       setGrading(true);
+      setSessionError(null);
       try {
         const observed = observedRecallRef.current;
         const latencyMs = observed?.latencyMs;
-        observedRecallRef.current = null;
         const { next, review } = await recordReview(current.card, current.srs, g, {
           latencyMs,
           hintUsed: scaffold.hintUsed,
@@ -232,6 +240,7 @@ export function useStudySession() {
           responseCorrect: scaffold.responseCorrect,
           judge: scaffold.judge,
         });
+        observedRecallRef.current = null;
         const activation = markFirstRunReviewCompleted();
         void emitActivity("cards_reviewed", {
           count: 1,
@@ -257,41 +266,37 @@ export function useStudySession() {
         if (mode === "standard" && !cooldown && isSaturated(answers)) setCooldown(true);
         const rest = queue.slice(1);
         const allReviews = [...reviews, review];
-        const c = await getCounts();
         setSessionResults((prev) => [...prev, {
-          cardId: current.card.id, grade: g, srs: next,
+          cardId: current.card.id, grade: g, srs: next, review,
         }]);
         setReviews(allReviews);
-        setCounts(c);
-        if (rest.length > 0) {
-          setQueue(rest);
-        } else if (reinforcing) {
-          // Reinforcement drill finished — drop back to the normal due queue.
+        setQueue(rest);
+        if (rest.length === 0) {
           setReinforcing(null);
-          setQueue(await reloadStandardQueue());
-        } else if (mode === "light") {
-          // Light round done — end cleanly into the summary rather than reopening the queue.
           setMode("standard");
-          setQueue([]);
-        } else {
-          // Re-query: FSRS learning steps may have re-queued a card minutes out.
-          setQueue(await reloadStandardQueue());
         }
         setFlipped(false);
+        // The review is already committed. A failed counter read must not invite a duplicate grade.
+        const c = await getCounts().catch(() => null);
+        if (c) setCounts(c);
+      } catch {
+        setSessionError(t("Your answer could not be saved. Try again before moving on."));
       } finally {
         gradingRef.current = false;
         setGrading(false);
       }
     },
-    [current, queue, reinforcing, mode, cooldown, recentAnswers, reloadStandardQueue, reviews, reviewTimer],
+    [current, queue, mode, cooldown, recentAnswers, reviews, reviewTimer, t],
   );
 
   /** D5 — start a focused drill on a weak concept/error-type, on top of the due queue. */
   const startReinforcement = useCallback(async (w: Weakness) => {
     const cards = await getReinforcementCards({ label: w.label, kind: w.kind });
     if (cards.length === 0) return;
+    setSessionResults([]);
+    setRecentAnswers([]);
     setReinforcing({ label: w.label, kind: w.kind });
-    setQueue(cards);
+    setQueue(buildReviewBatch(cards, getLearningProfile().dailyMinutes));
     setFlipped(false);
     document.querySelector<HTMLElement>("section.app-scroll-region:not([hidden])")?.scrollTo({
       top: 0,
@@ -310,6 +315,8 @@ export function useStudySession() {
     const [due, all] = await Promise.all([getDueCards(), getCardsWithSrs()]);
     const light = buildLightQueue(due, all);
     if (light.length === 0) return;
+    setSessionResults([]);
+    setRecentAnswers([]);
     setReinforcing(null);
     setCooldown(false);
     setMode("light");
@@ -319,17 +326,33 @@ export function useStudySession() {
 
   /** P2 #5 — return to the standard due queue and scroll the card into view. */
   const startReview = useCallback(async () => {
+    await refresh();
     setSessionResults([]);
+    setRecentAnswers([]);
     setReinforcing(null);
     setCooldown(false);
     setMode("standard");
-    setQueue(await reloadStandardQueue());
     setFlipped(false);
     document.querySelector<HTMLElement>("section.app-scroll-region:not([hidden])")?.scrollTo({
       top: 0,
       behavior: "smooth",
     });
-  }, [reloadStandardQueue]);
+  }, [refresh]);
+
+  const lastReviewRequest = useRef(0);
+  useEffect(() => {
+    if (loading || lastReviewRequest.current === reviewRequest) return;
+    lastReviewRequest.current = reviewRequest;
+    // A deliberate "practice now" action can start a new batch after the summary.
+    // Returning to an unfinished batch preserves its answer and ordering.
+    if (queue.length === 0) {
+      const resume = async () => {
+        try { await startReview(); }
+        catch { setSessionError(t("Could not load your practice history.")); }
+      };
+      void resume();
+    }
+  }, [loading, queue.length, reviewRequest, startReview, t]);
 
   /** P1 #4 — cooldown choice: bank the session and stop into the honest summary. */
   const stopSession = useCallback(() => {
@@ -444,6 +467,8 @@ export function useStudySession() {
   return {
     available,
     loading,
+    sessionError,
+    retryLoad: refresh,
     queue,
     current,
     flipped,

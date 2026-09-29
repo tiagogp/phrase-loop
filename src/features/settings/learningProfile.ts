@@ -42,6 +42,8 @@ export interface LearningProfile {
   objective: MethodObjective;
   focus: string;
   goal: number;
+  /** Comfortable session budget; older profiles default to ten minutes. */
+  dailyMinutes?: number;
   createdAt: number;
   onboardingCompleted: boolean;
   /** Monotonic disclosure tier for app sections; once raised it never decreases. */
@@ -58,6 +60,7 @@ export const DEFAULT_LEARNING_PROFILE: LearningProfile = {
   objective: "conversation",
   focus: "",
   goal: 3,
+  dailyMinutes: 10,
   createdAt: 0,
   onboardingCompleted: false,
   unlockedTabTier: 0,
@@ -138,6 +141,7 @@ function normalizeProfile(value: unknown): LearningProfile {
     objective: objectiveOrDefault(raw.objective, raw.focus),
     focus: typeof raw.focus === "string" ? raw.focus.trim() : "",
     goal: clampGoal(raw.goal),
+    dailyMinutes: raw.dailyMinutes === 5 || raw.dailyMinutes === 20 ? raw.dailyMinutes : 10,
     createdAt,
     onboardingCompleted: raw.onboardingCompleted === true,
     unlockedTabTier: unlockedTabTierOrDefault(raw.unlockedTabTier),

@@ -79,3 +79,19 @@ describe("loadOrderedDueQueue", () => {
     expect(queue.map((c) => c.card.id)).toContain(due[1].card.id);
   });
 });
+
+// The session must end even if a missed item becomes due again while it is running.
+describe("finite review batches", () => {
+  it("limits the batch, resumes today's remaining budget, and leaves the scheduler unchanged", async () => {
+    const { buildReviewBatch } = await import("./studySession");
+    await saveCards(Array.from({ length: 8 }, (_, i) => makeCard(String(i))));
+    const snapshot = await loadStudySnapshot();
+    const batch = buildReviewBatch(snapshot.queue, 5);
+    expect(batch).toHaveLength(3);
+    expect(snapshot.queue).toHaveLength(16);
+    const { review } = await recordReview(batch[0].card, batch[0].srs, Rating.Again);
+    const resumed = buildReviewBatch((await loadOrderedDueQueue()).queue, 5, [review]);
+    expect(resumed).toHaveLength(2);
+    expect(batch).toHaveLength(3);
+  });
+});

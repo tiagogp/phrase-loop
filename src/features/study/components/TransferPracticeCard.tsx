@@ -3,12 +3,12 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { getCards, getConversations, getErrorEvents, getMethodProgression, saveAudioRecording, saveErrorEvents, saveProductionAttempt } from "@/lib/store/repository";
+import { Notice } from "@/components/ui/Notice";
+import { getCards, getConversations, getErrorEvents, saveAudioRecording, saveErrorEvents, saveProductionAttempt } from "@/lib/store/repository";
 import { emitActivity } from "@/lib/store/activityLog";
 import { buildTransferActivities, type TransferActivity } from "../transfer";
 import { useT } from "@/i18n/I18nProvider";
 import { interpolate } from "@/i18n/translate";
-import { READING_WRITING_STAGE_LABEL, supportForProgression, type MethodProgressionState } from "@/features/method/progression";
 import type { ProductionAttempt } from "@/lib/performance/types";
 import { useCorrectionAudio } from "@/features/correct/hooks/useCorrectionAudio";
 import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
@@ -24,7 +24,7 @@ import type { ErrorEvent } from "@/lib/cards/schema";
  * A bounded transfer check. Fixed-pattern prompts have a conservative local evaluator;
  * a configured evaluator additionally checks open task completion and general language.
  */
-export function TransferPracticeCard({ onCompleted }: { onCompleted?: () => void } = {}) {
+export function TransferPracticeCard({ onCompleted, onOpenSettings }: { onCompleted?: () => void; onOpenSettings?: () => void } = {}) {
   const { t } = useT();
   const responseId = useId();
   const [activities, setActivities] = useState<TransferActivity[]>([]);
@@ -40,12 +40,14 @@ export function TransferPracticeCard({ onCompleted }: { onCompleted?: () => void
     notes: string[];
   } | null>(null);
   const [checking, setChecking] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const busyRef = useRef(false);
+  const [retryOf, setRetryOf] = useState<string | undefined>();
   const [recordingBlob, setRecordingBlob] = useState<Blob | null>(null);
   const [audioNote, setAudioNote] = useState<string | null>(null);
   const promptStartedAtRef = useRef(0);
-  const [progression, setProgression] = useState<MethodProgressionState | undefined>();
   const { provider, selectedModel, hasEvaluator } = useProviderSelection({ fallbackToEvaluator: true });
-  const support = supportForProgression(progression);
   const audio = useCorrectionAudio({
     onNote: setAudioNote,
     onText: (updater) => setValue(updater),
@@ -53,25 +55,22 @@ export function TransferPracticeCard({ onCompleted }: { onCompleted?: () => void
   });
 
   const load = useCallback(async () => {
-    const [cards, errors, conversations, currentProgression] = await Promise.all([
-      getCards(),
-      getErrorEvents(),
-      getConversations(),
-      getMethodProgression(),
-    ]);
-    setActivities(buildTransferActivities(cards, errors, conversations));
-    promptStartedAtRef.current = Date.now();
-    setProgression(currentProgression);
+    try {
+      const [cards, errors, conversations] = await Promise.all([getCards(), getErrorEvents(), getConversations()]);
+      setActivities(buildTransferActivities(cards, errors, conversations));
+      setError(null);
+      promptStartedAtRef.current = Date.now();
+    } catch {
+      setError("Could not load your practice history.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    const run = async () => {
-      await load();
-    };
-    void run().catch(() => undefined);
-    const refresh = () => void load().catch(() => undefined);
-    window.addEventListener("phraseloop:activity", refresh);
-    return () => window.removeEventListener("phraseloop:activity", refresh);
+    // Keep this set of prompts stable while the learner answers and retries.
+    const run = async () => { await load(); };
+    void run();
   }, [load]);
 
   const activity = activities[index];
@@ -89,7 +88,9 @@ export function TransferPracticeCard({ onCompleted }: { onCompleted?: () => void
     setAudioNote(null);
     setSaved(false);
     setPendingAttempt(null);
+    setRetryOf(undefined);
     setEvaluation(null);
+    setError(null);
     promptStartedAtRef.current = Date.now();
   };
 
@@ -236,158 +237,172 @@ export function TransferPracticeCard({ onCompleted }: { onCompleted?: () => void
 
   const submit = async () => {
     const text = value.trim();
-    if (!activity || !text || pendingAttempt || checking) return;
+    if (!activity || !text || pendingAttempt || busyRef.current) return;
+    busyRef.current = true;
     setChecking(true);
+    setError(null);
     try {
-    const now = Date.now();
-    const recordingId = recordingBlob ? crypto.randomUUID() : undefined;
-    if (recordingId && recordingBlob) {
-      await saveAudioRecording({
-        id: recordingId,
-        blob: recordingBlob,
-        mimeType: recordingBlob.type || "audio/webm",
-        sizeBytes: recordingBlob.size,
+      const now = Date.now();
+      const recordingId = recordingBlob ? crypto.randomUUID() : undefined;
+      if (recordingId && recordingBlob) {
+        await saveAudioRecording({
+          id: recordingId,
+          blob: recordingBlob,
+          mimeType: recordingBlob.type || "audio/webm",
+          sizeBytes: recordingBlob.size,
+          createdAt: now,
+        }).catch(() => undefined);
+      }
+      const result = await evaluate(activity, text);
+      if (result.errors.length) await saveErrorEvents(result.errors);
+      const attempt: ProductionAttempt = {
+        id: crypto.randomUUID(),
+        source: "study" as const,
+        stage: retryOf ? "retry" : "production",
+        retryOf,
+        prompt: interpolate(activity.prompt, activity.promptVars),
+        context: activity.kind,
+        transferKind: activity.kind,
+        transferSourceId: activity.sourceId,
+        recordingId,
+        preparationMs: Math.max(0, now - (promptStartedAtRef.current || now)),
+        text,
+        spoken: Boolean(recordingBlob),
+        wordCount: text.split(/\s+/).filter(Boolean).length,
+        finished: true,
+        issueCount: result.issueCount ?? result.notes.length,
+        evaluated: result.evaluated,
+        // "needs_support" is a verdict. An attempt nothing could judge gets none, the same
+        // way an unmeasured metric is null rather than zero.
+        transferOutcome: result.evaluated ? (result.clear ? "clear" : "needs_support") : undefined,
+        avoidedErrorIds: result.clear ? activity.errorIds : undefined,
+        errorTypesFound: [...new Set(result.errors.flatMap((error) => error.errorTypes))],
+        taskCompleted: result.taskCompleted,
+        judge: result.judge,
+        targetPatternId: activity.patternId,
+        durationMs: audio.recordingElapsedMs || undefined,
+        fluency: recordingBlob && audio.recordingElapsedMs > 0
+          ? { wordsPerMinute: Math.round((text.split(/\s+/).filter(Boolean).length / (audio.recordingElapsedMs / 60000)) * 10) / 10 }
+          : undefined,
+        // Observed, not requested. `newContext` now means "the learner actually carried the
+        // pattern into new content", and is left undefined when the app could not tell.
+        newContext: result.transferVerified ? result.transferred : undefined,
+        transferVerified: result.transferVerified,
+        listeningRecognition: activity.kind === "listening_recognition",
+        retold: activity.kind === "topic_retell" || activity.kind === "error_reconstruction",
+        // Record the support actually shown, rather than inferring it from the learner's level.
+        scaffoldUsed: activity.kind === "reading_to_meaning" || Boolean(activity.errorIds?.length),
         createdAt: now,
+      };
+      await saveProductionAttempt(attempt);
+      setPendingAttempt(attempt);
+      setEvaluation({ clear: result.clear, evaluated: result.evaluated, formOnly: result.formOnly, notes: result.notes });
+      setSaved(true);
+      setRecordingBlob(null);
+      // Evidence is already durable; a secondary activity-log failure must not invite a duplicate.
+      void emitActivity("production_attempt", {
+        attemptId: attempt.id,
+        source: attempt.source,
+        stage: attempt.stage,
+        prompt: attempt.prompt,
+        text: attempt.text,
+        spoken: attempt.spoken,
+        wordCount: attempt.wordCount,
+        finished: attempt.finished,
+        issueCount: attempt.issueCount,
+        evaluated: attempt.evaluated,
+        scaffoldUsed: attempt.scaffoldUsed,
+        transferKind: attempt.transferKind,
+        transferSourceId: attempt.transferSourceId,
+        recordingId: attempt.recordingId,
+        preparationMs: attempt.preparationMs,
+        newContext: attempt.newContext,
+        transferVerified: attempt.transferVerified,
+        listeningRecognition: attempt.listeningRecognition,
+        transferOutcome: attempt.transferOutcome,
+        avoidedErrorIds: attempt.avoidedErrorIds,
+        durationMs: attempt.durationMs,
+        fluency: attempt.fluency,
+        createdAt: attempt.createdAt,
       }).catch(() => undefined);
-    }
-    const result = await evaluate(activity, text);
-    if (result.errors.length) await saveErrorEvents(result.errors);
-    const attempt: ProductionAttempt = {
-      id: crypto.randomUUID(),
-      source: "study" as const,
-      stage: "production" as const,
-      prompt: interpolate(activity.prompt, activity.promptVars),
-      context: activity.kind,
-      transferKind: activity.kind,
-      transferSourceId: activity.sourceId,
-      recordingId,
-      preparationMs: Math.max(0, now - (promptStartedAtRef.current || now)),
-      text,
-      spoken: Boolean(recordingBlob),
-      wordCount: text.split(/\s+/).filter(Boolean).length,
-      finished: true,
-      issueCount: result.issueCount ?? result.notes.length,
-      evaluated: result.evaluated,
-      // "needs_support" is a verdict. An attempt nothing could judge gets none, the same
-      // way an unmeasured metric is null rather than zero.
-      transferOutcome: result.evaluated ? (result.clear ? "clear" : "needs_support") : undefined,
-      avoidedErrorIds: result.clear ? activity.errorIds : undefined,
-      errorTypesFound: [...new Set(result.errors.flatMap((error) => error.errorTypes))],
-      taskCompleted: result.taskCompleted,
-      judge: result.judge,
-      targetPatternId: activity.patternId,
-      durationMs: audio.recordingElapsedMs || undefined,
-      fluency: recordingBlob && audio.recordingElapsedMs > 0
-        ? { wordsPerMinute: Math.round((text.split(/\s+/).filter(Boolean).length / (audio.recordingElapsedMs / 60000)) * 10) / 10 }
-        : undefined,
-      // Observed, not requested. `newContext` now means "the learner actually carried the
-      // pattern into new content", and is left undefined when the app could not tell.
-      newContext: result.transferVerified ? result.transferred : undefined,
-      transferVerified: result.transferVerified,
-      listeningRecognition: activity.kind === "listening_recognition",
-      retold: activity.kind === "topic_retell" || activity.kind === "error_reconstruction",
-      scaffoldUsed: activity.kind === "reading_to_meaning" || support.readingWriting.stage !== "independent_transfer",
-      createdAt: now,
-    };
-    await saveProductionAttempt(attempt);
-    await emitActivity("production_attempt", {
-      attemptId: attempt.id,
-      source: attempt.source,
-      stage: attempt.stage,
-      prompt: attempt.prompt,
-      text: attempt.text,
-      spoken: attempt.spoken,
-      wordCount: attempt.wordCount,
-      finished: attempt.finished,
-      issueCount: attempt.issueCount,
-      evaluated: attempt.evaluated,
-      scaffoldUsed: attempt.scaffoldUsed,
-      transferKind: attempt.transferKind,
-      transferSourceId: attempt.transferSourceId,
-      recordingId: attempt.recordingId,
-      preparationMs: attempt.preparationMs,
-      newContext: attempt.newContext,
-      transferVerified: attempt.transferVerified,
-      listeningRecognition: attempt.listeningRecognition,
-      transferOutcome: attempt.transferOutcome,
-      avoidedErrorIds: attempt.avoidedErrorIds,
-      durationMs: attempt.durationMs,
-      fluency: attempt.fluency,
-      createdAt: attempt.createdAt,
-    });
-    setPendingAttempt(attempt);
-    setEvaluation({ clear: result.clear, evaluated: result.evaluated, formOnly: result.formOnly, notes: result.notes });
-    setSaved(true);
-    setRecordingBlob(null);
+    } catch {
+      setError("Your answer could not be saved. Try again before moving on.");
     } finally {
+      busyRef.current = false;
       setChecking(false);
     }
   };
 
   const skip = async () => {
-    if (!activity || pendingAttempt) return;
-    const createdAt = Date.now();
-    const attempt: ProductionAttempt = {
-      id: crypto.randomUUID(),
-      source: "study",
-      stage: "production",
-      prompt: interpolate(activity.prompt, activity.promptVars),
-      context: activity.kind,
-      transferKind: activity.kind,
-      transferSourceId: activity.sourceId,
-      text: "",
-      spoken: false,
-      wordCount: 0,
-      finished: false,
-      skipped: true,
-      evaluated: true,
-      issueCount: 0,
-      preparationMs: Math.max(0, createdAt - (promptStartedAtRef.current || createdAt)),
-      // A skipped prompt produced no text, so there is nothing to verify. Both fields stay
-      // undefined rather than recording a transfer that was never attempted.
-      createdAt,
-    };
-    await saveProductionAttempt(attempt);
-    await emitActivity("production_attempt", {
-      attemptId: attempt.id,
-      source: attempt.source,
-      stage: attempt.stage,
-      prompt: attempt.prompt,
-      text: attempt.text,
-      spoken: attempt.spoken,
-      wordCount: 0,
-      finished: false,
-      issueCount: 0,
-      evaluated: true,
-      skipped: true,
-      preparationMs: attempt.preparationMs,
-      transferKind: attempt.transferKind,
-      transferSourceId: attempt.transferSourceId,
-      newContext: attempt.newContext,
-      createdAt,
-    });
-    advancePrompt();
+    if (!activity || pendingAttempt || busyRef.current) return;
+    busyRef.current = true;
+    setChecking(true);
+    setError(null);
+    try {
+      const createdAt = Date.now();
+      const attempt: ProductionAttempt = {
+        id: crypto.randomUUID(),
+        source: "study",
+        stage: "production",
+        prompt: interpolate(activity.prompt, activity.promptVars),
+        context: activity.kind,
+        transferKind: activity.kind,
+        transferSourceId: activity.sourceId,
+        text: "",
+        spoken: false,
+        wordCount: 0,
+        finished: false,
+        skipped: true,
+        evaluated: true,
+        issueCount: 0,
+        preparationMs: Math.max(0, createdAt - (promptStartedAtRef.current || createdAt)),
+        // A skipped prompt produced no text, so there is nothing to verify. Both fields stay
+        // undefined rather than recording a transfer that was never attempted.
+        createdAt,
+      };
+      await saveProductionAttempt(attempt);
+      void emitActivity("production_attempt", {
+        attemptId: attempt.id,
+        source: attempt.source,
+        stage: attempt.stage,
+        prompt: attempt.prompt,
+        text: attempt.text,
+        spoken: attempt.spoken,
+        wordCount: 0,
+        finished: false,
+        issueCount: 0,
+        evaluated: true,
+        skipped: true,
+        preparationMs: attempt.preparationMs,
+        transferKind: attempt.transferKind,
+        transferSourceId: attempt.transferSourceId,
+        newContext: attempt.newContext,
+        createdAt,
+      }).catch(() => undefined);
+      advancePrompt();
+    } catch {
+      setError("Your answer could not be saved. Try again before moving on.");
+    } finally {
+      busyRef.current = false;
+      setChecking(false);
+    }
   };
 
-  if (!activity) return null;
+  if (loading) return <p role="status" className="text-sm text-ink-muted">{t("Loading…")}</p>;
+  if (!activity) return <Notice tone={error ? "error" : undefined}>{t(error ?? "Save a phrase from a lesson or your own content to practice it here.")}{error && <Button variant="ghost" onClick={() => { setLoading(true); void load(); }}>{t("Try again")}</Button>}</Notice>;
 
   return (
     <Card className="space-y-4 p-5">
+      {error && <Notice tone="error">{t(error)}</Notice>}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs uppercase tracking-[0.7px] text-accent">{t("Transfer practice")}</p>
           <p className="mt-1 text-sm font-semibold text-ink">{t("Use a saved idea in a new context")}</p>
           <p className="mt-1 max-w-2xl text-xs leading-relaxed text-ink-muted">
-            {t("Write or speak a short response. PhraseLoop checks it before the review is complete.")}
+            {t("Write or speak a short response. Use the feedback to decide what to try again.")}
           </p>
         </div>
-        <span className="rounded-full border border-line bg-surface px-2 py-1 text-[11px] text-ink-muted">
-          {t("Support · {stage}", { stage: t(READING_WRITING_STAGE_LABEL[support.readingWriting.stage]) })}
-        </span>
       </div>
-      <p className="text-xs leading-relaxed text-ink-muted">
-        {t("Guidance · {guidance}", { guidance: t(support.readingWriting.guidance) })}
-      </p>
 
       <div className="space-y-3 rounded-lg border border-line bg-surface p-4">
         <div className="flex flex-wrap items-center gap-2">
@@ -418,6 +433,7 @@ export function TransferPracticeCard({ onCompleted }: { onCompleted?: () => void
         <textarea
           id={responseId}
           value={value}
+          readOnly={checking || Boolean(pendingAttempt)}
           onChange={(event) => {
             setValue(event.target.value);
             setRecordingBlob(null);
@@ -434,7 +450,7 @@ export function TransferPracticeCard({ onCompleted }: { onCompleted?: () => void
             type="button"
             variant={audio.recording ? "primary" : "secondary"}
             onClick={audio.recording ? audio.stopRecording : () => void audio.startRecording()}
-            disabled={audio.transcribing || Boolean(pendingAttempt)}
+            disabled={audio.transcribing || checking || Boolean(pendingAttempt)}
           >
             {audio.recording ? t("Stop recording") : t("Record response")}
           </Button>
@@ -445,11 +461,12 @@ export function TransferPracticeCard({ onCompleted }: { onCompleted?: () => void
       )}
       {audioNote && <p className="text-xs text-danger">{t(audioNote)}</p>}
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant="primary" onClick={() => void submit()} disabled={!value.trim() || Boolean(pendingAttempt) || checking}>
+        <Button variant="primary" onClick={() => void submit()} disabled={!value.trim() || Boolean(pendingAttempt) || checking || audio.recording || audio.transcribing}>
           {checking ? t("Checking…") : t("Check response")}
         </Button>
         <Button
           variant="ghost"
+          disabled={checking || Boolean(pendingAttempt) || audio.recording || audio.transcribing}
           onClick={() => {
             if (pendingAttempt) return;
             void skip();
@@ -471,13 +488,19 @@ export function TransferPracticeCard({ onCompleted }: { onCompleted?: () => void
                   : t("Evaluation unavailable")}
           </p>
           {evaluation?.notes.map((note) => <p key={note} className="text-ink-soft">{t(note)}</p>)}
+          {evaluation && !evaluation.evaluated && <p className="text-ink-soft">{t("Your attempt is saved as practice. An AI can check whether your message fits the situation.")}</p>}
           <div className="flex flex-wrap gap-2">
+            {evaluation && !evaluation.evaluated && !hasEvaluator && onOpenSettings && <Button variant="secondary" size="sm" onClick={onOpenSettings}>{t("Connect an AI")}</Button>}
+            {!evaluation?.clear && onCompleted && <Button variant="ghost" size="sm" onClick={onCompleted}>
+              {t("Keep my attempt and finish for today")}
+            </Button>}
             {evaluation?.clear ? (
               <Button variant="secondary" size="sm" onClick={() => { onCompleted?.(); advancePrompt(); }}>
                 {t("Finish transfer")}
               </Button>
             ) : (
               <Button variant="secondary" size="sm" onClick={() => {
+                setRetryOf(retryOf ?? pendingAttempt.id);
                 setPendingAttempt(null);
                 setEvaluation(null);
                 setSaved(false);

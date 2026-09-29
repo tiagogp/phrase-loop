@@ -6,6 +6,7 @@ import { springSnappy } from "@/lib/motion";
 import { useTheme } from "@/components/app/ThemeProvider";
 import { HOME_TABS, type HomeTab } from "@/components/app/homeTabs";
 import { IconButton } from "@/components/ui/IconButton";
+import { Button } from "@/components/ui/Button";
 import { toggleElectronFullscreen } from "@/platform/electron/bridge";
 import { useT } from "@/i18n/I18nProvider";
 
@@ -24,6 +25,7 @@ interface AppHeaderProps {
   onTabChange: (tab: HomeTab) => void;
   settingsOpen: boolean;
   onSettingsOpen: () => void;
+  onToolsOpen?: () => void;
   /** The tabs to render; defaults to the full app nav. The landing preview passes
    *  a subset (it has no "Hoje" home surface). */
   tabs?: readonly { id: HomeTab; label: string }[];
@@ -35,6 +37,7 @@ export default function AppHeader({
   onTabChange,
   settingsOpen,
   onSettingsOpen,
+  onToolsOpen,
   tabs = HOME_TABS,
   badges,
 }: AppHeaderProps) {
@@ -143,6 +146,7 @@ export default function AppHeader({
         </div>
 
         <div className="flex items-center gap-1" data-no-window-drag="true">
+          {onToolsOpen && <Button variant="ghost" size="sm" onClick={onToolsOpen} aria-label={t("Kokoro & Anki")} className="text-xs">Anki</Button>}
           <IconButton onClick={toggleDark} aria-label={t("Toggle dark mode")}>
             {isDark ? (
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">

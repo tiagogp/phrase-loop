@@ -33,8 +33,9 @@ const SPECS: Record<ModelId, ModelSpec> = {
   "kokoro-1.0": {
     id: "kokoro-1.0",
     url: "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-multi-lang-v1_0.tar.bz2",
-    sha256: "c133d26353d776da730870dac7da07dbfc9a5e3bc80cc5e8e83ab6e823be7046",
-    size: 349_418_188,
+    // Official release asset digest, updated upstream on 2026-09-08.
+    sha256: "c5f7e2d2caf082bc1d20fb70334a61d99d20b484500aad32e7cf84c128ea3298",
+    size: 349_906_910,
     archive: true,
     filename: "kokoro-multi-lang-v1_0.tar.bz2",
   },

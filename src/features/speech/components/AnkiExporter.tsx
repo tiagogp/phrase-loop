@@ -9,6 +9,9 @@ import { Field, Input, Textarea } from "@/components/ui/Field";
 import { Notice } from "@/components/ui/Notice";
 import { Spinner } from "@/components/ui/Spinner";
 import { cn } from "@/lib/cn";
+import { useT } from "@/i18n/I18nProvider";
+import { getCards } from "@/lib/store/repository";
+import { savedDeckRows } from "../savedDeck";
 
 type ExportStatus = "idle" | "exporting" | "done" | "error";
 
@@ -69,6 +72,7 @@ export default function AnkiExporter({
   embedded?: boolean;
   kokoroModel?: LocalModelState;
 }) {
+  const { t } = useT();
   const { voice } = useTtsSettings();
   const localModel = useKokoroModel();
   const model = kokoroModel ?? localModel;
@@ -79,6 +83,8 @@ export default function AnkiExporter({
   const [status, setStatus] = useState<ExportStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [loadingSaved, setLoadingSaved] = useState(false);
+  const [savedCount, setSavedCount] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const jsonTextId = useId();
@@ -90,6 +96,25 @@ export default function AnkiExporter({
     setError(null);
     setStatus("idle");
   }, []);
+
+  const loadSaved = async () => {
+    setLoadingSaved(true);
+    setError(null);
+    try {
+      const rows = savedDeckRows(await getCards());
+      setSavedCount(rows.length);
+      if (rows.length) {
+        setJsonText(JSON.stringify(rows, null, 2));
+        setFile(null);
+        setStatus("idle");
+      }
+    } catch {
+      setError(t("Could not load your practice history."));
+      setStatus("error");
+    } finally {
+      setLoadingSaved(false);
+    }
+  };
 
   const openFilePicker = useCallback(() => {
     const input = fileInputRef.current;
@@ -199,12 +224,18 @@ export default function AnkiExporter({
         </>
       )}
 
+      <div className="mb-5 space-y-2 rounded-lg border border-line bg-surface p-4">
+        <p className="text-sm font-medium text-ink">{t("Take your own learning to Anki")}</p>
+        <p className="text-xs leading-relaxed text-ink-muted">{t("Load the phrases from your library, or paste a list below. Kokoro adds English audio to the exported deck.")}</p>
+        <Button variant="secondary" size="sm" onClick={() => void loadSaved()} disabled={loadingSaved || status === "exporting"}>{t(loadingSaved ? "Loading…" : "Use my saved phrases")}</Button>
+        {savedCount !== null && <p role="status" className="text-xs text-ink-muted">{savedCount > 0 ? t("{count} phrases loaded. Review the list before exporting.", { count: savedCount }) : t("Your library is empty. Add a phrase in Content or paste a list below.")}</p>}
+      </div>
       <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-5">
         <div className="space-y-4 lg:col-span-3">
           <Field
-            label="JSON Text (optional)"
+            label={t("Phrase list (JSON)")}
             htmlFor={jsonTextId}
-            hint="If you paste JSON here, the file input is ignored."
+            hint={t("If you paste JSON here, the file input is ignored.")}
           >
             <Textarea
               value={jsonText}
@@ -223,7 +254,7 @@ export default function AnkiExporter({
           </Field>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Deck Name" htmlFor={deckNameId}>
+            <Field label={t("Deck name")} htmlFor={deckNameId}>
               <Input
                 value={deckName}
                 onChange={(e) => {
@@ -237,13 +268,13 @@ export default function AnkiExporter({
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="English Voice">
+            <Field label={t("English voice")}>
               <div className="w-full rounded-md border border-line bg-input px-3 py-2 text-sm text-ink">
                 {`Kokoro · ${voice}`}
               </div>
             </Field>
 
-            <Field label="Kokoro Speed" htmlFor={kokoroSpeedId}>
+            <Field label={t("Kokoro speed")} htmlFor={kokoroSpeedId}>
               <Input
                 value={enKokoroSpeed}
                 onChange={(e) => {
@@ -259,7 +290,7 @@ export default function AnkiExporter({
         </div>
 
         <div className="space-y-4 lg:col-span-2">
-          <Field label="JSON File (optional)" htmlFor={jsonFileId}>
+          <Field label={t("JSON file (optional)")} htmlFor={jsonFileId}>
             <input
               ref={fileInputRef}
               id={jsonFileId}
@@ -300,9 +331,9 @@ export default function AnkiExporter({
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="truncate">{file ? file.name : "Drag & drop a JSON file here"}</div>
+                  <div className="truncate">{file ? file.name : t("Drag & drop a JSON file here")}</div>
                   <div className="text-xs text-ink-muted">
-                    {file ? `${Math.round(file.size / 1024)} KB` : "or click to select"}
+                    {file ? `${Math.round(file.size / 1024)} KB` : t("or click to select")}
                   </div>
                 </div>
               </div>
@@ -320,7 +351,7 @@ export default function AnkiExporter({
             {status === "exporting" ? (
               <>
                 <Spinner className="h-3.5 w-3.5" />
-                Exporting…
+                {t("Exporting…")}
               </>
             ) : (
               <>
@@ -328,7 +359,7 @@ export default function AnkiExporter({
                   <path d="M3 14a1 1 0 011-1h3a1 1 0 010 2H5v2h10v-2h-2a1 1 0 110-2h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3z" />
                   <path d="M7 10a1 1 0 011.707-.707L10 10.586V3a1 1 0 112 0v7.586l1.293-1.293A1 1 0 0114.707 10.707l-3 3a1 1 0 01-1.414 0l-3-3A1 1 0 017 10z" />
                 </svg>
-                Download .apkg
+                {t("Download .apkg")}
               </>
             )}
           </Button>
@@ -346,7 +377,7 @@ export default function AnkiExporter({
           )}
 
           <p className="text-xs text-ink-muted">
-            Tip: the first export may take a while because models need to download.
+            {t("The first export may take a while while the voice model is prepared.")}
           </p>
         </div>
       </div>

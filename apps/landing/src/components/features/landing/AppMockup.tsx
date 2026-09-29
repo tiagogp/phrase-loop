@@ -10,6 +10,8 @@ import DiscoverTab from "@/features/discover/components/DiscoverTab";
 import SettingsScreen from "@/features/settings/components/SettingsScreen";
 import SpeechTab from "@/features/speech/components/SpeechTab";
 import StudyTab from "@/features/study/components/StudyTab";
+import ConversationTab from "@/features/converse/components/ConversationTab";
+import ProgressPage from "@/features/progress/components/ProgressPage";
 import { springSnappy } from "@/lib/motion";
 import {
   translateLanding,
@@ -54,6 +56,9 @@ function DemoTabContent({
       <CorrectTab onOpenSettings={onOpenSettings} onStudyNow={onOpenPractice} />
     );
   }
+
+  if (tab === "conversa") return <ConversationTab onOpenSettings={onOpenSettings} />;
+  if (tab === "progress") return <ProgressPage onPractice={onOpenPractice} />;
 
   return <SpeechTab />;
 }

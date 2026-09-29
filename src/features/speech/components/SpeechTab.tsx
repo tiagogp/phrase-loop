@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import { Segmented } from "@/components/ui/Segmented";
+
 import AnkiExporter from "@/features/speech/components/AnkiExporter";
 import AudioPlayer from "@/components/ui/AudioPlayer";
 import ThemePhraseGenerator from "@/features/speech/components/ThemePhraseGenerator";
@@ -25,7 +28,7 @@ import {
 import { useKokoroModel, type LocalModelState } from "@/features/speech/hooks/useLocalModel";
 import { useT } from "@/i18n/I18nProvider";
 
-export default function SpeechTab({ kokoroModel }: { kokoroModel?: LocalModelState } = {}) {
+function AudioStudio({ kokoroModel }: { kokoroModel?: LocalModelState } = {}) {
   const { t } = useT();
   const localKokoro = useKokoroModel();
   const kokoro = kokoroModel ?? localKokoro;
@@ -56,7 +59,8 @@ export default function SpeechTab({ kokoroModel }: { kokoroModel?: LocalModelSta
             <Textarea
               value={text}
               onChange={(event) => setText(event.target.value.slice(0, MAX_CHARS))}
-              placeholder="Type or paste English text here…"
+              aria-label={t("English text")}
+              placeholder={t("Type or paste English text here…")}
               rows={12}
               className="bg-card px-4 py-3 leading-relaxed"
             />
@@ -76,21 +80,21 @@ export default function SpeechTab({ kokoroModel }: { kokoroModel?: LocalModelSta
               type="button"
               className="cursor-pointer rounded px-2 py-1 text-xs text-ink-muted transition-colors hover:text-ink"
             >
-              Clear
+              {t("Clear")}
             </button>
             <button
               onClick={() => setText(EXAMPLE_TEXT)}
               type="button"
               className="cursor-pointer rounded px-2 py-1 text-xs text-ink-muted transition-colors hover:text-ink"
             >
-              Load example
+              {t("Load example")}
             </button>
           </div>
         </div>
 
         <div className="lg:col-span-2">
           <Card className="space-y-5 p-5">
-            <Field label="Voice">
+            <Field label={t("Voice")}>
               <Select
                 value={voice}
                 onChange={(value) => setVoice(toKokoroVoice(value))}
@@ -101,10 +105,11 @@ export default function SpeechTab({ kokoroModel }: { kokoroModel?: LocalModelSta
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label className="mb-0">Speed</Label>
+                <Label className="mb-0" htmlFor="kokoro-speed">{t("Speed")}</Label>
                 <span className="text-sm font-semibold tabular-nums text-accent">{speed.toFixed(2)}×</span>
               </div>
               <input
+                id="kokoro-speed"
                 type="range"
                 min={0.5}
                 max={2.0}
@@ -114,9 +119,9 @@ export default function SpeechTab({ kokoroModel }: { kokoroModel?: LocalModelSta
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-ink-muted">
-                <span>0.5× Slow</span>
-                <span>1× Normal</span>
-                <span>2× Fast</span>
+                <span>0.5× {t("Slow")}</span>
+                <span>1× {t("Normal")}</span>
+                <span>2× {t("Fast")}</span>
               </div>
             </div>
 
@@ -149,7 +154,7 @@ export default function SpeechTab({ kokoroModel }: { kokoroModel?: LocalModelSta
             {downloadingModel && (
               <div className="flex items-center gap-2 rounded border border-line bg-surface px-3 py-2.5 text-xs text-ink-soft">
                 <Spinner className="h-3 w-3 shrink-0" />
-                Preparing voices for the first time… this may take a minute.
+                {t("Preparing voices for the first time… this may take a minute.")}
               </div>
             )}
 
@@ -166,8 +171,8 @@ export default function SpeechTab({ kokoroModel }: { kokoroModel?: LocalModelSta
 
       {history.length > 0 && (
         <Disclosure
-          title="Recent audio"
-          description="Replay or restore something you generated earlier."
+          title={t("Recent audio")}
+          description={t("Replay or restore something you generated earlier.")}
           badge={<span className="text-xs tabular-nums text-ink-muted">{history.length}</span>}
           className="mt-6"
         >
@@ -175,16 +180,24 @@ export default function SpeechTab({ kokoroModel }: { kokoroModel?: LocalModelSta
         </Disclosure>
       )}
 
-      <Disclosure title="More tools" description="Theme phrase decks and legacy JSON-to-Anki export." className="mt-3">
-        <div className="space-y-3">
-          <Disclosure title="Theme phrases" description="Generate phrases from a situation, keep the useful ones, then export a deck." nested>
-            <ThemePhraseGenerator embedded />
-          </Disclosure>
-          <Disclosure title="Import JSON to Anki" description="Build an .apkg deck from an existing JSON file." nested>
-            <AnkiExporter embedded kokoroModel={kokoro} />
-          </Disclosure>
-        </div>
-      </Disclosure>
+
     </div>
   );
+}
+
+
+export default function SpeechTab({ kokoroModel }: { kokoroModel?: LocalModelState } = {}) {
+  const { t } = useT();
+  const [tool, setTool] = useState("anki");
+  return <div className="space-y-5">
+    <Segmented label={t("Kokoro & Anki")} value={tool} onChange={setTool} options={[
+      { value: "anki", label: t("Anki deck") },
+      { value: "audio", label: t("Generate audio") },
+      { value: "themes", label: t("Theme phrases") },
+    ]} />
+    <p className="max-w-2xl text-sm leading-relaxed text-ink-muted">{t("Generate English audio with Kokoro, export a deck, or create phrases for a situation you want to practice.")}</p>
+    <div hidden={tool !== "anki"}><AnkiExporter embedded kokoroModel={kokoroModel} /></div>
+    <div hidden={tool !== "audio"}><AudioStudio kokoroModel={kokoroModel} /></div>
+    <div hidden={tool !== "themes"}><ThemePhraseGenerator embedded /></div>
+  </div>;
 }

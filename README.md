@@ -2,7 +2,9 @@
 
 PhraseLoop is a local-first app for Brazilian A2-B1 self-study learners who want to turn real English and their own mistakes into daily production practice: listen, save one useful phrase, produce English without help, get feedback, retry, and review at the right time.
 
-PhraseLoop starts with one Home-led loop: hear a curated clip, save one useful phrase, review it immediately, correct your own sentence, and turn that correction into tomorrow's practice. Speech generation, Anki export, Speak, custom plans, and AI provider setup are still built in, but they stay behind the core loop rather than defining the first experience.
+PhraseLoop starts with a bounded daily loop: choose 5, 10, or 20 minutes, recall a few due phrases, use one idea in a new situation, and return later to see what stayed. A first lesson gets an empty library started. Five stable destinations — Today, Practice, Talk, Content, and Progress — keep the next step clear. Kokoro audio and Anki export are always one click away.
+
+Progress shows the learner's actual answers: unaided recall, a linked improvement after feedback, and verified use in a new situation. Self-ratings and time spent are practice activity, not evidence of mastery. Weekly comparisons use matched phrases and evaluation conditions. See [the product review and implementation notes](docs/learning-loop-review.md).
 
 It is research-aligned, not a substitute for a class, teacher, or immersion, and not yet a proven learning-effectiveness claim. Launch validation is tracking retention, transfer, retry resolution, and unaided production rather than streaks or volume.
 
@@ -15,7 +17,7 @@ Two things a manual flashcard app and a generic chatbot don't do for you:
 - **Your source's own audio** — phrases come from real English you chose (a
   YouTube clip, an article, a PDF) and review cards keep that source's audio, not a
   robotic re-read. _Source clip → saved phrase → next-day review card._ The lessons
-  bundled with the app are the exception: their 292 clips are generated on-device by
+  bundled with the app are the exception: their 1,394 clips are generated on-device by
   Kokoro TTS (`scripts/generate-learn-audio.mjs`), and `native-audio/manifest.json`
   is still empty, so nothing shipped in the box is native-source audio.
 - **Your mistakes become drills** — a correction isn't a dead-end note. Each fix
@@ -77,8 +79,9 @@ by SHA-256 and installed atomically.
 Kokoro (349 MB) starts downloading on its own as soon as onboarding finishes, so
 it is usually in place before the learner first needs generated audio; a bar
 above the tabs reports progress on every screen until it lands. Whisper is still
-fetched on first use. The bundled lessons' 292 audio clips ship with the app, so
-nothing in the core loop waits on either download.
+fetched on first use. The bundled lessons' 1,394 audio clips ship with the app, so
+nothing in the packaged first lesson waits on either download. In a source checkout,
+run `yarn learn:audio` to generate those assets; `yarn build` also does this automatically.
 
 ## Running
 
