@@ -45,6 +45,7 @@ const SettingsScreen = dynamic(() => import("@/features/settings/components/Sett
 const SpeechTab = dynamic(() => import("@/features/speech/components/SpeechTab"));
 const StudyTab = dynamic(() => import("@/features/study/components/StudyTab"));
 const ProgressPage = dynamic(() => import("@/features/progress/components/ProgressPage"));
+const TutorWorkspace = dynamic(() => import("@/features/tutor/components/TutorWorkspace"));
 
 async function recommendedLessonId(): Promise<string> {
   const profile = getLearningProfile();
@@ -74,6 +75,7 @@ function TabContent({
   onTransfer,
   onProgress,
   onTools,
+  onTutor,
   studyView,
   reviewRequest,
   onStudyViewChange,
@@ -94,6 +96,7 @@ function TabContent({
   onTransfer: () => void;
   onProgress: () => void;
   onTools: () => void;
+  onTutor: () => void;
   studyView: ReviewView;
   reviewRequest: number;
   onStudyViewChange: (view: ReviewView) => void;
@@ -111,6 +114,7 @@ function TabContent({
   if (tab === "hoje") {
     return (
       <HojeHome
+        onTutor={onTutor}
         onStudy={onOpenPractice}
         onTransfer={onTransfer}
         onProgress={onProgress}
@@ -137,7 +141,7 @@ function TabContent({
       />
     );
   }
-  if (tab === "progress") return <ProgressPage onPractice={onOpenPractice} />;
+  if (tab === "progress") return <ProgressPage onPractice={onOpenPractice} onTutor={onTutor} />;
   if (tab === "study") return <StudyTab reviewRequest={reviewRequest} onOpenSettings={onOpenSettings} view={studyView} onViewChange={onStudyViewChange} onProgress={onProgress} onDiscover={onOpenDiscover} onConversation={onSpeak} onLesson={() => onOpenLesson()} onCorrect={onOpenCorrect} />;
   if (tab === "conversa") return <ConversationTab onOpenSettings={onOpenSettings} />;
   if (tab === "correct") return <CorrectTab onOpenSettings={onOpenSettings} onStudyNow={onOpenPractice} kokoroModel={kokoro} />;
@@ -145,7 +149,7 @@ function TabContent({
 }
 
 // Secondary workspaces stay reachable without changing the five primary destinations.
-type Overlay = "settings" | "tools" | "correct" | "c1" | null;
+type Overlay = "settings" | "tools" | "correct" | "c1" | "tutor" | null;
 
 function OverlayHeader({
   title,
@@ -323,6 +327,19 @@ function HomeContent() {
                   showAdvancedAi={true}
                 />
               </div>
+            ) : overlay === "tutor" ? (
+              <div className="h-full overflow-y-auto app-scroll-region">
+                <div className="mx-auto max-w-3xl px-4 py-6 pb-20">
+                  <TabErrorBoundary><TutorWorkspace
+                    onBack={() => setOverlay(null)}
+                    onSettings={() => setOverlay("settings")}
+                    onPractice={openPractice}
+                    onConversation={openSpeaking}
+                    onContent={() => changeTab("discover")}
+                    onTools={() => setOverlay("tools")}
+                  /></TabErrorBoundary>
+                </div>
+              </div>
             ) : overlay === "correct" ? (
               <div className="h-full overflow-y-auto app-scroll-region">
                 <div className="mx-auto max-w-5xl px-4 py-6">
@@ -381,6 +398,7 @@ function HomeContent() {
                       transition={springSoft}
                     >
                       <TabErrorBoundary>
+                        {item.id !== "hoje" && <div className="mb-4 flex justify-end"><Button variant="ghost" size="sm" onClick={() => setOverlay("tutor")}>Praticar com meu tutor →</Button></div>}
                         <TabContent
                           tab={item.id}
                           onOpenSettings={() => {
@@ -391,6 +409,7 @@ function HomeContent() {
                           onTransfer={openTransfer}
                           onProgress={() => changeTab("progress")}
                           onTools={() => setOverlay("tools")}
+                          onTutor={() => setOverlay("tutor")}
                           studyView={studyView}
                           reviewRequest={reviewRequest}
                           onStudyViewChange={setStudyView}

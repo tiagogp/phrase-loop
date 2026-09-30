@@ -11,6 +11,9 @@ Use:
   comercial (2026-07-25), escrita antes de qualquer evidencia de usuario.
 - [docs/learning-efficacy-experiment.md](learning-efficacy-experiment.md) para o protocolo do
   estudo longitudinal que ainda precisa de participantes.
+- [Tutor com LLM](tutor-llm-concept.md) para a visão de acompanhamento contínuo:
+  experiência, memória, sessões e integração com as ferramentas. A [primeira versão implementada](tutor-llm-implementation.md)
+  registra escopo, limites e validação técnica.
 - Este arquivo para todas as decisoes de produto e aprendizagem.
 
 ## Produto Em Uma Frase

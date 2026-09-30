@@ -10,8 +10,9 @@ import { useLearningEvidence } from "../useLearningEvidence";
 import type { EvidenceRate } from "../learningEvidence";
 import { LearningWins } from "./LearningWins";
 import { ProgressOverview } from "./ProgressOverview";
+import { TutorProgressCard } from "@/features/tutor/components/TutorProgressCard";
 
-export default function ProgressPage({ onPractice }: { onPractice: () => void }) {
+export default function ProgressPage({ onPractice, onTutor }: { onPractice: () => void; onTutor?: () => void }) {
   const { t } = useT();
   const { evidence, loading, error, refresh } = useLearningEvidence();
   const [details, setDetails] = useState(false);
@@ -38,6 +39,7 @@ export default function ProgressPage({ onPractice }: { onPractice: () => void })
                 </>}
             </Card>
           </>}
+      {onTutor && <TutorProgressCard onOpen={onTutor} />}
       <Button variant="ghost" onClick={() => setDetails(!details)} aria-expanded={details} aria-controls="progress-details">
         {t(details ? "Hide detailed stats" : "Show detailed stats")}
       </Button>

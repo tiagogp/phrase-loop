@@ -39,10 +39,12 @@ export interface ProviderSelection {
  */
 export function useProviderSelection({
   fallbackToEvaluator = false,
-}: { fallbackToEvaluator?: boolean } = {}): ProviderSelection {
+  initialProvider = null,
+  initialModel = "",
+}: { fallbackToEvaluator?: boolean; initialProvider?: ProviderKind | null; initialModel?: string } = {}): ProviderSelection {
   const { settings } = useAiSettings();
-  const [providerOverride, setProviderOverride] = useState<ProviderKind | null>(null);
-  const [ollamaModel, setOllamaModel] = useState("");
+  const [providerOverride, setProviderOverride] = useState<ProviderKind | null>(initialProvider);
+  const [ollamaModel, setOllamaModel] = useState(initialModel);
 
   const providers = settings.providers;
 

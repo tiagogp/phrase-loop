@@ -7,8 +7,8 @@
  */
 
 const DB_NAME = "tts-cards";
-// v12: adds the proof queue, whose attempts must never live in `reviews`.
-const DB_VERSION = 12;
+// v13: additive tutor memory and resumable sessions; existing learning data stays intact.
+const DB_VERSION = 13;
 
 export const STORES = {
   errorEvents: "errorEvents",
@@ -35,6 +35,8 @@ export const STORES = {
    * the contamination the queue exists to avoid.
    */
   proofAttempts: "proofAttempts",
+  tutorSessions: "tutorSessions",
+  tutorPreferences: "tutorPreferences",
 } as const;
 
 export type StoreName = (typeof STORES)[keyof typeof STORES];
@@ -52,6 +54,12 @@ export function openDb(): Promise<IDBDatabase> {
   if (dbPromise) return dbPromise;
   dbPromise = new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
+    let blocked = false;
+    req.onblocked = () => {
+      blocked = true;
+      dbPromise = null;
+      reject(new Error("Feche as outras janelas do PhraseLoop e recarregue esta página para atualizar o armazenamento local."));
+    };
     req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains(STORES.errorEvents)) {
@@ -134,9 +142,19 @@ export function openDb(): Promise<IDBDatabase> {
         const s = db.createObjectStore(STORES.methodProgression, { keyPath: "id" });
         s.createIndex("updatedAt", "updatedAt");
       }
+      if (!db.objectStoreNames.contains(STORES.tutorSessions)) {
+        db.createObjectStore(STORES.tutorSessions, { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains(STORES.tutorPreferences)) {
+        db.createObjectStore(STORES.tutorPreferences, { keyPath: "id" });
+      }
     };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+    req.onsuccess = () => {
+      if (blocked) { req.result.close(); return; }
+      req.result.onversionchange = () => { req.result.close(); dbPromise = null; };
+      resolve(req.result);
+    };
+    req.onerror = () => { dbPromise = null; reject(req.error); };
   });
   return dbPromise;
 }

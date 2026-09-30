@@ -1355,8 +1355,8 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1790714510.3423562,
-    "ast_hash": "0a3ea6e08b58a48d04afae60392f6d9e",
+    "mtime": 1790716517.9895427,
+    "ast_hash": "05ddd4bc2fcc89347d180ac03635d250",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -2370,8 +2370,8 @@
     "semantic_hash": ""
   },
   "src/features/home/dailyLoop.test.ts": {
-    "mtime": 1790715108.9974387,
-    "ast_hash": "6b27d4626e415f146a75c91f989fdbe3",
+    "mtime": 1790717863.4726996,
+    "ast_hash": "c5997ba820d947372f0249ecbc30933e",
     "semantic_hash": ""
   },
   "src/features/home/dailyLoop.ts": {
@@ -2395,8 +2395,8 @@
     "semantic_hash": ""
   },
   "src/features/progress/learningEvidence.ts": {
-    "mtime": 1790715899.0931325,
-    "ast_hash": "0296e20b77ff86b52af211b3ba24b3f4",
+    "mtime": 1790717863.180592,
+    "ast_hash": "745839ff32e6bdb29ddbe291a80d20c6",
     "semantic_hash": ""
   },
   "src/features/progress/useLearningEvidence.ts": {

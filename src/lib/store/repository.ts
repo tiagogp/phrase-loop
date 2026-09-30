@@ -30,6 +30,7 @@ import type {
 } from "@/lib/performance/types";
 import type { MethodProgressionState } from "@/features/method/progression";
 import type { RecallQuality } from "@/features/study/responseEvaluation";
+import { isTutorPreferences, isTutorSession } from "@/features/tutor/contract";
 import {
   STORES,
   clearAll,
@@ -731,6 +732,8 @@ export function validateLocalBackup(raw: unknown): BackupValidationResult {
         if (store === STORES.effortHistory && typeof row.weekOf !== "string") {
           errors.push(`${store}[${index}] is missing a weekOf key.`);
         }
+        if (store === STORES.tutorSessions && !isTutorSession(row)) errors.push(`${store}[${index}] is not a valid tutor session.`);
+        if (store === STORES.tutorPreferences && !isTutorPreferences(row)) errors.push(`${store}[${index}] is not valid tutor preferences.`);
         if (errors.length >= 12) {
           errors.push("More validation errors were omitted.");
           break;

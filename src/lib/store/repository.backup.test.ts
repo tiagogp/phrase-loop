@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Card } from "@/lib/cards/schema";
 import { Rating } from "@/lib/srs/fsrs";
 import { STORES, clearAll, getAll, putMany, type StoreName } from "./db";
+import { tutorAttempt, tutorSession } from "@/features/tutor/testFixtures";
 import {
   exportLocalBackup,
   getCards,
@@ -166,6 +167,8 @@ describe("local backup round-trip — weeks-scale zero-loss proof (Phase 4)", ()
     [STORES.audioRecordings]: "id",
     [STORES.methodProgression]: "id",
     [STORES.proofAttempts]: "id",
+    [STORES.tutorSessions]: "id",
+    [STORES.tutorPreferences]: "id",
   };
 
   function buildSeed(): Record<StoreName, Record<string, unknown>[]> {
@@ -178,6 +181,8 @@ describe("local backup round-trip — weeks-scale zero-loss proof (Phase 4)", ()
       createdAt: START + i * (DAY / 2),
     }));
     return {
+      [STORES.tutorSessions]: [{ ...tutorSession({ phase: "feedback", attempts: [tutorAttempt()], draft: "rascunho preservado" }) }],
+      [STORES.tutorPreferences]: [{ id: "preferences", goal: "Falar no trabalho", explanationLanguage: "pt", ignoredEvidenceIds: ["review:review-1"] }],
       [STORES.errorEvents]: Array.from({ length: 25 }, (_, i) => ({
         id: `error-${i}`,
         text: `I has a mistake ${i}`,
@@ -346,7 +351,7 @@ describe("local backup round-trip — weeks-scale zero-loss proof (Phase 4)", ()
       String(a[KEY_FIELD[store]]).localeCompare(String(b[KEY_FIELD[store]])),
     );
 
-  it("loses nothing across all 12 stores through export → JSON file → restore", async () => {
+  it("loses nothing across every store through export → JSON file → restore", async () => {
     const seed = buildSeed();
     const storeNames = Object.values(STORES) as StoreName[];
 

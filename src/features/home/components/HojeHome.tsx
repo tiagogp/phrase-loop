@@ -13,8 +13,10 @@ import type { TaskItem } from "@/features/plan/schema";
 import { useLearningEvidence } from "@/features/progress/useLearningEvidence";
 import { LearningWins } from "@/features/progress/components/LearningWins";
 import { deriveDailyLoop } from "../dailyLoop";
+import { TutorHomeCard } from "@/features/tutor/components/TutorHomeCard";
 
 interface HojeHomeProps {
+  onTutor: () => void;
   onStudy: () => void;
   onDiscover: () => void;
   onCorrect: () => void;
@@ -54,6 +56,7 @@ export function HojeHome(props: HojeHomeProps) {
     <div className="space-y-6">
       <PageHeader eyebrow={t("A little English, put to use")} title={t("Today")}
         description={t("Remember a little. Say something of your own. Come back and see what stayed.")} />
+      <TutorHomeCard onOpen={props.onTutor} />
       <Card className="surface-grid-glow overflow-hidden p-5 sm:p-7">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-xs font-medium uppercase tracking-wider text-accent">{t("Your daily loop")}</p>
