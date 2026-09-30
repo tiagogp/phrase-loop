@@ -2,13 +2,13 @@
 
 import { useMemo } from "react";
 import { useTutorMemory } from "@/features/tutor/useTutorMemory";
-import { useLearningEvidence } from "@/features/progress/useLearningEvidence";
+import { useLearningHistory } from "@/features/progress/useLearningEvidence";
 import { DEFAULT_TUTOR_PREFERENCES } from "@/features/tutor/model";
 import { deriveExperience } from "./experience";
 
 export function useExperience() {
   const tutor = useTutorMemory();
-  const learning = useLearningEvidence();
+  const learning = useLearningHistory();
   const experience = useMemo(() => deriveExperience({
     sessions: tutor.memory?.sessions ?? [],
     preferences: tutor.memory?.preferences ?? DEFAULT_TUTOR_PREFERENCES,

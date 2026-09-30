@@ -19,7 +19,6 @@ import { nextQuickPhraseIndex } from "@/features/learn/quickPractice";
 import { ExploreHome, type ExploreActions } from "@/features/home/components/ExploreHome";
 import { TodayPlanCard } from "@/features/plan/components/TodayPlanCard";
 import { HojeHome } from "@/features/home/components/HojeHome";
-import { LessonView } from "@/features/learn/components/LessonView";
 import {
   firstLesson,
   lessonById,
@@ -29,7 +28,6 @@ import {
 import { getLearningProfile } from "@/features/settings/learningProfile";
 import OnboardingDialog from "@/features/settings/components/OnboardingDialog";
 import type { ReviewView } from "@/features/study/components/ReviewWorkspaceNav";
-import { PlanOnboarding } from "@/features/plan/components/PlanOnboarding";
 import { PlanGenerationToast } from "@/features/plan/components/PlanGenerationToast";
 import { installDefaultPlan } from "@/features/plan/defaultPlans";
 import type { TaskItem } from "@/features/plan/schema";
@@ -42,6 +40,7 @@ import { isStoreAvailable } from "@/lib/store/db";
 import { emitActivity } from "@/lib/store/activityLog";
 import { getCards } from "@/lib/store/repository";
 import { refreshMethodProgression } from "@/features/method/progressionPersistence";
+import { WorkspaceActivityContext } from "@/lib/workspaceActivity";
 
 function WorkspaceLoading() {
   const { t } = useT();
@@ -57,6 +56,9 @@ const SpeechTab = dynamic(() => import("@/features/speech/components/SpeechTab")
 const StudyTab = dynamic(() => import("@/features/study/components/StudyTab"), { loading: WorkspaceLoading });
 const ProgressPage = dynamic(() => import("@/features/progress/components/ProgressPage"), { loading: WorkspaceLoading });
 const TutorWorkspace = dynamic(() => import("@/features/tutor/components/TutorWorkspace"), { loading: WorkspaceLoading });
+
+const LessonView = dynamic(() => import("@/features/learn/components/LessonView").then(module => module.LessonView), { loading: WorkspaceLoading });
+const PlanOnboarding = dynamic(() => import("@/features/plan/components/PlanOnboarding").then(module => module.PlanOnboarding), { loading: WorkspaceLoading });
 
 async function recommendedLessonId(): Promise<string> {
   const profile = getLearningProfile();
@@ -149,7 +151,7 @@ function TabContent({
     );
   }
   if (tab === "progress") return <ProgressPage active={active} onPractice={onOpenPractice} onTutor={onTutor} />;
-  if (tab === "study") return <StudyTab onHome={onHome} onTools={() => exploreActions.onTools("anki")} reviewRequest={reviewRequest} onOpenSettings={onOpenSettings} view={studyView} onViewChange={onStudyViewChange} onProgress={onProgress} onDiscover={onOpenDiscover} onConversation={onSpeak} onLesson={onFirstLesson} onCorrect={onOpenCorrect} />;
+  if (tab === "study") return <StudyTab active={active} onHome={onHome} onTools={() => exploreActions.onTools("anki")} reviewRequest={reviewRequest} onOpenSettings={onOpenSettings} view={studyView} onViewChange={onStudyViewChange} onProgress={onProgress} onDiscover={onOpenDiscover} onConversation={onSpeak} onLesson={onFirstLesson} onCorrect={onOpenCorrect} />;
   if (tab === "conversa") return <ConversationTab active={active} onOpenSettings={onOpenSettings} />;
   if (tab === "correct") return <CorrectTab onOpenSettings={onOpenSettings} onStudyNow={onOpenPractice} kokoroModel={kokoro} />;
   return null;
@@ -224,16 +226,7 @@ function HomeContent() {
   // making progression depend on whether the learner visits Progress.
   useEffect(() => {
     if (!isStoreAvailable()) return;
-    let queued = false;
-    const refresh = () => {
-      if (queued) return;
-      queued = true;
-      void refreshMethodProgression()
-        .catch(() => undefined)
-        .finally(() => {
-          queued = false;
-        });
-    };
+    const refresh = () => { void refreshMethodProgression().catch(() => undefined); };
     refresh();
     window.addEventListener("phraseloop:performance-evidence", refresh);
     return () => window.removeEventListener("phraseloop:performance-evidence", refresh);
@@ -435,36 +428,38 @@ function HomeContent() {
                       transition={springSoft}
                     >
                       <TabErrorBoundary>
-                        <TabContent
-                          tab={item.id}
-                          active={active && overlay === null && lessonId === null}
-                          onOpenSettings={() => openSettings()}
-                          onOpenDiscover={() => changeTab("discover")}
-                          onOpenPractice={openPractice}
-                          onTransfer={openTransfer}
-                          onProgress={() => changeTab("progress")}
-                          onTutor={() => openTutor("recommended")}
-                          onContentPractice={cardId => openTutor("new", cardId)}
-                          studyView={studyView}
-                          reviewRequest={reviewRequest}
-                          onStudyViewChange={setStudyView}
-                          onSpeak={openSpeaking}
-                          onOpenCorrect={openCorrect}
-                          onFirstLesson={startFirstLesson}
-                          onOpenPlanTask={openPlanTask}
-                          discoverPrefill={discoverPrefill}
-                          kokoro={kokoro}
-                          onExplore={() => changeTab("explore")}
-                          onPlan={() => setOverlay("plan")}
-                          onHome={() => changeTab("hoje")}
-                          exploreActions={{
-                            onTutor: () => openTutor("new"), onLesson: () => openLesson(), onSpeak: openSpeaking,
-                            onCorrect: openCorrect, onDiscover: () => changeTab("discover"), onReview: openPractice,
-                            onFocus: () => { setStudyView("progress"); changeTab("study"); },
-                            onProgress: () => changeTab("progress"), onPlan: () => setOverlay("plan"),
-                            onC1: () => setOverlay("c1"), onTools: selected => { setTool(selected); setOverlay("tools"); },
-                          }}
-                        />
+                        <WorkspaceActivityContext value={active && overlay === null && lessonId === null}>
+                          <TabContent
+                            tab={item.id}
+                            active={active && overlay === null && lessonId === null}
+                            onOpenSettings={() => openSettings()}
+                            onOpenDiscover={() => changeTab("discover")}
+                            onOpenPractice={openPractice}
+                            onTransfer={openTransfer}
+                            onProgress={() => changeTab("progress")}
+                            onTutor={() => openTutor("recommended")}
+                            onContentPractice={cardId => openTutor("new", cardId)}
+                            studyView={studyView}
+                            reviewRequest={reviewRequest}
+                            onStudyViewChange={setStudyView}
+                            onSpeak={openSpeaking}
+                            onOpenCorrect={openCorrect}
+                            onFirstLesson={startFirstLesson}
+                            onOpenPlanTask={openPlanTask}
+                            discoverPrefill={discoverPrefill}
+                            kokoro={kokoro}
+                            onExplore={() => changeTab("explore")}
+                            onPlan={() => setOverlay("plan")}
+                            onHome={() => changeTab("hoje")}
+                            exploreActions={{
+                              onTutor: () => openTutor("new"), onLesson: () => openLesson(), onSpeak: openSpeaking,
+                              onCorrect: openCorrect, onDiscover: () => changeTab("discover"), onReview: openPractice,
+                              onFocus: () => { setStudyView("progress"); changeTab("study"); },
+                              onProgress: () => changeTab("progress"), onPlan: () => setOverlay("plan"),
+                              onC1: () => setOverlay("c1"), onTools: selected => { setTool(selected); setOverlay("tools"); },
+                            }}
+                          />
+                        </WorkspaceActivityContext>
                       </TabErrorBoundary>
                     </m.div>}
                   </section>

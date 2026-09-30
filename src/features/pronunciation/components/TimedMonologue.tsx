@@ -33,7 +33,7 @@ export function TimedMonologue({
   const [blob, setBlob] = useState<Blob | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [promptStartedAt] = useState(() => Date.now());
-  const timer = useStageTimer("speak", 3);
+  const timer = useStageTimer("speak", 3, { active });
   const audio = useCorrectionAudio({
     active,
     onNote: setNote,

@@ -1,16 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { MethodStage } from "@/features/method/learningLoop";
-import {
-  createTimer,
-  creditedMs,
-  pauseTimer,
-  resumeTimer,
-  stageMinutes,
-  touchTimer,
-  type StageTimerState,
-} from "@/features/method/stageTimer";
+import { stageMinutes } from "@/features/method/stageTimer";
+import { createStageTimerController } from "./stageTimerController";
+import { WorkspaceActivityContext } from "@/lib/workspaceActivity";
 
 export interface StageTimer {
   /** Start or resume measuring. Idempotent. */
@@ -40,59 +34,55 @@ export interface StageTimer {
 export function useStageTimer(
   stage: MethodStage,
   fallbackMinutes: number,
-  options: { autoStart?: boolean } = {},
+  options: { autoStart?: boolean; active?: boolean } = {},
 ): StageTimer {
   const { autoStart = true } = options;
-  const stateRef = useRef<StageTimerState | null>(null);
+  const workspaceActive = useContext(WorkspaceActivityContext);
+  const active = workspaceActive && (options.active ?? true);
+  const [controller] = useState(() => createStageTimerController(autoStart));
 
   const start = useCallback(() => {
-    const now = Date.now();
-    stateRef.current =
-      stateRef.current == null ? createTimer(now) : resumeTimer(stateRef.current, now);
-  }, []);
+    controller.start(Date.now());
+  }, [controller]);
 
   const touch = useCallback(() => {
-    if (stateRef.current == null) return;
-    stateRef.current = touchTimer(stateRef.current, Date.now());
-  }, []);
+    controller.touch(Date.now());
+  }, [controller]);
 
   const pause = useCallback(() => {
-    if (stateRef.current == null) return;
-    stateRef.current = pauseTimer(stateRef.current, Date.now());
-  }, []);
+    controller.pause(Date.now());
+  }, [controller]);
 
   const commit = useCallback(
     (stageOverride?: MethodStage) => {
-      const state = stateRef.current;
-      stateRef.current = null;
-      if (state == null) return fallbackMinutes;
-      return stageMinutes(stageOverride ?? stage, creditedMs(state, Date.now()), fallbackMinutes);
+      const elapsed = controller.commit(Date.now());
+      if (elapsed == null) return fallbackMinutes;
+      return stageMinutes(stageOverride ?? stage, elapsed, fallbackMinutes);
     },
-    [stage, fallbackMinutes],
+    [controller, stage, fallbackMinutes],
   );
 
   useEffect(() => {
-    if (autoStart) start();
-
-    const onVisibility = () => {
-      if (document.visibilityState === "hidden") pause();
-      else start();
-    };
+    const onVisibility = () => controller.setAvailable(active && !document.hidden && document.hasFocus(), Date.now());
+    const onBlur = () => controller.setAvailable(false, Date.now());
+    onVisibility();
+    if (!active) return;
 
     document.addEventListener("visibilitychange", onVisibility);
-    window.addEventListener("blur", pause);
-    window.addEventListener("focus", start);
+    window.addEventListener("blur", onBlur);
+    window.addEventListener("focus", onVisibility);
     document.addEventListener("pointerdown", touch, { passive: true });
     document.addEventListener("keydown", touch, { passive: true });
 
     return () => {
       document.removeEventListener("visibilitychange", onVisibility);
-      window.removeEventListener("blur", pause);
-      window.removeEventListener("focus", start);
+      window.removeEventListener("blur", onBlur);
+      window.removeEventListener("focus", onVisibility);
       document.removeEventListener("pointerdown", touch);
       document.removeEventListener("keydown", touch);
+      controller.setAvailable(false, Date.now());
     };
-  }, [autoStart, start, pause, touch]);
+  }, [active, controller, touch]);
 
   return useMemo(() => ({ start, touch, pause, commit }), [start, touch, pause, commit]);
 }

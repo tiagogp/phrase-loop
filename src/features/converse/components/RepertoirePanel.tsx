@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import { useT } from "@/i18n/I18nProvider";
@@ -61,14 +61,14 @@ export function RepertoirePanel({
         </p>
       </div>
 
-      <motion.ul
+      <m.ul
         className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-3 app-scroll-region"
         variants={staggerContainer}
         initial="hidden"
         animate="show"
       >
         {items.map((item) => (
-          <motion.li
+          <m.li
             key={item.expression.toLowerCase()}
             variants={listItem}
             className={cn(
@@ -85,9 +85,9 @@ export function RepertoirePanel({
               )}
             </div>
             {item.gloss && <p className="mt-0.5 text-xs text-ink-muted">{item.gloss}</p>}
-          </motion.li>
+          </m.li>
         ))}
-      </motion.ul>
+      </m.ul>
 
       <div className="space-y-1.5 border-t border-line px-4 py-3">
         {error && <p className="text-xs text-danger">{error}</p>}

@@ -66,7 +66,7 @@ export function PronunciationCoach({
   compact = false,
 }: PronunciationCoachProps) {
   const { t } = useT();
-  const repeatTimer = useStageTimer("repeat", 3);
+  const repeatTimer = useStageTimer("repeat", 3, { active });
   // Checking a repeat means transcribing it, so this surface waits on Whisper
   // exactly the way the audio surfaces wait on Kokoro. Showing the install here
   // beats letting Record answer with "model not ready".

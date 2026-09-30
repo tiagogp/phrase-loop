@@ -153,8 +153,8 @@ export default function DiscoverTab({
 
   // Listening is credited for the seconds actually played, and banked once — not a flat
   // minute every time the learner presses play on the same segment.
-  const listenTimer = useStageTimer("listen", 1, { autoStart: false });
-  const noticeTimer = useStageTimer("notice", 3);
+  const listenTimer = useStageTimer("listen", 1, { autoStart: false, active });
+  const noticeTimer = useStageTimer("notice", 3, { active });
   const listenedRef = useRef(false);
   const playRequestRef = useRef(0);
   const sourceInputRef = useRef<HTMLInputElement | null>(null);

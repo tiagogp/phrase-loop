@@ -56,10 +56,9 @@ import { deriveCyclePlan } from "./cyclePlanner";
 import { getWeeklyGoal } from "./weeklyGoal";
 import { buildReviewBatch, loadOrderedDueQueue, loadStudySnapshot } from "./studySession";
 
-export function useStudySession(reviewRequest = 0) {
+export function useStudySession(reviewRequest = 0, active = true) {
   const { t } = useT();
   const { settings } = useAiSettings();
-  const reviewTimer = useStageTimer("review", 1);
   const defaultProvider = settings.providers.find(
     (provider) => provider.kind === settings.defaultProvider,
   );
@@ -67,6 +66,7 @@ export function useStudySession(reviewRequest = 0) {
   const [loading, setLoading] = useState(true);
   const [sessionError, setSessionError] = useState<string | null>(null);
   const [queue, setQueue] = useState<DueCard[]>([]);
+  const reviewTimer = useStageTimer("review", 1, { active: active && !loading && queue.length > 0 });
   const [flipped, setFlipped] = useState(false);
   const [grading, setGrading] = useState(false);
   const [reviews, setReviews] = useState<ReviewRecord[]>([]);

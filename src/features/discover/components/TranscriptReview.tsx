@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import { type RefObject } from "react";
 import { BLUR, springSoft } from "@/lib/motion";
 import { Card } from "@/components/ui/Card";
@@ -106,7 +106,7 @@ export function TranscriptReview({
       </div>
 
       {generating && (
-        <motion.div
+        <m.div
           className="border-b border-line bg-accent/4 px-5 py-3"
           initial={{ opacity: 0, height: 0, filter: `blur(${BLUR}px)` }}
           animate={{ opacity: 1, height: "auto", filter: "blur(0px)" }}
@@ -122,7 +122,7 @@ export function TranscriptReview({
           <div className="generation-track" aria-hidden="true">
             <span className="generation-bar" />
           </div>
-        </motion.div>
+        </m.div>
       )}
 
       {(genError || genDone) && (

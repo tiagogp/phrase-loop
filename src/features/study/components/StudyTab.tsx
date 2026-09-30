@@ -21,7 +21,8 @@ import Disclosure from "@/components/ui/Disclosure";
 import { DEFAULT_LEARNING_PROFILE, getLearningProfile, subscribeToProfile } from "@/features/settings/learningProfile";
 import { ReviewWorkspaceNav, type ReviewView } from "./ReviewWorkspaceNav";
 
-export default function StudyTab({ onHome, onTools, onDiscover, onConversation, onLesson, onCorrect, onProgress, onOpenSettings, view, onViewChange, reviewRequest = 0 }: {
+export default function StudyTab({ onHome, onTools, onDiscover, onConversation, onLesson, onCorrect, onProgress, onOpenSettings, view, onViewChange, reviewRequest = 0, active = true }: {
+  active?: boolean;
   onHome?: () => void;
   onTools?: () => void;
   onDiscover?: () => void;
@@ -35,9 +36,9 @@ export default function StudyTab({ onHome, onTools, onDiscover, onConversation, 
   reviewRequest?: number;
 }) {
   const { t } = useT();
-  const session = useStudySession(reviewRequest);
   const [localView, setLocalView] = useState<ReviewView>("library");
   const activeView = view ?? localView;
+  const session = useStudySession(reviewRequest, active && activeView === "review");
   const setActiveView = onViewChange ?? setLocalView;
   const [extraPractice, setExtraPractice] = useState(false);
   const [transferComplete, setTransferComplete] = useState(false);

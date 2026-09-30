@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Notice } from "@/components/ui/Notice";
@@ -635,7 +635,7 @@ export default function CorrectTab({
 
         <div className="relative">
           <AnimatePresence mode="popLayout" initial={false}>
-            <motion.div
+            <m.div
               key={mode}
               variants={fadeRise}
               initial="hidden"
@@ -672,7 +672,7 @@ export default function CorrectTab({
                 onAdd={addDraft}
               />
             )}
-            </motion.div>
+            </m.div>
           </AnimatePresence>
         </div>
 

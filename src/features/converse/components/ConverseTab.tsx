@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
@@ -115,10 +115,8 @@ export default function ConverseTab({
   const { t } = useT();
   const selection = useProviderSelection({ fallbackToEvaluator: true });
   const { provider, activeProvider, hasEvaluator, selectedModel } = selection;
-  const speakTimer = useStageTimer("speak", 2);
-  const pauseSpeaking = speakTimer.pause;
-
   const [conversation, setConversation] = useState<Conversation | null>(null);
+  const speakTimer = useStageTimer("speak", 2, { active: active && conversation !== null });
   const [past, setPast] = useState<Conversation[]>([]);
   const [scenarioId, setScenarioId] = useState<string>(() => (topicFirst ? "custom" : scenarios[0].id));
   const [customScenario, setCustomScenario] = useState("");
@@ -231,9 +229,14 @@ export default function ConverseTab({
   }, []);
 
   useEffect(() => {
+    if (!active) return;
+    let cancelled = false;
+    let request = 0;
     const loadProgression = () => {
+      const currentRequest = ++request;
       void Promise.all([getMethodProgression(), getErrorEvents()])
         .then(([nextProgression, errors]) => {
+          if (cancelled || currentRequest !== request) return;
           setProgression(nextProgression);
           setRecurringError(selectRecurringError(errors));
         })
@@ -243,10 +246,11 @@ export default function ConverseTab({
     window.addEventListener("phraseloop:progress-updated", loadProgression);
     window.addEventListener("phraseloop:activity", loadProgression);
     return () => {
+      cancelled = true;
       window.removeEventListener("phraseloop:progress-updated", loadProgression);
       window.removeEventListener("phraseloop:activity", loadProgression);
     };
-  }, []);
+  }, [active]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -674,8 +678,7 @@ export default function ConverseTab({
     vadFrameRef.current = null;
     void audioCtxRef.current?.close().catch(() => {});
     audioCtxRef.current = null;
-    pauseSpeaking();
-  }, [active, pauseSpeaking]);
+  }, [active]);
 
   // Phase 2 — run correction over just the learner's turns and stamp the conversation's
   // situational context onto every mistake found. Runs once per session; re-opening shows the
@@ -1432,7 +1435,7 @@ export default function ConverseTab({
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <motion.ul
+        <m.ul
           className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-card px-4 py-5 app-scroll-region sm:px-6"
           variants={staggerContainer}
           initial="hidden"
@@ -1449,7 +1452,7 @@ export default function ConverseTab({
             </li>
           )}
           <div ref={bottomRef} />
-        </motion.ul>
+        </m.ul>
 
         {showRepertoire && (
           <RepertoirePanel items={repertoire} context={conversation.context} conversationId={conversation.id} />
@@ -1576,7 +1579,7 @@ function TurnBubble({ turn, items = [] }: { turn: ConversationTurn; items?: Repe
     gloss: item.gloss || glosses.get(item.expression.toLowerCase()) || "",
   }));
   return (
-    <motion.li variants={listItem} className={cn("flex", isUser ? "justify-end" : "justify-start")}>
+    <m.li variants={listItem} className={cn("flex", isUser ? "justify-end" : "justify-start")}>
       <div
         className={cn(
           "max-w-[88%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm sm:max-w-[76%]",
@@ -1604,7 +1607,7 @@ function TurnBubble({ turn, items = [] }: { turn: ConversationTurn; items?: Repe
             )
           : (parsed?.plain ?? turn.text)}
       </div>
-    </motion.li>
+    </m.li>
   );
 }
 

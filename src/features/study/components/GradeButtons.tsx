@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import { cn } from "@/lib/cn";
 import { hoverLift, springSnappy, tapPress } from "@/lib/motion";
 import {
@@ -36,7 +36,7 @@ export function GradeButtons({
   return (
     <div className="space-y-2"><p className="text-xs text-ink-muted">{t("How did remembering feel? This sets the next review.")}</p><div className="grid grid-cols-4 gap-2">
       {GRADES.map((grade) => (
-        <motion.button
+        <m.button
           key={grade}
           type="button"
           disabled={disabled || (allowedGrades ? !allowedGrades.includes(grade) : false)}
@@ -51,7 +51,7 @@ export function GradeButtons({
         >
           <span>{t(GRADE_LABELS[grade])}</span>
           <span className="tabular-nums opacity-70">{previewInterval(srs, grade)}</span>
-        </motion.button>
+        </m.button>
       ))}
     </div></div>
   );

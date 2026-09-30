@@ -6,6 +6,7 @@ import {
   saveMethodProgression,
 } from "@/lib/store/repository";
 import { deriveProgressionState, type MethodProgressionState } from "./progression";
+import { createRefreshQueue } from "@/lib/store/refreshQueue";
 
 /**
  * Recompute the durable support snapshot from the source-of-truth evidence.
@@ -14,7 +15,7 @@ import { deriveProgressionState, type MethodProgressionState } from "./progressi
  * `phraseloop:performance-evidence` event, so support changes as soon as an
  * attempt has been stored instead of waiting for the Progress screen to open.
  */
-export async function refreshMethodProgression(): Promise<MethodProgressionState> {
+export const refreshMethodProgression = createRefreshQueue(async (): Promise<MethodProgressionState> => {
   const [listeningAttempts, productionAttempts, retryOutcomes, previous] = await Promise.all([
     getListeningAttempts(),
     getProductionAttempts(),
@@ -32,4 +33,4 @@ export async function refreshMethodProgression(): Promise<MethodProgressionState
     window.dispatchEvent(new Event("phraseloop:progress-updated"));
   }
   return progression;
-}
+});
