@@ -32,7 +32,7 @@ import { useT } from "@/i18n/I18nProvider";
  * It composes what already exists: `PronunciationCoach` for the Repeat stage, and
  * `MistakeStep` in voice-first mode for Speak → Feedback → Retry.
  */
-export function GuidedSpeaking({ onDone }: { onDone?: () => void }) {
+export function GuidedSpeaking({ onDone, active = true }: { onDone?: () => void; active?: boolean }) {
   const { t } = useT();
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [steps, setSteps] = useState<SpeakingDrillStep[]>([]);
@@ -116,6 +116,7 @@ export function GuidedSpeaking({ onDone }: { onDone?: () => void }) {
             <p className="mt-1 text-xs text-ink-muted">{t(step.prompt)}</p>
           </div>
           <PronunciationCoach
+            active={active}
             source="lesson"
             lessonId={lesson.id}
             targetText={step.phrase.en}
@@ -127,6 +128,7 @@ export function GuidedSpeaking({ onDone }: { onDone?: () => void }) {
 
       {speakStep && !saved && !["timed_monologue", "simulated_conversation", "real_world_production"].includes(support.speaking.stage) && (
         <MistakeStep
+          active={active}
           voiceFirst
           lessonId={lesson.id}
           phrase={speakStep.phrase}
@@ -140,6 +142,7 @@ export function GuidedSpeaking({ onDone }: { onDone?: () => void }) {
 
       {!saved && ["timed_monologue", "simulated_conversation", "real_world_production"].includes(support.speaking.stage) && (
         <TimedMonologue
+          active={active}
           lessonId={lesson.id}
           prompt={support.speaking.prompt}
           targetSeconds={support.speaking.targetSeconds}

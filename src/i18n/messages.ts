@@ -10,6 +10,18 @@ import type { UiLang } from "./config";
  * falls back to English for them.
  */
 export const messages: Record<string, Partial<Record<UiLang, string>>> = {
+  "Connect your AI and manage your learning preferences.": { pt: "Conecte sua IA e ajuste suas preferências de aprendizado." },
+  "Choose a provider, connect it, and return to your activity.": { pt: "Escolha uma IA, conecte e volte à sua atividade." },
+  "Choose an AI provider": { pt: "Escolha sua IA" },
+  "Create an API key in your provider account, then paste it below. It is not your account password.": { pt: "Crie uma chave de API na sua conta do provedor e cole abaixo. Não é a senha da sua conta." },
+  "Connect and use this AI": { pt: "Conectar e usar esta IA" },
+  "Connecting…": { pt: "Conectando…" },
+  "Connection failed": { pt: "Não foi possível conectar" },
+  "Connected! This AI is ready for your tutor, conversations, and content.": { pt: "Conectado! Esta IA está pronta para o tutor, as conversas e os conteúdos." },
+  "Could not connect. Check your settings and try again.": { pt: "Não foi possível conectar. Confira os dados e tente novamente." },
+  "Done — return to my activity": { pt: "Pronto, voltar à minha atividade" },
+  "On this computer": { pt: "Neste computador" },
+  "Open Ollama and download a model first. Keep it running, choose the model below, and connect. No API key is needed.": { pt: "Abra o Ollama e baixe um modelo primeiro. Mantenha-o aberto, escolha o modelo abaixo e conecte. Não precisa de chave de API." },
   // Daily learning loop and visible evidence.
   "Add content": { pt: "Adicionar conteúdo" },
   "Say it aloud (optional)": { pt: "Falar em voz alta (opcional)" },

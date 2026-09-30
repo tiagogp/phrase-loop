@@ -76,6 +76,7 @@ import {
 } from "@/features/converse/repertoire";
 import { advanceVad, computeRms, createVadState, silenceCountdownSeconds } from "@/features/converse/vad";
 import { RepertoirePanel } from "@/features/converse/components/RepertoirePanel";
+import { createMediaRun, requestActiveMicrophone } from "@/features/converse/mediaRun";
 import { RepertoireRecall } from "@/features/converse/components/RepertoireRecall";
 
 /**
@@ -93,6 +94,7 @@ import { RepertoireRecall } from "@/features/converse/components/RepertoireRecal
 const ELICIT_PER_TURN = 2;
 
 export interface ConverseTabProps {
+  active?: boolean;
   onOpenSettings?: () => void;
   /** Starter scenarios offered as chips. Defaults to the everyday role-play set. */
   scenarios?: ConversationScenario[];
@@ -107,11 +109,13 @@ export default function ConverseTab({
   scenarios = CONVERSATION_SCENARIOS,
   topicFirst = false,
   defaultFreeTalk = false,
+  active = true,
 }: ConverseTabProps) {
   const { t } = useT();
   const selection = useProviderSelection({ fallbackToEvaluator: true });
   const { provider, activeProvider, hasEvaluator, selectedModel } = selection;
   const speakTimer = useStageTimer("speak", 2);
+  const pauseSpeaking = speakTimer.pause;
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [past, setPast] = useState<Conversation[]>([]);
@@ -121,6 +125,9 @@ export default function ConverseTab({
   const [challenge, setChallenge] = useState(false);
   const [typed, setTyped] = useState("");
   const [busy, setBusy] = useState(false);
+  const [preparingAudio, setPreparingAudio] = useState(false);
+  const mediaRun = useRef(createMediaRun());
+  const replyRequestRef = useRef(0);
   const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
   // Speaking a turn goes through Whisper; free talk depends on it entirely. Show
@@ -139,6 +146,16 @@ export default function ConverseTab({
   const [repertoire, setRepertoire] = useState<RepertoireItem[]>([]);
   // Seconds until a silent free-talk turn is sent, so a 3s pause doesn't look like a freeze.
   const [silenceCountdown, setSilenceCountdown] = useState<number | null>(null);
+  const [previousActive, setPreviousActive] = useState(active);
+  if (previousActive !== active) {
+    setPreviousActive(active);
+    if (!active) {
+      setRecording(false);
+      setPreparingAudio(false);
+      setSilenceCountdown(null);
+    }
+  }
+
 
   // Phase 2 — post-session review (find mistakes → cards). `review` is the conversation being
   // reviewed; null while in setup or an active chat.
@@ -171,6 +188,7 @@ export default function ConverseTab({
   const listenRef = useRef<() => void>(() => {});
 
   const retryAudio = useCorrectionAudio({
+    active,
     onNote: setReviewNote,
     onText: (updater) => {
       retrySpokenRef.current = true;
@@ -193,6 +211,10 @@ export default function ConverseTab({
 
   useEffect(
     () => () => {
+      replyRequestRef.current += 1;
+      mediaRun.current.setActive(false);
+      if (audioRef.current) { audioRef.current.onended = null; audioRef.current.pause(); }
+      if (recorderRef.current) recorderRef.current.onstop = null;
       recorderRef.current?.stream.getTracks().forEach((track) => track.stop());
       if (vadFrameRef.current) cancelAnimationFrame(vadFrameRef.current);
       void audioCtxRef.current?.close().catch(() => {});
@@ -253,6 +275,11 @@ export default function ConverseTab({
   }, []);
 
   const resume = useCallback((target: Conversation) => {
+    replyRequestRef.current += 1;
+    setBusy(false);
+    mediaRun.current.cancel();
+    audioRef.current?.pause();
+    setPreparingAudio(false);
     // Re-activate: clear `endedAt` so continuing it counts as the same live session.
     setConversation({ ...target, endedAt: undefined });
     setTyped("");
@@ -276,39 +303,29 @@ export default function ConverseTab({
     [],
   );
 
-  // Synthesize the reply's audio and stage it on the shared <audio> element, returning it ready
-  // to play. We await this *before* revealing the assistant bubble so text and voice land
-  // together. Audio is optional (Kokoro may not be downloaded, etc.), so failures return null
-  // and the conversation continues silently.
-  //
-  // Callers must pass the *plain* text: at C1-C2 the reply carries repertoire markup, and Kokoro
-  // would happily pronounce the asterisks and the trailer.
-  const synthReply = useCallback(async (text: string): Promise<HTMLAudioElement | null> => {
-    try {
-      const blob = await synthesizeSpeech(text);
-      if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
-      const url = URL.createObjectURL(blob);
-      audioUrlRef.current = url;
-      if (!audioRef.current) audioRef.current = new Audio();
-      audioRef.current.src = url;
-      return audioRef.current;
-    } catch {
-      return null;
-    }
-  }, []);
-
-  // Play the staged reply. In free talk we auto-open the mic once the AI has finished speaking
-  // (or immediately, if there's no audio) so the learner can answer hands-free.
-  const speak = useCallback((audio: HTMLAudioElement | null) => {
+  // Text has already been saved and displayed; speech is optional background work.
+  const playReply = useCallback(async (text: string, run: ReturnType<ReturnType<typeof createMediaRun>["start"]>) => {
+    if (!run.current()) return;
+    setPreparingAudio(true);
     const relisten = () => {
-      if (freeTalkRef.current) listenRef.current();
+      if (run.current() && freeTalkRef.current) listenRef.current();
     };
-    if (!audio) {
+    try {
+      const blob = await synthesizeSpeech(text, run.signal);
+      if (!run.current()) return;
+      if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
+      audioUrlRef.current = URL.createObjectURL(blob);
+      if (!audioRef.current) audioRef.current = new Audio();
+      const audio = audioRef.current;
+      audio.src = audioUrlRef.current;
+      audio.onended = relisten;
+      setPreparingAudio(false);
+      await audio.play();
+    } catch {
       relisten();
-      return;
+    } finally {
+      if (run.current()) setPreparingAudio(false);
     }
-    audio.onended = relisten;
-    void audio.play().catch(relisten);
   }, []);
 
   const evaluatorHint = !hasEvaluator
@@ -331,7 +348,11 @@ export default function ConverseTab({
   const canStart = hasEvaluator && (usingCustom ? customTrimmed.length > 0 : Boolean(activeScenario));
 
   const start = useCallback(async () => {
-    if (busy || !canStart) return;
+    if (!active || busy || !canStart) return;
+    const request = ++replyRequestRef.current;
+    const media = mediaRun.current.start();
+    audioRef.current?.pause();
+    setPreparingAudio(false);
     const familiarTopic = !usingCustom && activeScenario?.id === "personal-update"
       ? selectFamiliarTopic(
           past.map((item) => ({ topicId: item.topicId, context: item.context, createdAt: item.startedAt })),
@@ -367,9 +388,9 @@ export default function ConverseTab({
         speakerFamiliarity: progressionSupport.listening.speakerFamiliarity,
         taughtExpressions: pastTaught,
       });
-      // Hold the "Starting…" state through TTS so the greeting bubble and its voice appear together.
+      if (request !== replyRequestRef.current) return;
+      // Show the greeting as soon as the language model responds.
       const parsed = reply ? parseRepertoire(reply) : null;
-      const audio = parsed ? await synthReply(parsed.plain) : null;
       if (parsed) setRepertoire(parsed.items);
       const conv: Conversation = {
         id: crypto.randomUUID(),
@@ -390,23 +411,27 @@ export default function ConverseTab({
         startedAt: Date.now(),
       };
       persist(conv);
-      if (reply) speak(audio);
+      if (parsed) void playReply(parsed.plain, media);
     } catch (err: unknown) {
-      setNote(err instanceof Error ? err.message : t("Couldn't start the conversation."));
+      if (request === replyRequestRef.current) setNote(err instanceof Error ? err.message : t("Couldn't start the conversation."));
     } finally {
-      setBusy(false);
+      if (request === replyRequestRef.current) setBusy(false);
     }
-  }, [busy, canStart, usingCustom, customTrimmed, activeScenario, past, pastTaught, provider, selectedModel, level, challenge, persist, synthReply, speak, progressionSupport, recurringError, t]);
+  }, [active, busy, canStart, usingCustom, customTrimmed, activeScenario, past, pastTaught, provider, selectedModel, level, challenge, persist, playReply, progressionSupport, recurringError, t]);
 
   const sendTurn = useCallback(
     async (text: string, spoken = false) => {
       const trimmed = text.trim();
-      if (!trimmed || busy || !conversation) return;
+      if (!active || !trimmed || busy || !conversation) return;
       const learnerTurns = conversation.turns.filter((turn) => turn.role === "user").length;
       if (learnerTurns >= progressionSupport.conversation.maxTurns) {
         setNote(t("This {stage} practice is complete. Finish it to review your output.", { stage: t(SPEAKING_STAGE_LABEL[progressionSupport.speaking.stage]) }));
         return;
       }
+      const request = ++replyRequestRef.current;
+      const media = mediaRun.current.start();
+      audioRef.current?.pause();
+      setPreparingAudio(false);
       setBusy(true);
       setNote(null);
       // Credit any expression the learner reached for before the turn goes out, so the partner's
@@ -459,10 +484,10 @@ export default function ConverseTab({
           // opening for a dozen expressions at once turns the conversation into a drill.
           elicitExpressions: unusedRepertoire(afterUse).slice(-ELICIT_PER_TURN).map((item) => item.expression),
         });
+        if (request !== replyRequestRef.current) return;
         if (reply) {
-          // Stage the audio first, then reveal the bubble + play together (kept in sync).
+          // Persist the text before optional speech synthesis begins.
           const parsed = parseRepertoire(reply);
-          const audio = await synthReply(parsed.plain);
           const nextRepertoire =
             parsed.items.length > 0 ? mergeRepertoire(afterUse, parsed.items) : afterUse;
           const withReply: Conversation = {
@@ -472,15 +497,15 @@ export default function ConverseTab({
           };
           persist(withReply);
           setRepertoire(nextRepertoire);
-          speak(audio);
+          void playReply(parsed.plain, media);
         }
       } catch (err: unknown) {
-        setNote(err instanceof Error ? err.message : t("Couldn't get a reply."));
+        if (request === replyRequestRef.current) setNote(err instanceof Error ? err.message : t("Couldn't get a reply."));
       } finally {
-        setBusy(false);
+        if (request === replyRequestRef.current) setBusy(false);
       }
     },
-    [busy, conversation, repertoire, pastTaught, provider, selectedModel, persist, synthReply, speak, speakTimer, progressionSupport, recurringError, t],
+    [active, busy, conversation, repertoire, pastTaught, provider, selectedModel, persist, playReply, speakTimer, progressionSupport, recurringError, t],
   );
   useEffect(() => {
     sendTurnRef.current = sendTurn;
@@ -490,10 +515,13 @@ export default function ConverseTab({
   // sending (human-in-the-loop, like the Correct tab); in free talk we send it straight away.
   // Off Apple Silicon, transcription fails gracefully and they can just type.
   const transcribeBlob = useCallback(async (blob: Blob, opts?: { autoSend?: boolean }) => {
+    const current = mediaRun.current.checkpoint();
+    if (!current()) return;
     setTranscribing(true);
     setNote(null);
     try {
       const text = await transcribeAudio(blob);
+      if (!current()) return;
       if (!text) {
         setNote(t("Couldn't make out any speech in that clip."));
         return;
@@ -505,7 +533,7 @@ export default function ConverseTab({
         setTyped((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text));
       }
     } catch (err: unknown) {
-      setNote(err instanceof Error ? err.message : t("Transcription failed."));
+      if (current()) setNote(err instanceof Error ? err.message : t("Transcription failed."));
     } finally {
       setTranscribing(false);
     }
@@ -521,9 +549,12 @@ export default function ConverseTab({
   }, []);
 
   const startRecording = useCallback(async () => {
+    const current = mediaRun.current.checkpoint();
+    if (!current()) return;
     setNote(null);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await requestActiveMicrophone(current);
+      if (!stream) return;
       const recorder = new MediaRecorder(stream);
       chunksRef.current = [];
       recorder.ondataavailable = (e) => {
@@ -532,12 +563,13 @@ export default function ConverseTab({
       recorder.onstop = () => {
         stream.getTracks().forEach((t) => t.stop());
         const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
-        if (blob.size > 0) void transcribeBlob(blob);
+        if (current() && blob.size > 0) void transcribeBlob(blob);
       };
       recorderRef.current = recorder;
       recorder.start();
       setRecording(true);
     } catch {
+      if (!current()) return;
       setNote(t("Couldn't access the microphone. Check the browser's permission."));
     }
   }, [transcribeBlob, t]);
@@ -546,11 +578,13 @@ export default function ConverseTab({
   // a sustained quiet stretch (SILENCE_MS — the "debounce") ends the turn and auto-sends it.
   // If no speech arrives at all within NO_SPEECH_MS, we quietly give up so we don't loop forever.
   const startListening = useCallback(async () => {
-    if (recorderRef.current) return; // already listening/recording
+    const current = mediaRun.current.checkpoint();
+    if (!current() || recorderRef.current) return; // already listening/recording
     setNote(null);
     discardRef.current = false;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await requestActiveMicrophone(current);
+      if (!stream) return;
       const recorder = new MediaRecorder(stream);
       chunksRef.current = [];
       recorder.ondataavailable = (e) => {
@@ -561,7 +595,7 @@ export default function ConverseTab({
         cleanupVad();
         recorderRef.current = null;
         setRecording(false);
-        if (discardRef.current) return;
+        if (discardRef.current || !current()) return;
         const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
         if (blob.size > 0) void transcribeBlob(blob, { autoSend: true });
       };
@@ -582,6 +616,7 @@ export default function ConverseTab({
       setSilenceCountdown(null);
 
       const tick = () => {
+        if (!current()) return;
         analyser.getByteTimeDomainData(data);
         const step = advanceVad(vad, computeRms(data), performance.now());
         vad = step.state;
@@ -604,6 +639,7 @@ export default function ConverseTab({
       };
       vadFrameRef.current = requestAnimationFrame(tick);
     } catch {
+      if (!current()) return;
       cleanupVad();
       setRecording(false);
       setNote(t("Couldn't access the microphone. Check the browser's permission."));
@@ -622,6 +658,23 @@ export default function ConverseTab({
     recorderRef.current = null;
     setRecording(false);
   }, [cleanupVad]);
+
+  useEffect(() => {
+    mediaRun.current.setActive(active);
+    if (active) return;
+    if (audioRef.current) {
+      audioRef.current.onended = null;
+      audioRef.current.pause();
+    }
+    if (recorderRef.current) recorderRef.current.onstop = null;
+    recorderRef.current?.stream.getTracks().forEach((track) => track.stop());
+    recorderRef.current = null;
+    if (vadFrameRef.current) cancelAnimationFrame(vadFrameRef.current);
+    vadFrameRef.current = null;
+    void audioCtxRef.current?.close().catch(() => {});
+    audioCtxRef.current = null;
+    pauseSpeaking();
+  }, [active, pauseSpeaking]);
 
   // Phase 2 — run correction over just the learner's turns and stamp the conversation's
   // situational context onto every mistake found. Runs once per session; re-opening shows the
@@ -723,6 +776,10 @@ export default function ConverseTab({
 
   const openReview = useCallback(
     (conv: Conversation) => {
+      replyRequestRef.current += 1;
+      setBusy(false);
+      mediaRun.current.cancel();
+      setPreparingAudio(false);
       audioRef.current?.pause();
       if (audioRef.current) audioRef.current.onended = null; // don't re-arm the mic after we leave
       stopRecording();
@@ -1382,6 +1439,7 @@ export default function ConverseTab({
           {conversation.turns.map((turn, i) => (
             <TurnBubble key={i} turn={turn} items={repertoire} />
           ))}
+          {preparingAudio && <li role="status" className="text-xs text-ink-muted">Preparando áudio… Você já pode ler e responder.</li>}
           {busy && (
             <li className="flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-2 text-xs font-medium text-ink-muted shadow-sm">
               <Spinner className="h-3.5 w-3.5" /> {t("Thinking…")}

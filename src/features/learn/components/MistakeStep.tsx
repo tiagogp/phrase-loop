@@ -60,6 +60,7 @@ function resultIssueCount(result: LocalCorrectionResult): number {
  * provider — while typing stays a first-class path for a denied or missing mic.
  */
 export function MistakeStep({
+  active = true,
   lessonId,
   phrase,
   noticedPhraseId,
@@ -71,6 +72,7 @@ export function MistakeStep({
   voiceFirst = false,
   onSaved,
 }: {
+  active?: boolean;
   lessonId: string;
   phrase: LessonPhrase;
   noticedPhraseId?: string;
@@ -122,6 +124,7 @@ export function MistakeStep({
   const note = (message: string | null) => setError(message ? t(message) : null);
 
   const productionAudio = useCorrectionAudio({
+    active,
     onNote: note,
     onText: (updater) => {
       spokenRef.current = true;
@@ -134,6 +137,7 @@ export function MistakeStep({
   });
 
   const retryAudio = useCorrectionAudio({
+    active,
     onNote: note,
     onText: (updater) => {
       retrySpokenRef.current = true;

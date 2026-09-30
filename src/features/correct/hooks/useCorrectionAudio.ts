@@ -1,10 +1,12 @@
 "use client";
 
 import { type ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
+import { requestActiveMicrophone } from "@/features/converse/mediaRun";
 import { transcribeAudio } from "@/features/correct/api";
 import { MAX_CORRECTION_UPLOAD_BYTES } from "@/features/correct/constants";
 
 interface UseCorrectionAudioOptions {
+  active?: boolean;
   onNote: (note: string | null) => void;
   onText: (updater: (current: string) => string) => void;
   /** Keep the original sample when a caller needs evidence beyond its transcript. */
@@ -13,11 +15,18 @@ interface UseCorrectionAudioOptions {
   maxDurationMs?: number;
 }
 
-export function useCorrectionAudio({ onNote, onText, onBlob, maxDurationMs }: UseCorrectionAudioOptions) {
+export function useCorrectionAudio({ onNote, onText, onBlob, maxDurationMs, active = true }: UseCorrectionAudioOptions) {
   const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
+  const [previousActive, setPreviousActive] = useState(active);
+  if (previousActive !== active) {
+    setPreviousActive(active);
+    if (!active) setRecording(false);
+  }
   const [recordingElapsedMs, setRecordingElapsedMs] = useState(0);
   const recorderRef = useRef<MediaRecorder | null>(null);
+  const generationRef = useRef(0);
+  const activeRef = useRef(active);
   const chunksRef = useRef<Blob[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const stopTimerRef = useRef<number | null>(null);
@@ -31,35 +40,45 @@ export function useCorrectionAudio({ onNote, onText, onBlob, maxDurationMs }: Us
     elapsedTimerRef.current = null;
   }, []);
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    activeRef.current = active;
+    return () => {
+      activeRef.current = false;
+      generationRef.current += 1;
+      if (recorderRef.current) recorderRef.current.onstop = null;
       recorderRef.current?.stream.getTracks().forEach((track) => track.stop());
+      recorderRef.current = null;
       clearRecordingTimers();
-    },
-    [clearRecordingTimers],
-  );
+    };
+  }, [active, clearRecordingTimers]);
 
   const transcribeBlob = useCallback(async (blob: Blob, filename?: string) => {
+    const generation = generationRef.current;
+    if (!activeRef.current) return;
     setTranscribing(true);
     onNote(null);
     try {
       const text = await transcribeAudio(blob, filename);
+      if (!activeRef.current || generation !== generationRef.current) return;
       if (!text) {
         onNote("Couldn't make out any speech in that clip.");
         return;
       }
       onText((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text));
     } catch (err: unknown) {
-      onNote(err instanceof Error ? err.message : "Transcription failed.");
+      if (activeRef.current && generation === generationRef.current) onNote(err instanceof Error ? err.message : "Transcription failed.");
     } finally {
       setTranscribing(false);
     }
   }, [onNote, onText]);
 
   const startRecording = useCallback(async () => {
+    const generation = generationRef.current;
+    if (!activeRef.current) return;
     onNote(null);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await requestActiveMicrophone(() => activeRef.current && generation === generationRef.current);
+      if (!stream) return;
       const recorder = new MediaRecorder(stream);
       chunksRef.current = [];
       recorder.ondataavailable = (event) => {
@@ -68,7 +87,7 @@ export function useCorrectionAudio({ onNote, onText, onBlob, maxDurationMs }: Us
       recorder.onstop = () => {
         stream.getTracks().forEach((track) => track.stop());
         const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
-        if (blob.size > 0) {
+        if (activeRef.current && generation === generationRef.current && blob.size > 0) {
           onBlob?.(blob);
           void transcribeBlob(blob);
         }
@@ -94,6 +113,7 @@ export function useCorrectionAudio({ onNote, onText, onBlob, maxDurationMs }: Us
       }
       setRecording(true);
     } catch {
+      if (!activeRef.current || generation !== generationRef.current) return;
       onNote("Couldn't access the microphone. Check the browser's permission.");
     }
   }, [clearRecordingTimers, maxDurationMs, onBlob, onNote, transcribeBlob]);

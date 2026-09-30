@@ -1,5 +1,6 @@
 "use client";
 
+import { createMediaRun, requestActiveMicrophone } from "@/features/converse/mediaRun";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
@@ -22,6 +23,7 @@ import type {
 } from "@/lib/pronunciation/types";
 
 interface PronunciationCoachProps {
+  active?: boolean;
   targetText: string;
   targetLang?: string;
   cardId?: string;
@@ -50,6 +52,7 @@ function wordClass(word: PronunciationWordFeedback): string {
 }
 
 export function PronunciationCoach({
+  active = true,
   targetText,
   targetLang = "en",
   cardId,
@@ -71,6 +74,14 @@ export function PronunciationCoach({
   const [recording, setRecording] = useState(false);
   const [assessing, setAssessing] = useState(false);
   const [playingReference, setPlayingReference] = useState(false);
+  const [previousActive, setPreviousActive] = useState(active);
+  if (previousActive !== active) {
+    setPreviousActive(active);
+    if (!active) {
+      setRecording(false);
+      setPlayingReference(false);
+    }
+  }
   const [assessment, setAssessment] = useState<PronunciationAssessment | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [micDenied, setMicDenied] = useState(false);
@@ -78,21 +89,29 @@ export function PronunciationCoach({
   const [fallbackUsed, setFallbackUsed] = useState(false);
   const [history, setHistory] = useState<PronunciationAttempt[]>([]);
   const recorderRef = useRef<MediaRecorder | null>(null);
+  const mediaRun = useRef(createMediaRun());
   const chunksRef = useRef<Blob[]>([]);
   const referenceRef = useRef<HTMLAudioElement | null>(null);
   const referenceUrlRef = useRef<string | null>(null);
   const referenceDurationRef = useRef<number | undefined>(undefined);
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    const media = mediaRun.current;
+    media.setActive(active);
+    return () => {
+      media.setActive(false);
+      if (recorderRef.current) recorderRef.current.onstop = null;
       recorderRef.current?.stream.getTracks().forEach((track) => track.stop());
+      recorderRef.current = null;
       referenceRef.current?.pause();
       if (referenceUrlRef.current) URL.revokeObjectURL(referenceUrlRef.current);
-    },
-    [],
-  );
+      referenceUrlRef.current = null;
+    };
+  }, [active]);
 
   const playReference = useCallback(async () => {
+    if (!active) return;
+    const run = mediaRun.current.start();
     setNote(null);
     setPlayingReference(true);
     try {
@@ -104,7 +123,8 @@ export function PronunciationCoach({
       if (referenceAudioUrl) {
         audio.src = referenceAudioUrl;
       } else {
-        const blob = await synthesizeSpeech(targetText);
+        const blob = await synthesizeSpeech(targetText, run.signal);
+        if (!run.current()) return;
         if (referenceUrlRef.current) URL.revokeObjectURL(referenceUrlRef.current);
         referenceUrlRef.current = URL.createObjectURL(blob);
         audio.src = referenceUrlRef.current;
@@ -115,15 +135,17 @@ export function PronunciationCoach({
         audio.addEventListener("loadedmetadata", done, { once: true });
         audio.addEventListener("error", done, { once: true });
       });
+      if (!run.current()) return;
       if (Number.isFinite(audio.duration) && audio.duration > 0) {
         referenceDurationRef.current = Math.round(audio.duration * 1000);
       }
       await audio.play();
     } catch (err: unknown) {
+      if (!run.current()) return;
       setPlayingReference(false);
       setNote(err instanceof Error ? err.message : t("Couldn't play the reference audio."));
     }
-  }, [referenceAudioUrl, targetText, t]);
+  }, [active, referenceAudioUrl, targetText, t]);
 
   const assessBlob = useCallback(
     async (blob: Blob) => {
@@ -204,12 +226,15 @@ export function PronunciationCoach({
   );
 
   const startRecording = useCallback(async () => {
+    const current = mediaRun.current.checkpoint();
+    if (!current()) return;
     setAssessment(null);
     setNote(null);
     setMicDenied(false);
     setFallbackUsed(false);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await requestActiveMicrophone(current);
+      if (!stream) return;
       const recorder = new MediaRecorder(stream);
       chunksRef.current = [];
       recorder.ondataavailable = (event) => {
@@ -218,12 +243,13 @@ export function PronunciationCoach({
       recorder.onstop = () => {
         stream.getTracks().forEach((track) => track.stop());
         const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
-        if (blob.size > 0) void assessBlob(blob);
+        if (current() && blob.size > 0) void assessBlob(blob);
       };
       recorderRef.current = recorder;
       recorder.start();
       setRecording(true);
     } catch {
+      if (!current()) return;
       setMicDenied(true);
       setNote(t("Couldn't access the microphone. Check the browser's permission."));
     }

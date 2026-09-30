@@ -13,12 +13,14 @@ import { useT } from "@/i18n/I18nProvider";
 
 /** A bounded open-speaking surface for the timed-monologue progression stages. */
 export function TimedMonologue({
+  active = true,
   prompt,
   targetSeconds,
   lessonId,
   scaffoldUsed = true,
   onComplete,
 }: {
+  active?: boolean;
   prompt: string;
   targetSeconds: number;
   lessonId?: string;
@@ -33,6 +35,7 @@ export function TimedMonologue({
   const [promptStartedAt] = useState(() => Date.now());
   const timer = useStageTimer("speak", 3);
   const audio = useCorrectionAudio({
+    active,
     onNote: setNote,
     onText: (updater) => setText(updater),
     onBlob: setBlob,

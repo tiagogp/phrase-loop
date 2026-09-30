@@ -17,18 +17,12 @@ APP="dist/$ARCH_DIR/PhraseLoop.app"
 echo "→ Building Next.js…"
 node scripts/fix-native-rpaths.mjs
 
-# Keep Next's compiler cache, but remove deployable output so release builds
-# cannot accidentally package a stale standalone server.
-if [ -d .next/cache ]; then
-  NEXT_CACHE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/phraseloop-next-cache.XXXXXX")"
-  mv .next/cache "$NEXT_CACHE_DIR/cache"
-  rm -rf .next
-  mkdir -p .next
-  mv "$NEXT_CACHE_DIR/cache" .next/cache
-  rmdir "$NEXT_CACHE_DIR"
-else
-  rm -rf .next
-fi
+# Next keeps its running development server in .next/dev. Removing that folder
+# underneath `next dev` triggers repeated missing-manifest errors and reloads.
+# Preserve it and the compiler cache; remove all deployable production output so
+# the package cannot accidentally contain a stale standalone server.
+mkdir -p .next
+find .next -mindepth 1 -maxdepth 1 ! -name cache ! -name dev -exec rm -rf {} +
 
 npm run build
 

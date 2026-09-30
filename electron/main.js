@@ -369,6 +369,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 850,
+    show: false,
     minWidth: 800,
     minHeight: 600,
     title: "PhraseLoop",
@@ -380,6 +381,12 @@ function createWindow() {
       ? { color: "#0a0a0a", symbolColor: "#e5e5e5", height: 40 }
       : undefined,
     webPreferences: { contextIsolation: true, preload: PRELOAD_JS },
+  });
+
+  const window = mainWindow;
+  window.once("ready-to-show", () => {
+    window.maximize();
+    window.show();
   });
 
   // Open target=_blank / external links in the system browser, not the app.

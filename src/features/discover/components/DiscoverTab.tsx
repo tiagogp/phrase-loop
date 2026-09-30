@@ -74,7 +74,9 @@ export default function DiscoverTab({
   onStudyNow,
   onCorrect,
   prefill,
+  active = true,
 }: {
+  active?: boolean;
   onOpenSettings?: () => void;
   onStudyNow?: () => void;
   onCorrect?: () => void;
@@ -111,6 +113,11 @@ export default function DiscoverTab({
   // learner who skips it is not asked again for the same source.
   const [probeDone, setProbeDone] = useState(false);
   const [playing, setPlaying] = useState<number | null>(null);
+  const [previousActive, setPreviousActive] = useState(active);
+  if (previousActive !== active) {
+    setPreviousActive(active);
+    if (!active) setPlaying(null);
+  }
   const selection = useProviderSelection();
   const { provider, providerReady, selectedModel } = selection;
 
@@ -167,6 +174,7 @@ export default function DiscoverTab({
 
   useEffect(
     () => () => {
+      playRequestRef.current += 1;
       audioRef.current?.pause();
     },
     [],
@@ -205,6 +213,15 @@ export default function DiscoverTab({
 
   // A learner who leaves Discover mid-clip still listened. Bank it on the way out.
   useEffect(() => () => commitListen(), [commitListen]);
+
+  useEffect(() => {
+    if (active) return;
+    playRequestRef.current += 1;
+    audioRef.current?.pause();
+    stopAtRef.current = null;
+    listenTimer.pause();
+    commitListen();
+  }, [active, listenTimer, commitListen]);
 
   // Stop clip playback at the segment boundary.
   useEffect(() => {
@@ -246,7 +263,7 @@ export default function DiscoverTab({
   const playClip = useCallback(
     async (index: number, seg: TranscriptSegment) => {
       const audio = audioRef.current;
-      if (!audio) return;
+      if (!audio || !active) return;
       const requestId = playRequestRef.current + 1;
       playRequestRef.current = requestId;
 
@@ -319,7 +336,7 @@ export default function DiscoverTab({
         }
       }
     },
-    [playing, listenTimer],
+    [active, playing, listenTimer],
   );
 
   // One label for both the button and the loading panel, so they never disagree.

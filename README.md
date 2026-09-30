@@ -122,13 +122,21 @@ also creates a user config file on first launch:
 Build a shareable disk image:
 
 ```bash
-npm run app:download
+PHRASELOOP_SKIP_MAC_CLEAN_INSTALL=1 npm run app:download
 ```
 
 This packages the native runtime and writes a drag-to-Applications disk image
 to `dist/PhraseLoop-mac-arm64.dmg`. Share that file: the recipient
 opens the `.dmg`, drags **PhraseLoop** to **Applications**, and double-clicks to
 launch. No Terminal window and no install script.
+
+On macOS, `PHRASELOOP_SKIP_MAC_CLEAN_INSTALL=1` preserves the installed app and its
+local data. Without that flag, the script removes them before building. The same
+command can be run directly as
+`PHRASELOOP_SKIP_MAC_CLEAN_INSTALL=1 bash scripts/make-download.sh`.
+The app and disk image are built once; the download script renames the completed
+image. Packaging preserves `.next/dev`, so a running development server keeps its
+manifests while production output is rebuilt.
 
 > A build signed and notarized with a Developer ID (set `APPLE_DEVELOPER_ID`
 > plus the notarytool credentials before `app:download`) launches with a plain

@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { HOME_TABS, type HomeTab } from "@/components/app/homeTabs";
-import { getCards, getErrorEvents, getCounts } from "@/lib/store/repository";
-import { isStoreAvailable } from "@/lib/store/db";
+import { countDueCards, getCounts } from "@/lib/store/repository";
+import { count, isStoreAvailable, STORES } from "@/lib/store/db";
+import { createSharedResource } from "@/lib/store/sharedResource";
 import { getLearningProfile, saveLearningProfile } from "@/features/settings/learningProfile";
 import { OWN_SENTENCE_CARD_PREFIX } from "@/features/learn/lessonDeck";
 import type { EnglishLevel } from "@/features/discover/types";
@@ -47,6 +48,28 @@ export function tabsForUnlockTier(tier: number, gates?: TabGates): HomeTab[] {
   return HOME_TABS.map((tab) => tab.id);
 }
 
+/** Query counts only: unlocking does not need phrase text, sources or corrections. */
+export async function loadTabUnlockSnapshot(): Promise<{ tier: number; dueCount: number }> {
+  const profile = getLearningProfile();
+  if (!isStoreAvailable()) return { tier: profile.unlockedTabTier, dueCount: 0 };
+  if (profile.unlockedTabTier === MAX_UNLOCK_TIER) {
+    return { tier: MAX_UNLOCK_TIER, dueCount: await countDueCards() };
+  }
+  const ownSentencesRange = IDBKeyRange.bound(OWN_SENTENCE_CARD_PREFIX, `${OWN_SENTENCE_CARD_PREFIX}\uffff`);
+  const [counts, errorEvents, ownSentences] = await Promise.all([
+    getCounts(), count(STORES.errorEvents), count(STORES.cards, ownSentencesRange),
+  ]);
+  return {
+    tier: computeUnlockedTabTier({ cards: counts.cards, reviews: counts.reviews, errorEvents, ownSentences }, profile.unlockedTabTier),
+    dueCount: counts.due,
+  };
+}
+
+const unlockResource = createSharedResource({ tier: 0, dueCount: 0 }, loadTabUnlockSnapshot, [
+  "phraseloop:activity", "phraseloop:lesson-saved", "phraseloop:backup-restored", "phraseloop:profile-updated",
+]);
+const clearAnnouncement = () => {};
+
 export function useUnlockedTabs({ hasEvaluator = false }: { hasEvaluator?: boolean } = {}): {
   tabs: ReadonlyArray<(typeof HOME_TABS)[number]>;
   tier: number;
@@ -54,71 +77,14 @@ export function useUnlockedTabs({ hasEvaluator = false }: { hasEvaluator?: boole
   announcement: HomeTab | null;
   clearAnnouncement: () => void;
 } {
-  // Seed 0 on server and client alike: the stored tier lives in localStorage, so
-  // reading it during the first client render hydrates a different tab list than
-  // the server sent (same mismatch HojeHome documents). The mount effect below
-  // raises the tier immediately after hydration.
-  const [tier, setTier] = useState(0);
-  const [dueCount, setDueCount] = useState(0);
-  const [announcement, setAnnouncement] = useState<HomeTab | null>(null);
-  // Seeded undefined for the same hydration reason as the tier; the mount effect fills it in,
-  // and the `profile-updated` listener keeps it current when the learner changes level.
-  const [level, setLevel] = useState<EnglishLevel | undefined>(undefined);
-
+  void hasEvaluator;
+  const { data, loading } = useSyncExternalStore(unlockResource.subscribe, unlockResource.getSnapshot, unlockResource.getServerSnapshot);
+  // Persist only a published snapshot; a write arriving during a read makes the
+  // resource reread before publishing, so stale evidence cannot raise the tier.
   useEffect(() => {
-    let cancelled = false;
-
-    const refresh = async () => {
-      const profile = getLearningProfile();
-      setLevel(profile.level);
-      if (!isStoreAvailable()) {
-        setTier(profile.unlockedTabTier);
-        setDueCount(0);
-        return;
-      }
-
-      const [counts, errors, cards] = await Promise.all([getCounts(), getErrorEvents(), getCards()]);
-      if (cancelled) return;
-
-      const ownSentences = cards.filter((card) => card.id.startsWith(OWN_SENTENCE_CARD_PREFIX)).length;
-      setDueCount(counts.due);
-      const nextTier = computeUnlockedTabTier(
-        { cards: counts.cards, reviews: counts.reviews, errorEvents: errors.length, ownSentences },
-        profile.unlockedTabTier,
-      );
-      if (nextTier > profile.unlockedTabTier) {
-        saveLearningProfile({ unlockedTabTier: nextTier });
-      }
-      setTier(nextTier);
-    };
-
-    const handleRefresh = () => void refresh().catch(() => undefined);
-    handleRefresh();
-    window.addEventListener("phraseloop:activity", handleRefresh);
-    window.addEventListener("phraseloop:lesson-saved", handleRefresh);
-    window.addEventListener("phraseloop:backup-restored", handleRefresh);
-    window.addEventListener("phraseloop:profile-updated", handleRefresh);
-    return () => {
-      cancelled = true;
-      window.removeEventListener("phraseloop:activity", handleRefresh);
-      window.removeEventListener("phraseloop:lesson-saved", handleRefresh);
-      window.removeEventListener("phraseloop:backup-restored", handleRefresh);
-      window.removeEventListener("phraseloop:profile-updated", handleRefresh);
-    };
-  }, []);
-
-  const unlockedIds = useMemo(
-    () => new Set(tabsForUnlockTier(tier, { level, hasEvaluator })),
-    [tier, level, hasEvaluator],
-  );
-  const tabs = useMemo(() => HOME_TABS.filter((tab) => unlockedIds.has(tab.id)), [unlockedIds]);
-  const clearAnnouncement = useCallback(() => setAnnouncement(null), []);
-
-  return {
-    tabs,
-    tier,
-    dueCount,
-    announcement,
-    clearAnnouncement,
-  };
+    if (!loading && data.tier > getLearningProfile().unlockedTabTier) {
+      saveLearningProfile({ unlockedTabTier: data.tier });
+    }
+  }, [data, loading]);
+  return { tabs: HOME_TABS, ...data, announcement: null, clearAnnouncement };
 }

@@ -37,15 +37,20 @@ import { emitActivity } from "@/lib/store/activityLog";
 import { getCards } from "@/lib/store/repository";
 import { refreshMethodProgression } from "@/features/method/progressionPersistence";
 
-const C1Tab = dynamic(() => import("@/features/c1/components/C1Tab"));
-const ConversationTab = dynamic(() => import("@/features/converse/components/ConversationTab"));
-const CorrectTab = dynamic(() => import("@/features/correct/components/CorrectTab"));
-const DiscoverTab = dynamic(() => import("@/features/discover/components/DiscoverTab"));
-const SettingsScreen = dynamic(() => import("@/features/settings/components/SettingsScreen"));
-const SpeechTab = dynamic(() => import("@/features/speech/components/SpeechTab"));
-const StudyTab = dynamic(() => import("@/features/study/components/StudyTab"));
-const ProgressPage = dynamic(() => import("@/features/progress/components/ProgressPage"));
-const TutorWorkspace = dynamic(() => import("@/features/tutor/components/TutorWorkspace"));
+function WorkspaceLoading() {
+  const { t } = useT();
+  return <div role="status" className="min-h-48 rounded-lg border border-line bg-card p-6 text-sm text-ink-muted">{t("Loading…")}</div>;
+}
+
+const C1Tab = dynamic(() => import("@/features/c1/components/C1Tab"), { loading: WorkspaceLoading });
+const ConversationTab = dynamic(() => import("@/features/converse/components/ConversationTab"), { loading: WorkspaceLoading });
+const CorrectTab = dynamic(() => import("@/features/correct/components/CorrectTab"), { loading: WorkspaceLoading });
+const DiscoverTab = dynamic(() => import("@/features/discover/components/DiscoverTab"), { loading: WorkspaceLoading });
+const SettingsScreen = dynamic(() => import("@/features/settings/components/SettingsScreen"), { loading: WorkspaceLoading });
+const SpeechTab = dynamic(() => import("@/features/speech/components/SpeechTab"), { loading: WorkspaceLoading });
+const StudyTab = dynamic(() => import("@/features/study/components/StudyTab"), { loading: WorkspaceLoading });
+const ProgressPage = dynamic(() => import("@/features/progress/components/ProgressPage"), { loading: WorkspaceLoading });
+const TutorWorkspace = dynamic(() => import("@/features/tutor/components/TutorWorkspace"), { loading: WorkspaceLoading });
 
 async function recommendedLessonId(): Promise<string> {
   const profile = getLearningProfile();
@@ -69,6 +74,8 @@ async function resolveLessonId(nextLessonId?: string): Promise<string> {
 
 function TabContent({
   tab,
+  active,
+  onTutorSettings,
   onOpenSettings,
   onOpenDiscover,
   onOpenPractice,
@@ -90,6 +97,8 @@ function TabContent({
   kokoro,
 }: {
   tab: HomeTab;
+  active: boolean;
+  onTutorSettings: () => void;
   onOpenSettings: () => void;
   onOpenDiscover: () => void;
   onOpenPractice: () => void;
@@ -114,6 +123,7 @@ function TabContent({
   if (tab === "hoje") {
     return (
       <HojeHome
+        onTutorSettings={onTutorSettings}
         onTutor={onTutor}
         onStudy={onOpenPractice}
         onTransfer={onTransfer}
@@ -133,6 +143,7 @@ function TabContent({
   if (tab === "discover") {
     return (
       <DiscoverTab
+        active={active}
         key={discoverPrefill?.nonce ?? "discover"}
         onOpenSettings={onOpenSettings}
         onStudyNow={onOpenPractice}
@@ -143,7 +154,7 @@ function TabContent({
   }
   if (tab === "progress") return <ProgressPage onPractice={onOpenPractice} onTutor={onTutor} />;
   if (tab === "study") return <StudyTab reviewRequest={reviewRequest} onOpenSettings={onOpenSettings} view={studyView} onViewChange={onStudyViewChange} onProgress={onProgress} onDiscover={onOpenDiscover} onConversation={onSpeak} onLesson={() => onOpenLesson()} onCorrect={onOpenCorrect} />;
-  if (tab === "conversa") return <ConversationTab onOpenSettings={onOpenSettings} />;
+  if (tab === "conversa") return <ConversationTab active={active} onOpenSettings={onOpenSettings} />;
   if (tab === "correct") return <CorrectTab onOpenSettings={onOpenSettings} onStudyNow={onOpenPractice} kokoroModel={kokoro} />;
   return null;
 }
@@ -184,6 +195,19 @@ function HomeContent() {
   const [planDialogOpen, setPlanDialogOpen] = useState(false);
   const [discoverPrefill] = useState<{ url: string; nonce: number } | null>(null);
   const lessonRequestRef = useRef(0);
+  const settingsReturn = useRef<{ overlay: Exclude<Overlay, "settings">; lessonId: string | null }>({ overlay: null, lessonId: null });
+  const openSettings = useCallback((origin?: Exclude<Overlay, "settings">) => {
+    if (overlay !== "settings") {
+      settingsReturn.current = { overlay: origin === undefined ? overlay : origin, lessonId: origin === undefined ? lessonId : null };
+    }
+    lessonRequestRef.current += 1;
+    setLessonId(null);
+    setOverlay("settings");
+  }, [overlay, lessonId]);
+  const closeSettings = useCallback(() => {
+    setOverlay(settingsReturn.current.overlay);
+    setLessonId(settingsReturn.current.lessonId);
+  }, []);
   const kokoro = useKokoroModel();
   const { tabs, tier, dueCount, announcement, clearAnnouncement } = useUnlockedTabs();
   const activeTab = tabs.some((item) => item.id === tab) ? tab : "hoje";
@@ -286,10 +310,7 @@ function HomeContent() {
             activeTab={activeTab}
             onTabChange={changeTab}
             settingsOpen={overlay === "settings"}
-            onSettingsOpen={() => {
-              setLessonId(null);
-              setOverlay("settings");
-            }}
+            onSettingsOpen={() => openSettings()}
             onToolsOpen={() => { setLessonId(null); setOverlay("tools"); }}
             tabs={tabs}
             badges={{ study: dueCount }}
@@ -321,7 +342,7 @@ function HomeContent() {
             ) : overlay === "settings" ? (
               <div className="h-full overflow-y-auto pb-16 app-scroll-region sm:pb-20">
                 <SettingsScreen
-                  onBack={() => setOverlay(null)}
+                  onBack={closeSettings}
                   onOpenTools={() => setOverlay("tools")}
                   onOpenC1={advancedSurfacesUnlocked ? () => setOverlay("c1") : undefined}
                   showAdvancedAi={true}
@@ -332,7 +353,7 @@ function HomeContent() {
                 <div className="mx-auto max-w-3xl px-4 py-6 pb-20">
                   <TabErrorBoundary><TutorWorkspace
                     onBack={() => setOverlay(null)}
-                    onSettings={() => setOverlay("settings")}
+                    onSettings={() => openSettings()}
                     onPractice={openPractice}
                     onConversation={openSpeaking}
                     onContent={() => changeTab("discover")}
@@ -344,7 +365,7 @@ function HomeContent() {
               <div className="h-full overflow-y-auto app-scroll-region">
                 <div className="mx-auto max-w-5xl px-4 py-6">
                   <Button variant="ghost" onClick={() => setOverlay(null)}>{t("Back")}</Button>
-                  <CorrectTab onOpenSettings={() => setOverlay("settings")} onStudyNow={openPractice} kokoroModel={kokoro} />
+                  <CorrectTab onOpenSettings={() => openSettings()} onStudyNow={openPractice} kokoroModel={kokoro} />
                 </div>
               </div>
             ) : overlay === "c1" ? (
@@ -357,9 +378,7 @@ function HomeContent() {
                     onBack={() => setOverlay("settings")}
                   />
                   <C1Tab
-                    onOpenSettings={() => {
-                      setOverlay("settings");
-                    }}
+                    onOpenSettings={() => openSettings()}
                   />
                 </div>
               </div>
@@ -401,9 +420,9 @@ function HomeContent() {
                         {item.id !== "hoje" && <div className="mb-4 flex justify-end"><Button variant="ghost" size="sm" onClick={() => setOverlay("tutor")}>Praticar com meu tutor →</Button></div>}
                         <TabContent
                           tab={item.id}
-                          onOpenSettings={() => {
-                            setOverlay("settings");
-                          }}
+                          active={active && overlay === null && lessonId === null}
+                          onTutorSettings={() => openSettings("tutor")}
+                          onOpenSettings={() => openSettings()}
                           onOpenDiscover={() => changeTab("discover")}
                           onOpenPractice={openPractice}
                           onTransfer={openTransfer}
@@ -448,17 +467,14 @@ function HomeContent() {
             <PlanGenerationToast onViewPlan={() => changeTab("hoje")} />
           </div>
           <OnboardingDialog
-            onOpenSettings={() => {
-              setLessonId(null);
-              setOverlay("settings");
-            }}
+            onOpenSettings={() => openSettings()}
           />
           <PlanOnboarding
             open={planDialogOpen}
             onClose={() => setPlanDialogOpen(false)}
             onOpenSettings={() => {
               setPlanDialogOpen(false);
-              setOverlay("settings");
+              openSettings();
             }}
           />
         </div>

@@ -21,6 +21,8 @@ import type { TutorWorkspaceProps } from "./TutorWorkspace";
 export function TutorPractice({ initial, memory, onNew, ...props }: TutorWorkspaceProps & { initial: TutorSession; memory: TutorMemory; onNew: () => void }) {
   const { session: value, commit, call, busy, saving, fatal, error, setError, cancel, current } = useTutorSession(initial);
   const session = value!;
+  const phaseHeading = useRef<HTMLHeadingElement | null>(null);
+  useEffect(() => { phaseHeading.current?.focus(); }, [session.phase]);
   const selection = useProviderSelection({ initialProvider: initial.provider, initialModel: initial.model });
   const [question, setQuestion] = useState("");
   const [showMemory, setShowMemory] = useState(false);
@@ -95,7 +97,7 @@ export function TutorPractice({ initial, memory, onNew, ...props }: TutorWorkspa
   return <div className="space-y-5">
     <div className="flex flex-wrap items-center justify-between gap-2">
       <Button variant="ghost" onClick={props.onBack} disabled={saving || audio.recording || audio.transcribing}>{session.phase === "complete" ? "← Voltar" : "← Pausar e voltar"}</Button>
-      <span role="status" className="text-xs text-ink-muted">{fatal ? "Não foi possível salvar" : saving ? "Salvando…" : "Sessão salva neste navegador"}</span>
+      <span className="text-xs text-ink-muted">{fatal ? "Não foi possível salvar" : saving ? "Salvando…" : "Sessão salva neste navegador"}</span>
     </div>
     <PageHeader eyebrow={`Seu tutor · ${session.minutes} min · ${session.level}`} title={session.task.goal} description={session.reason} />
     <ol className="grid grid-cols-3 gap-2 text-xs text-ink-muted" aria-label="Etapas da sessão">
@@ -107,10 +109,10 @@ export function TutorPractice({ initial, memory, onNew, ...props }: TutorWorkspa
     {!selection.providerReady && session.phase !== "complete" && <Notice>A IA está indisponível. Você pode guardar sua resposta, conectar uma IA ou voltar às revisões.<div className="mt-3 flex flex-wrap gap-2"><Button onClick={props.onSettings} disabled={saving}>Configurar IA</Button><Button variant="secondary" onClick={props.onPractice} disabled={saving}>Ir para revisões</Button></div></Notice>}
 
     {session.phase === "practice" && <Card className="space-y-5 p-5 sm:p-7">
-      <div><p className="text-xs font-semibold uppercase tracking-wider text-accent">{session.attempts.length ? "Reconstrua sua resposta" : session.parentSessionId ? "Primeiro, tente recuperar" : "Sua situação"}</p><p className="mt-3 whitespace-pre-wrap text-base leading-relaxed text-ink">{session.task.situation}</p></div>
+      <div><h2 ref={phaseHeading} tabIndex={-1} className="text-xs font-semibold uppercase tracking-wider text-accent">{session.attempts.length ? "Reconstrua sua resposta" : session.parentSessionId ? "Primeiro, tente recuperar" : "Sua situação"}</h2><p className="mt-3 whitespace-pre-wrap text-base leading-relaxed text-ink">{session.task.situation}</p></div>
       <p className="text-sm leading-relaxed text-ink-soft">{session.task.instruction}</p>
       {last && <Notice>{last.feedback.retryInstruction}</Notice>}
-      <label className="block space-y-2 text-sm font-medium text-ink"><span>Sua resposta em inglês</span><textarea autoFocus value={session.draft} onChange={e => updateDraft(e.target.value)} maxLength={3000} rows={5} className={tutorInputClass} readOnly={blocked} placeholder="Escreva do seu jeito, mesmo que ainda faltem palavras." lang="en" /></label>
+      <label className="block space-y-2 text-sm font-medium text-ink"><span>Sua resposta em inglês</span><textarea value={session.draft} onChange={e => updateDraft(e.target.value)} maxLength={3000} rows={5} className={tutorInputClass} readOnly={blocked} placeholder="Escreva do seu jeito, mesmo que ainda faltem palavras." lang="en" /></label>
       <div className="flex flex-wrap items-center gap-2">
         <Button disabled={blocked || !selection.providerReady || !session.draft.trim()} onClick={() => void evaluate()}>Receber feedback</Button>
         <Button variant="secondary" disabled={blocked || !selection.providerReady || session.help.length >= 20} onClick={() => void ask("Me dê uma pequena dica para começar, sem mostrar a resposta completa.")}>Preciso de uma dica</Button>
@@ -121,7 +123,7 @@ export function TutorPractice({ initial, memory, onNew, ...props }: TutorWorkspa
     </Card>}
 
     {session.phase === "feedback" && last && <Card className="space-y-5 p-5 sm:p-7" aria-label="Feedback do tutor">
-      <p role="status" className="text-xs font-semibold uppercase tracking-wider text-accent">{feedbackLabels[last.feedback.status]}</p>
+      <h2 ref={phaseHeading} tabIndex={-1} className="text-xs font-semibold uppercase tracking-wider text-accent">{feedbackLabels[last.feedback.status]}</h2>
       <div><p className="mb-2 text-xs text-ink-muted">Sua resposta · {last.supportUsed ? "com apoio" : "sem pedir apoio"}</p><blockquote className="border-l-2 border-accent/40 pl-4 text-ink" lang="en">{last.text}</blockquote></div>
       <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink-soft">{last.feedback.feedback}</p>
       {last.feedback.points.map((point, i) => <div key={i} className="space-y-2 rounded-md border border-line p-4"><p className="text-sm text-ink" lang="en">{point.original} → <strong>{point.revised}</strong></p><p className="text-sm leading-relaxed text-ink-soft">{point.explanation}</p></div>)}
@@ -136,7 +138,7 @@ export function TutorPractice({ initial, memory, onNew, ...props }: TutorWorkspa
     </Card>}
 
     {session.phase === "complete" && <Card className="space-y-5 p-5 sm:p-7">
-      <h2 className="text-xl font-semibold text-ink">O que aconteceu nesta sessão</h2>
+      <h2 ref={phaseHeading} tabIndex={-1} className="text-xl font-semibold text-ink">O que aconteceu nesta sessão</h2>
       <p className="text-sm leading-relaxed text-ink-soft">{tutorSummary(session)}</p>
       {session.draft.trim() && <div className="rounded border border-line p-4"><p className="text-xs text-ink-muted">Rascunho não enviado · sem avaliação</p><p className="mt-2 whitespace-pre-wrap text-sm text-ink" lang="en">{session.draft}</p></div>}
       {parent && session.attempts.length > 0 && <Notice>Você voltou ao objetivo após {Math.max(0, Math.floor((session.attempts[0].createdAt - (parent.completedAt ?? parent.updatedAt)) / 86_400_000))} dias completos. Compare as respostas e as situações abaixo; tarefas diferentes não são um mesmo teste.</Notice>}

@@ -17,6 +17,7 @@ import { TutorHomeCard } from "@/features/tutor/components/TutorHomeCard";
 
 interface HojeHomeProps {
   onTutor: () => void;
+  onTutorSettings: () => void;
   onStudy: () => void;
   onDiscover: () => void;
   onCorrect: () => void;
@@ -56,7 +57,6 @@ export function HojeHome(props: HojeHomeProps) {
     <div className="space-y-6">
       <PageHeader eyebrow={t("A little English, put to use")} title={t("Today")}
         description={t("Remember a little. Say something of your own. Come back and see what stayed.")} />
-      <TutorHomeCard onOpen={props.onTutor} />
       <Card className="surface-grid-glow overflow-hidden p-5 sm:p-7">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-xs font-medium uppercase tracking-wider text-accent">{t("Your daily loop")}</p>
@@ -96,6 +96,7 @@ export function HojeHome(props: HojeHomeProps) {
               </ol>
             </>}
       </Card>
+      <TutorHomeCard onOpen={props.onTutor} onSettings={props.onTutorSettings} />
       {ready && <LearningWins wins={evidence.wins} compact />}
       <section aria-labelledby="explore-title">
         <h2 id="explore-title" className="mb-3 text-sm font-semibold text-ink">{t("Make it relevant to your life")}</h2>

@@ -237,9 +237,9 @@ export async function del(store: StoreName, key: IDBValidKey): Promise<void> {
   });
 }
 
-export async function count(store: StoreName): Promise<number> {
+export async function count(store: StoreName, query?: IDBKeyRange | IDBValidKey): Promise<number> {
   const db = await openDb();
-  return reqToPromise(db.transaction(store, "readonly").objectStore(store).count());
+  return reqToPromise(db.transaction(store, "readonly").objectStore(store).count(query));
 }
 
 /** Count records matching an index range without materializing them. */

@@ -13,7 +13,7 @@ import {
 import { useAiSettings } from "@/features/settings/context/AiSettingsContext";
 import type { ProviderKind } from "@/lib/cards/provider";
 import type { AiSettingsPatch, ProviderStatus } from "@/types/aiSettings";
-import Disclosure from "@/components/ui/Disclosure";
+import { connectProvider } from "../connectProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Field";
@@ -36,10 +36,10 @@ const PROVIDER_COPY: Record<ProviderKind, string> = {
   ollama:
     "Private and on-device. Optional for custom content.",
   claude:
-    "Cloud IA from Anthropic. Your learning content is sent to Anthropic.",
-  openai: "Cloud IA from OpenAI. Your learning content is sent to OpenAI.",
+    "Cloud AI from Anthropic. Your learning content is sent to Anthropic.",
+  openai: "Cloud AI from OpenAI. Your learning content is sent to OpenAI.",
   openrouter:
-    "Cloud IA routed through OpenRouter (default model openrouter/fusion). Your learning content is sent to OpenRouter.",
+    "Cloud AI routed through OpenRouter (default model openrouter/fusion). Your learning content is sent to OpenRouter.",
 };
 
 function statusLabel(provider: ProviderStatus): string {
@@ -91,8 +91,13 @@ export default function SettingsScreen({
   const { t } = useT();
   const { settings, loading, save, test, refresh } = useAiSettings();
   const restoreInputRef = useRef<HTMLInputElement | null>(null);
-  const [ollamaUrl, setOllamaUrl] = useState(settings.ollama.baseUrl);
-  const [ollamaModel, setOllamaModel] = useState(settings.ollama.model);
+  const [ollamaUrlDraft, setOllamaUrl] = useState<string | null>(null);
+  const [ollamaModelDraft, setOllamaModel] = useState<string | null>(null);
+  const ollamaUrl = ollamaUrlDraft ?? settings.ollama.baseUrl;
+  const ollamaModel = ollamaModelDraft ?? (settings.ollama.model || settings.ollama.models[0] || "");
+  const [selectedProvider, setSelectedProvider] = useState<ProviderKind | null>(null);
+  const selected = selectedProvider ?? settings.defaultProvider;
+  const [connected, setConnected] = useState<ProviderKind | null>(null);
   const [anthropicKey, setAnthropicKey] = useState("");
   const [openaiKey, setOpenaiKey] = useState("");
   const [openrouterKey, setOpenrouterKey] = useState("");
@@ -137,21 +142,28 @@ export default function SettingsScreen({
   ) => {
     setBusy(name);
     setNotice(null);
-    const result = await action();
-    setNotice({
-      ok: result.ok,
-      text:
-        result.detail ||
-        result.error ||
-        (result.ok ? t("Saved.") : t("Something went wrong.")),
-    });
-    setBusy(null);
+    try {
+      const result = await action();
+      setNotice({ ok: result.ok, text: result.detail || result.error || (result.ok ? t("Saved.") : t("Something went wrong.")) });
+    } catch {
+      setNotice({ ok: false, text: t("Could not connect. Check your settings and try again.") });
+    } finally {
+      setBusy(null);
+    }
   };
 
-  const chooseDefault = (defaultProvider: string) =>
-    run("default", () =>
-      save({ defaultProvider: defaultProvider as ProviderKind }),
-    );
+  const connect = (kind: ProviderKind, draft: AiSettingsPatch, clear?: () => void) =>
+    run(`connect-${kind}`, async () => {
+      setConnected(null);
+      const result = await connectProvider(kind, draft, test, save);
+      setTestResults(current => ({ ...current, [kind]: result.ok }));
+      if (result.ok) {
+        clear?.();
+        setConnected(kind);
+        return { ok: true, detail: t("Connected! This AI is ready for your tutor, conversations, and content.") };
+      }
+      return result;
+    });
 
   const downloadBackup = async () => {
     setBusy("backup");
@@ -248,26 +260,14 @@ export default function SettingsScreen({
     }
   };
 
-  const testConnection = async (
-    kind: ProviderKind,
-    draft: AiSettingsPatch = {},
-  ) => {
-    setBusy(`test-${kind}`);
-    setNotice(null);
-    const result = await test(kind, draft);
-    setTestResults((current) => ({ ...current, [kind]: result.ok }));
-    setNotice({ ok: result.ok, text: result.detail });
-    setBusy(null);
-  };
-
   const renderedStatus = (
     provider: ProviderStatus,
   ): { label: string; tone: StatusTone } => {
-    if (busy === `test-${provider.kind}`)
+    if (busy === `connect-${provider.kind}`)
       return { label: "Testing", tone: "default" };
     if (testResults[provider.kind] === false) {
       return {
-        label: provider.kind === "ollama" ? "Offline" : "Invalid key",
+        label: "Connection failed",
         tone: "danger",
       };
     }
@@ -286,24 +286,24 @@ export default function SettingsScreen({
       kind === "claude" ? "anthropicApiKey" : kind === "openrouter" ? "openrouterApiKey" : "openaiApiKey";
     const shownStatus = provider ? renderedStatus(provider) : null;
     return (
-      <Disclosure
-        title={provider?.label ?? kind}
-        description={t(PROVIDER_COPY[kind])}
-        defaultOpen={settings.defaultProvider === kind}
-        nested
-        badge={
-          shownStatus && (
-            <StatusPill tone={shownStatus.tone}>{t(shownStatus.label)}</StatusPill>
-          )
-        }
-      >
+      <Card className="space-y-4 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="font-semibold text-ink">{provider?.label ?? kind}</h3>
+          {shownStatus && <StatusPill tone={shownStatus.tone}>{t(shownStatus.label)}</StatusPill>}
+        </div>
+        <p className="text-sm text-ink-soft">{t(PROVIDER_COPY[kind])}</p>
+        <p className="text-sm text-ink-muted">{t("Create an API key in your provider account, then paste it below. It is not your account password.")}</p>
         <Field label={t("API key")} htmlFor={`${kind}-key`}>
           <Input
             id={`${kind}-key`}
             type="password"
             autoComplete="off"
             value={key}
-            onChange={(event) => setKey(event.target.value)}
+            onChange={(event) => {
+              setKey(event.target.value);
+              setConnected(null);
+              setTestResults(current => ({ ...current, [kind]: undefined }));
+            }}
             placeholder={
               provider?.configured
                 ? settings.storage === "system"
@@ -316,8 +316,8 @@ export default function SettingsScreen({
         </Field>
         <div className="mt-3 flex flex-wrap gap-2">
           <Button
-            variant="secondary"
-            disabled={!settings.writable || !key.trim() || busy !== null}
+            variant="primary"
+            disabled={!settings.writable || (!key.trim() && !provider?.configured) || busy !== null}
             onClick={() => {
               const anyCloudConfigured = settings.providers.some(
                 (item) => item.kind !== "ollama" && item.configured,
@@ -335,32 +335,10 @@ export default function SettingsScreen({
                 }
                 recordCloudConsent();
               }
-              void run(`save-${kind}`, async () => {
-                const result = await save({
-                  [keyField]: key,
-                } as AiSettingsPatch);
-                if (result.ok) setKey("");
-                return result;
-              });
+              void connect(kind, key.trim() ? { [keyField]: key.trim() } : {}, () => setKey(""));
             }}
           >
-            {t("Save key")}
-          </Button>
-          <Button
-            variant="secondary"
-            disabled={
-              !settings.writable ||
-              busy !== null ||
-              (!key.trim() && !provider?.configured)
-            }
-            onClick={() =>
-              void testConnection(
-                kind,
-                key.trim() ? ({ [keyField]: key } as AiSettingsPatch) : {},
-              )
-            }
-          >
-            {t("Test connection")}
+            {busy === `connect-${kind}` ? t("Connecting…") : t("Connect and use this AI")}
           </Button>
           {provider?.configured && (
             <Button
@@ -373,18 +351,26 @@ export default function SettingsScreen({
                   )
                 )
                   return;
-                void run(`remove-${kind}`, () =>
-                  save({ [keyField]: null } as AiSettingsPatch),
-                );
+                void run(`remove-${kind}`, async () => {
+                  const result = await save({ [keyField]: null } as AiSettingsPatch);
+                  if (result.ok) {
+                    setConnected(null);
+                    setTestResults(current => ({ ...current, [kind]: undefined }));
+                  }
+                  return result;
+                });
               }}
             >
               {t("Remove key")}
             </Button>
           )}
         </div>
-      </Disclosure>
+      </Card>
     );
   };
+
+  const ollamaProvider = settings.providers.find(provider => provider.kind === "ollama");
+  const ollamaStatus = ollamaProvider ? renderedStatus(ollamaProvider) : null;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 sm:py-8">
@@ -396,7 +382,7 @@ export default function SettingsScreen({
         <PageHeader
           title={t("Settings")}
           description={showAdvancedAi
-            ? t("Manage local data, advanced AI, and export tools.")
+            ? t("Connect your AI and manage your learning preferences.")
             : t("Manage your local PhraseLoop data.")}
         />
       </div>
@@ -418,18 +404,93 @@ export default function SettingsScreen({
       )}
 
       <nav aria-label={t("Settings sections")} className="mb-5 flex flex-wrap gap-2">
+        {showAdvancedAi && <a href="#settings-ai" className="inline-flex min-h-10 items-center rounded-md border border-accent/30 bg-accent/5 px-3 text-sm font-medium text-accent">{t("Connect an AI")}</a>}
         <a href="#settings-data" className="inline-flex min-h-10 items-center rounded-md border border-line bg-card px-3 text-sm font-medium text-ink-soft transition-colors hover:border-line-strong hover:text-ink">
           {t("Data and privacy")}
         </a>
         {(showAdvancedAi || onOpenTools || onOpenC1) && (
           <a href="#settings-advanced" className="inline-flex min-h-10 items-center rounded-md border border-line bg-card px-3 text-sm font-medium text-ink-soft transition-colors hover:border-line-strong hover:text-ink">
-            {t("AI and tools")}
+            {t("Tools")}
           </a>
         )}
         <a href="#settings-profile" className="inline-flex min-h-10 items-center rounded-md border border-line bg-card px-3 text-sm font-medium text-ink-soft transition-colors hover:border-line-strong hover:text-ink">
           {t("Learner profile")}
         </a>
       </nav>
+
+      {showAdvancedAi && (
+        <section id="settings-ai" aria-labelledby="connect-ai-title" className="mb-8 scroll-mt-4 space-y-4">
+          <div>
+            <h2 id="connect-ai-title" className="text-xl font-semibold text-ink">{t("Connect an AI")}</h2>
+            <p className="mt-2 text-sm text-ink-soft">{t("Choose a provider, connect it, and return to your activity.")}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="group" aria-label={t("Choose an AI provider")}>
+            {settings.providers.map(provider => <Button key={provider.kind} variant={selected === provider.kind ? "primary" : "secondary"} aria-pressed={selected === provider.kind} disabled={loading || busy !== null} onClick={() => { setSelectedProvider(provider.kind); setNotice(null); setConnected(null); }}>{provider.label}</Button>)}
+          </div>
+          {loading && <p role="status" className="text-sm text-ink-muted">{t("Loading…")}</p>}
+          {selected === "ollama" && <Card className="space-y-4 p-5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="font-semibold text-ink">Ollama · {t("On this computer")}</h3>
+              {ollamaStatus && <StatusPill tone={ollamaStatus.tone}>{t(ollamaStatus.label)}</StatusPill>}
+            </div>
+            <p className="text-sm text-ink-soft">{t("Open Ollama and download a model first. Keep it running, choose the model below, and connect. No API key is needed.")}</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label={t("Server address")} htmlFor="ollama-url">
+                <Input
+                  id="ollama-url"
+                  value={ollamaUrl}
+                  onChange={(event) => setOllamaUrl(event.target.value)}
+                  disabled={!settings.writable || busy !== null}
+                />
+              </Field>
+              <Field label={t("AI model")} htmlFor="ollama-model">
+                {settings.ollama.models.length > 0 ? (
+                  <Select
+                    value={ollamaModel || settings.ollama.models[0]}
+                    onChange={setOllamaModel}
+                    options={settings.ollama.models.map((model) => ({
+                      value: model,
+                      label: model,
+                    }))}
+                    disabled={!settings.writable || busy !== null}
+                  />
+                ) : (
+                  <Input
+                    id="ollama-model"
+                    value={ollamaModel}
+                    onChange={(event) => setOllamaModel(event.target.value)}
+                    placeholder="llama3.1"
+                    disabled={!settings.writable || busy !== null}
+                  />
+                )}
+              </Field>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                variant="primary"
+                disabled={!settings.writable || busy !== null || !ollamaModel.trim()}
+                onClick={() => void connect("ollama", { ollamaBaseUrl: ollamaUrl.trim(), ollamaModel: ollamaModel.trim() })}
+              >
+                {busy === "connect-ollama" ? t("Connecting…") : t("Connect and use this AI")}
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={busy !== null}
+                onClick={() => void refresh()}
+              >
+                {t("Refresh models")}
+              </Button>
+            </div>
+          </Card>}
+
+          <div className="space-y-3">
+            {selected === "openrouter" && cloudCard("openrouter", openrouterKey, setOpenrouterKey)}
+            {selected === "claude" && cloudCard("claude", anthropicKey, setAnthropicKey)}
+            {selected === "openai" && cloudCard("openai", openaiKey, setOpenaiKey)}
+          </div>
+          {connected === selected && <Button onClick={onBack}>{t("Done — return to my activity")} →</Button>}
+        </section>
+      )}
 
       <Card id="settings-data" className="mb-4 scroll-mt-4 p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -541,114 +602,7 @@ export default function SettingsScreen({
       </Card>
 
       <section id="settings-advanced" className="scroll-mt-4">
-      {showAdvancedAi && (
-        <Disclosure
-          title={t("Advanced AI for custom content")}
-          description={t("Connect local or cloud AI only when you want custom sources, corrections, conversations, or custom plans.")}
-          className="mb-4"
-        >
-          <Card className="mb-4 p-5">
-              <h3 className="font-medium text-ink">{t("Default AI")}</h3>
-            <p className="mb-4 mt-1 text-sm text-ink-muted">
-              {t("The bundled lesson and review work without AI setup. Custom content can use local or cloud AI.")}
-            </p>
-            <Select
-              value={settings.defaultProvider}
-              onChange={chooseDefault}
-              options={settings.providers.map((provider) => ({
-                value: provider.kind,
-                label: `${provider.label}${provider.available ? "" : ` ${t("— unavailable")}`}`,
-              }))}
-              disabled={!settings.writable || loading || busy !== null}
-            />
-          </Card>
 
-          <Disclosure
-            title="Ollama"
-            description={t(PROVIDER_COPY.ollama)}
-            defaultOpen={settings.defaultProvider === "ollama"}
-            className="mb-3"
-            nested
-            badge={
-              settings.providers[0] &&
-              (() => {
-                const shown = renderedStatus(settings.providers[0]);
-                return <StatusPill tone={shown.tone}>{t(shown.label)}</StatusPill>;
-              })()
-            }
-          >
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label={t("Server address")} htmlFor="ollama-url">
-                <Input
-                  id="ollama-url"
-                  value={ollamaUrl}
-                  onChange={(event) => setOllamaUrl(event.target.value)}
-                  disabled={!settings.writable || busy !== null}
-                />
-              </Field>
-              <Field label={t("AI model")} htmlFor="ollama-model">
-                {settings.ollama.models.length > 0 ? (
-                  <Select
-                    value={ollamaModel || settings.ollama.models[0]}
-                    onChange={setOllamaModel}
-                    options={settings.ollama.models.map((model) => ({
-                      value: model,
-                      label: model,
-                    }))}
-                    disabled={!settings.writable || busy !== null}
-                  />
-                ) : (
-                  <Input
-                    id="ollama-model"
-                    value={ollamaModel}
-                    onChange={(event) => setOllamaModel(event.target.value)}
-                    placeholder="llama3.1"
-                    disabled={!settings.writable || busy !== null}
-                  />
-                )}
-              </Field>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button
-                variant="secondary"
-                disabled={!settings.writable || busy !== null}
-                onClick={() =>
-                  run("save-ollama", () =>
-                    save({ ollamaBaseUrl: ollamaUrl, ollamaModel }),
-                  )
-                }
-              >
-                {t("Save")}
-              </Button>
-              <Button
-                variant="secondary"
-                disabled={!settings.writable || busy !== null}
-                onClick={() =>
-                  void testConnection("ollama", {
-                    ollamaBaseUrl: ollamaUrl,
-                    ollamaModel,
-                  })
-                }
-              >
-                {t("Test connection")}
-              </Button>
-              <Button
-                variant="secondary"
-                disabled={busy !== null}
-                onClick={() => void refresh()}
-              >
-                {t("Refresh models")}
-              </Button>
-            </div>
-          </Disclosure>
-
-          <div className="space-y-3">
-            {cloudCard("openrouter", openrouterKey, setOpenrouterKey)}
-            {cloudCard("claude", anthropicKey, setAnthropicKey)}
-            {cloudCard("openai", openaiKey, setOpenaiKey)}
-          </div>
-        </Disclosure>
-      )}
 
       {onOpenTools && (
         <Card className="mt-4 p-5">

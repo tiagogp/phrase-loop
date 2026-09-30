@@ -121,10 +121,14 @@ build_macos_download() {
 
   clean_macos_install
 
-  # Mirror the arch-derived output dir used by electron/build-app.sh.
+  # build-app.sh owns packaging, signing and DMG creation. Reuse its result:
+  # invoking electron-builder again repeated the slow disk-image step and could
+  # replace the notarized image with a different, unnotarized one.
   ARCH_DIR="mac-arm64"
   APP="dist/$ARCH_DIR/PhraseLoop.app"
   DMG="dist/PhraseLoop-$ARCH_DIR.dmg"
+  VERSION="$(node -p "require('./package.json').version")"
+  PRODUCED_DMG="dist/PhraseLoop-$VERSION.dmg"
 
   # Build the signed .app (Next + native addons + Electron).
   ./electron/build-app.sh
@@ -134,17 +138,9 @@ build_macos_download() {
     exit 1
   fi
 
-  echo "→ Building disk image..."
-  # --prepackaged builds the DMG from the already post-processed & signed .app
-  # (electron-builder's own `dmg` target would package an un-finished bundle).
-  rm -f "$DMG"
-  ./node_modules/.bin/electron-builder --mac dmg --prepackaged "$APP"
-
-  # electron-builder names the dmg from productName + version; normalize to the
-  # arch-tagged name the rest of the tooling/docs expect.
-  PRODUCED_DMG="$(find dist -maxdepth 1 -type f -name "*.dmg" -print | head -1)"
-  if [ -z "$PRODUCED_DMG" ]; then
-    echo "✗ Disk image was not produced"
+  echo "→ Preparing the completed disk image for sharing (no rebuild)..."
+  if [ ! -f "$PRODUCED_DMG" ]; then
+    echo "✗ Build did not produce $PRODUCED_DMG"
     exit 1
   fi
   if [ "$PRODUCED_DMG" != "$DMG" ]; then

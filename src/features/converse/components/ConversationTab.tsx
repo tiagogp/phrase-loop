@@ -13,7 +13,7 @@ import { DEFAULT_LEARNING_PROFILE, getLearningProfile, subscribeToProfile } from
 import { GuidedSpeaking } from "@/features/pronunciation/components/GuidedSpeaking";
 
 /** Conversation is discoverable at every level; unavailable AI has a useful local alternative. */
-export default function ConversationTab({ onOpenSettings }: { onOpenSettings?: () => void }) {
+export default function ConversationTab({ onOpenSettings, active = true }: { onOpenSettings?: () => void; active?: boolean }) {
   const { t } = useT();
   const { hasEvaluator } = useProviderSelection({ fallbackToEvaluator: true });
   const { loading } = useAiSettings();
@@ -26,10 +26,10 @@ export default function ConversationTab({ onOpenSettings }: { onOpenSettings?: (
         description={t("Practice a real situation. Keep a useful expression, improve one answer, and bring it into your next review.")} />
       {guided ? <>
         <Button variant="ghost" onClick={() => setGuided(false)}>{t("Back to conversation")}</Button>
-        <GuidedSpeaking onDone={() => setGuided(false)} />
+        <GuidedSpeaking active={active} onDone={() => setGuided(false)} />
       </> : loading ? <p role="status" className="text-sm text-ink-muted">{t("Loading…")}</p>
         : hasEvaluator ? <>
-          <ConverseTab onOpenSettings={onOpenSettings}
+          <ConverseTab active={active} onOpenSettings={onOpenSettings}
             scenarios={advanced ? ADVANCED_CONVERSATION_SCENARIOS : undefined}
             topicFirst={advanced} defaultFreeTalk={advanced} />
           <Button variant="ghost" onClick={() => setGuided(true)}>{t("Warm up with guided speaking")}</Button>

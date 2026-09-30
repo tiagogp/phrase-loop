@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { MethodStage } from "@/features/method/learningLoop";
 import {
   createTimer,
@@ -94,5 +94,5 @@ export function useStageTimer(
     };
   }, [autoStart, start, pause, touch]);
 
-  return { start, touch, pause, commit };
+  return useMemo(() => ({ start, touch, pause, commit }), [start, touch, pause, commit]);
 }
