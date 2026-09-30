@@ -1,3 +1,4 @@
+import { journeyMessages } from "./journeyMessages";
 import { tutorMessages } from "./tutorMessages";
 import { experienceMessages } from "./experienceMessages";
 import type { UiLang } from "./config";
@@ -5455,4 +5456,5 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "End-weight on the reversal: 'narrower — and STRONGer — than advocates suggest', with a pause before the dash.": { pt: "Peso no fim, na reviravolta: 'narrower — and STRONGer — than advocates suggest', com uma pausa antes do travessão." },
   "Group a list with level tone and short pauses: 'claims — evidence — values — uncertainties'.": { pt: "Agrupe uma lista com tom nivelado e pausas curtas: 'claims — evidence — values — uncertainties'." },
 
+  ...journeyMessages,
 };

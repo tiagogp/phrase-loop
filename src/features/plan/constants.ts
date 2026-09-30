@@ -41,6 +41,7 @@ export const PLAN_DAYS_OPTIONS = [
 ];
 
 export const AVAILABILITY_OPTIONS = [
+  { value: "5", label: "5 min / day" },
   { value: "10", label: "10 min / day" },
   { value: "20", label: "20 min / day" },
   { value: "30", label: "30 min / day" },

@@ -48,11 +48,11 @@ export function PlanOnboarding({
     });
 
   const [step, setStep] = useState<PlanOnboardingStep>("goal");
-  const [goal, setGoal] = useState("");
+  const [goal, setGoal] = useState(profile.focus);
   const [currentLevel, setCurrentLevel] = useState<EnglishLevel>(profile.level);
   const [targetLevel, setTargetLevel] = useState<EnglishLevel>(() => defaultTargetLevel(profile.level));
-  const [planDays, setPlanDays] = useState(90);
-  const [availabilityMinutes, setAvailabilityMinutes] = useState(20);
+  const [planDays, setPlanDays] = useState(30);
+  const [availabilityMinutes, setAvailabilityMinutes] = useState(profile.dailyMinutes ?? 10);
   const [error, setError] = useState<string | null>(null);
 
   const goalTrimmed = goal.trim();

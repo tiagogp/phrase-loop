@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { setFullNavigation, useExperiencePreferences } from "@/features/activation/experiencePreferences";
 import Select from "@/components/ui/Select";
 import { ENGLISH_LEVELS } from "@/features/discover/constants";
+import { isLevelAtLeast } from "@/features/discover/levels";
 import type { EnglishLevel } from "@/features/discover/types";
 import {
   DEFAULT_LEARNING_PROFILE,
@@ -90,7 +91,7 @@ export default function SettingsScreen({
   onOpenC1?: () => void;
   showAdvancedAi?: boolean;
 }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const { fullNavigation } = useExperiencePreferences();
   const objective = useSyncExternalStore(subscribeToProfile, () => getLearningProfile().objective, () => DEFAULT_LEARNING_PROFILE.objective);
   const minutes = useSyncExternalStore(subscribeToProfile, () => getLearningProfile().dailyMinutes ?? 10, () => 10);
@@ -649,6 +650,18 @@ export default function SettingsScreen({
             {t("Adjust your English level as you progress. Lessons and corrections follow it.")}
           </p>
         </div>
+        <Field label={t("Interface language")} className="mt-3 max-w-52">
+          <Select
+            value={lang}
+            disabled={isLevelAtLeast(learnerLevel, "B1")}
+            aria-describedby="interface-language-hint"
+            options={[{ value: "pt", label: "Português" }, { value: "en", label: "English" }]}
+            onChange={value => saveLearningProfile({ interfaceLang: value as "pt" | "en" })}
+          />
+        </Field>
+        <p id="interface-language-hint" className="mt-2 text-xs text-ink-muted">
+          {t("From B1 the interface switches to English.")}
+        </p>
         <Field label={t("English level")} className="mt-3 max-w-52">
           <Select value={learnerLevel} onChange={changeLearnerLevel} options={ENGLISH_LEVELS} />
         </Field>
@@ -663,9 +676,6 @@ export default function SettingsScreen({
           <input type="checkbox" className="mt-1 accent-accent" checked={fullNavigation} onChange={event => setFullNavigation(event.target.checked)} />
           <span>{t("Show all shortcuts")}<span className="mt-1 block text-xs text-ink-muted">{t("Keep all sections in the navigation. Every tool remains available in Explore, More options, or Settings even with this turned off.")}</span></span>
         </label>
-        <p className="mt-2 text-xs text-ink-muted">
-          {t("From B1 the interface switches to English.")}
-        </p>
       </Card>
     </div>
   );

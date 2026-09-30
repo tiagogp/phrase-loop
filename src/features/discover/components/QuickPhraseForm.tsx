@@ -33,7 +33,7 @@ export function QuickPhraseForm({ onStudy, onPracticeSource }: { onStudy?: () =>
       } else {
         const { added } = await saveGeneratedDeck(cards, [candidate]);
         void emitActivity("cards_created", { count: added, source: "discover" }).catch(() => undefined);
-        setMessage("Phrase saved in both directions. Try recalling it now, or export it with Kokoro & Anki.");
+        setMessage("Phrase saved in your library. Try using it in a situation.");
       }
       setSavedCardId(cards[0].id);
     } catch {

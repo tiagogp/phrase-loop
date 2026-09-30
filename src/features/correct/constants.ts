@@ -5,8 +5,8 @@ import type { CorrectionInputMode } from "./types";
 export const MAX_CORRECTION_UPLOAD_BYTES = 25 * 1024 * 1024;
 
 export const CORRECTION_INPUT_OPTIONS: { value: CorrectionInputMode; label: string }[] = [
-  { value: "ai", label: "AI review" },
-  { value: "manual", label: "Manual entry" },
+  { value: "ai", label: "Get feedback" },
+  { value: "manual", label: "I already have a correction" },
 ];
 
 export const CORRECTION_ERROR_TYPES: ErrorType[] = [

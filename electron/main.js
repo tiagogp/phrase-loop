@@ -3,13 +3,14 @@
 //
 // Boot sequence: native-capable Next server -> BrowserWindow.
 
-const { app, BrowserWindow, ipcMain, Menu, shell, utilityProcess, safeStorage } = require("electron");
+const { app, BrowserWindow, ipcMain, Menu, shell, utilityProcess } = require("electron");
 const { spawn, spawnSync } = require("node:child_process");
 const crypto = require("node:crypto");
 const http = require("node:http");
 const os = require("node:os");
 const path = require("node:path");
 const fs = require("node:fs");
+const { createAiSettingsStore, localSecret } = require("./ai-settings");
 
 app.setName("PhraseLoop");
 
@@ -47,69 +48,20 @@ function cleanSetting(value, maxLength) {
     : undefined;
 }
 
-// API keys are the only genuinely sensitive fields here; base URL/model picks aren't secrets.
-const SECRET_SETTINGS_FIELDS = ["anthropicApiKey", "openaiApiKey", "openrouterApiKey"];
 const CLOUD_SECRET_FIELDS = {
   claude: "anthropicApiKey",
   openai: "openaiApiKey",
   openrouter: "openrouterApiKey",
 };
-const SAFE_STORAGE_PREFIX = "safeStorage:v1:";
 const SECRET_TOKEN = crypto.randomBytes(32).toString("hex");
 let secretServer = null;
 
-// OS keychain (Keychain on macOS) when available; falls back to the 0o600 plaintext file
-// on platforms/setups without one (e.g. a Linux box with no secret-service daemon running).
-function secureStorageMode() {
-  return safeStorage.isEncryptionAvailable() ? "system" : "local-file";
-}
-
-function encryptSecret(value) {
-  if (!safeStorage.isEncryptionAvailable()) return value;
-  return SAFE_STORAGE_PREFIX + safeStorage.encryptString(value).toString("base64");
-}
-
-// Returns undefined (dropping the field) for a value that was encrypted under a keychain
-// this process can no longer decrypt with, rather than surfacing ciphertext as an API key.
-function decryptSecret(value) {
-  if (typeof value !== "string" || !value.startsWith(SAFE_STORAGE_PREFIX)) return value;
-  if (!safeStorage.isEncryptionAvailable()) return undefined;
-  try {
-    const encrypted = Buffer.from(value.slice(SAFE_STORAGE_PREFIX.length), "base64");
-    return safeStorage.decryptString(encrypted);
-  } catch {
-    return undefined;
-  }
-}
-
-function readStoredAiSettings() {
-  if (!fs.existsSync(AI_SETTINGS_FALLBACK_FILE)) return {};
-  try {
-    const parsed = JSON.parse(fs.readFileSync(AI_SETTINGS_FALLBACK_FILE, "utf8"));
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
-  } catch {
-    return {};
-  }
-}
-
-function publicAiSettings() {
-  const stored = readStoredAiSettings();
-  const { anthropicApiKey, openaiApiKey, openrouterApiKey, ...settings } = stored;
-  return {
-    ...settings,
-    configuredProviders: {
-      claude: typeof anthropicApiKey === "string" && anthropicApiKey.length > 0,
-      openai: typeof openaiApiKey === "string" && openaiApiKey.length > 0,
-      openrouter: typeof openrouterApiKey === "string" && openrouterApiKey.length > 0,
-    },
-  };
-}
-
-function saveSecureAiSettings(settings) {
-  fs.mkdirSync(path.dirname(AI_SETTINGS_FALLBACK_FILE), { recursive: true });
-  fs.writeFileSync(AI_SETTINGS_FALLBACK_FILE, `${JSON.stringify(settings, null, 2)}\n`, { mode: 0o600 });
-  fs.chmodSync(AI_SETTINGS_FALLBACK_FILE, 0o600);
-}
+// Credentials stay in the private local file; no OS password prompt is needed.
+const {
+  read: readStoredAiSettings,
+  publicSettings: publicAiSettings,
+  save: saveSecureAiSettings,
+} = createAiSettingsStore(AI_SETTINGS_FALLBACK_FILE);
 
 function startSecretServer() {
   return new Promise((resolve, reject) => {
@@ -121,7 +73,7 @@ function startSecretServer() {
         return;
       }
       const stored = readStoredAiSettings();
-      const secret = decryptSecret(stored[field]);
+      const secret = localSecret(stored[field]);
       res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
       res.end(JSON.stringify({ secret: typeof secret === "string" ? secret : null }));
     });
@@ -476,7 +428,7 @@ ipcMain.handle("phrase-loop:ai-settings-save", async (event, rawPatch) => {
     ]) {
       if (!(input in patch)) continue;
       const value = cleanSetting(patch[input], max);
-      if (value) next[stored] = SECRET_SETTINGS_FIELDS.includes(stored) ? encryptSecret(value) : value;
+      if (value) next[stored] = value;
       else delete next[stored];
     }
     saveSecureAiSettings(next);
@@ -641,7 +593,7 @@ async function boot() {
     ...(app.isPackaged && fs.existsSync(bundledModelsDir)
       ? { PHRASELOOP_BUNDLED_MODELS_DIR: bundledModelsDir }
       : {}),
-    PHRASELOOP_SETTINGS_STORAGE: secureStorageMode(),
+    PHRASELOOP_SETTINGS_STORAGE: "local-file",
     PHRASELOOP_SETTINGS_TOKEN: SETTINGS_TOKEN,
     PHRASELOOP_SECRET_PORT: String(secretPort),
     PHRASELOOP_SECRET_TOKEN: SECRET_TOKEN,

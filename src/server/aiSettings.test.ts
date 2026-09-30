@@ -69,7 +69,7 @@ describe("AI settings", () => {
     expect(serialized).not.toContain("apiKey");
   });
 
-  it("lists saved cloud providers without unlocking the keychain, then loads the key on use", async () => {
+  it("lists saved cloud providers without fetching secrets, then loads the key on use", async () => {
     process.env.PHRASELOOP_SECRET_PORT = "12345";
     process.env.PHRASELOOP_SECRET_TOKEN = "local-test-token";
     replaceRuntimeAiSettings({ configuredProviders: { claude: true } });

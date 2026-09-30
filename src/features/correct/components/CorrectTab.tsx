@@ -601,7 +601,7 @@ export default function CorrectTab({
     <div className="space-y-5">
       <PageHeader
         eyebrow={t("Learn from your output")}
-        title={t("Mistakes")}
+        title={t("Improve a text")}
         description={t("Get focused feedback, try the important correction again, and save only what is worth reviewing.")}
       />
 

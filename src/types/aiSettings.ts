@@ -35,7 +35,7 @@ export interface SecureAiSettings {
   defaultProvider?: ProviderKind;
   ollamaBaseUrl?: string;
   ollamaModel?: string;
-  /** Saved cloud credentials can be listed without opening the OS keychain. */
+  /** Saved cloud providers can be listed without fetching their API keys. */
   configuredProviders?: Partial<Record<"claude" | "openai" | "openrouter", boolean>>;
   anthropicApiKey?: string;
   openaiApiKey?: string;

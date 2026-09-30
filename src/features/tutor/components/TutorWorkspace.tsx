@@ -33,6 +33,7 @@ export interface TutorWorkspaceProps {
   onConversation: () => void;
   onContent: () => void;
   onTools: () => void;
+  onLocalPractice?: () => void;
 }
 
 export default function TutorWorkspace(props: TutorWorkspaceProps) {

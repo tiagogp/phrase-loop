@@ -21,7 +21,9 @@ import Disclosure from "@/components/ui/Disclosure";
 import { DEFAULT_LEARNING_PROFILE, getLearningProfile, subscribeToProfile } from "@/features/settings/learningProfile";
 import { ReviewWorkspaceNav, type ReviewView } from "./ReviewWorkspaceNav";
 
-export default function StudyTab({ onDiscover, onConversation, onLesson, onCorrect, onProgress, onOpenSettings, view, onViewChange, reviewRequest = 0 }: {
+export default function StudyTab({ onHome, onTools, onDiscover, onConversation, onLesson, onCorrect, onProgress, onOpenSettings, view, onViewChange, reviewRequest = 0 }: {
+  onHome?: () => void;
+  onTools?: () => void;
   onDiscover?: () => void;
   onConversation?: () => void;
   onLesson?: () => void;
@@ -34,7 +36,7 @@ export default function StudyTab({ onDiscover, onConversation, onLesson, onCorre
 }) {
   const { t } = useT();
   const session = useStudySession(reviewRequest);
-  const [localView, setLocalView] = useState<ReviewView>("review");
+  const [localView, setLocalView] = useState<ReviewView>("library");
   const activeView = view ?? localView;
   const setActiveView = onViewChange ?? setLocalView;
   const [extraPractice, setExtraPractice] = useState(false);
@@ -53,8 +55,8 @@ export default function StudyTab({ onDiscover, onConversation, onLesson, onCorre
 
   return (
     <div className="space-y-5">
-      <PageHeader eyebrow={t("Remember, then use")} title={t("Phrases")}
-        description={t("A short review, one answer of your own, and a clear place to stop.")}
+      <PageHeader eyebrow={t("Remember, then use")} title={t("My library")}
+        description={t("Your saved phrases, practice, and useful corrections in one place.")}
         aside={<span className="rounded-lg border border-line bg-card px-3 py-2 text-xs text-ink-muted">{t("{count} due in your library", { count: counts.due })}</span>} />
       <ReviewWorkspaceNav value={activeView} due={counts.due} hasPractice={session.reviews.length > 0} onChange={setActiveView} />
       {(session.sessionError || actionError) && <Notice tone="error">
@@ -87,7 +89,7 @@ export default function StudyTab({ onDiscover, onConversation, onLesson, onCorre
             {counts.cards > 0 ? <Button variant="primary" onClick={() => { setTransferComplete(false); setActiveView("use"); }}>{t("Use what I learned")}</Button>
               : onLesson && <Button variant="primary" onClick={onLesson}>{t("Start first lesson")}</Button>}
             {counts.cards === 0 && onDiscover && <Button variant="ghost" onClick={onDiscover}>{t("Add content")}</Button>}
-            {onProgress && ended && <Button variant="secondary" onClick={onProgress}>{t("See my progress")}</Button>}
+            {onHome && ended && <Button variant="secondary" onClick={onHome}>{t("Pause and go back")}</Button>}
             {counts.due > 0 && <Button variant="ghost" onClick={() => { setTransferComplete(false); run(session.startReview); }}>{t("Another short review")}</Button>}
           </div>
           {counts.due > 0 && ended && <p className="text-xs text-ink-muted">{t("{count} phrases are still due. You can return to them in another short session.", { count: counts.due })}</p>}
@@ -103,7 +105,7 @@ export default function StudyTab({ onDiscover, onConversation, onLesson, onCorre
           <h3 className="text-lg font-semibold text-ink">{t("You put your English to work")}</h3>
           <p className="text-sm leading-relaxed text-ink-soft">{t("Your attempt is saved. A later review will help you see what you can do again without help.")}</p>
           <div className="flex flex-wrap gap-2">
-            {onProgress && <Button variant="primary" onClick={onProgress}>{t("See my progress")}</Button>}
+            {onHome ? <Button variant="primary" onClick={onHome}>{t("Finish for today")}</Button> : onProgress && <Button variant="primary" onClick={onProgress}>{t("See my progress")}</Button>}
             <Button variant="ghost" onClick={() => setTransferComplete(false)}>{t("Try another situation")}</Button>
           </div>
         </Card> : counts.cards > 0 ? <TransferPracticeCard onCompleted={() => setTransferComplete(true)} onOpenSettings={onOpenSettings} />
@@ -133,6 +135,8 @@ export default function StudyTab({ onDiscover, onConversation, onLesson, onCorre
       {activeView === "library" && <section id="review-view-panel-library" role="tabpanel" aria-labelledby="review-view-tab-library" className="space-y-5">
         <h2 className="text-lg font-semibold text-ink">{t("Your phrase library")}</h2>
         <SavedCardsBrowser cards={session.cards} />
+        {counts.cards === 0 && onLesson && <Button variant="primary" onClick={onLesson}>{t("Start a short practice")}</Button>}
+        {counts.cards > 0 && onTools && <Button variant="ghost" onClick={onTools}>{t("Export to Anki")}</Button>}
         {onDiscover && <Button variant="secondary" onClick={onDiscover}>{t("Add content")}</Button>}
       </section>}
     </div>

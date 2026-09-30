@@ -9,6 +9,7 @@ import { countTaskEvidence, taskEvidenceMeetsTarget } from "../evidence";
 
 export interface TodayPlanState {
   loading: boolean;
+  error: boolean;
   plan: LearningPlan | null;
   today: DailyTask | null;
   /** True when a plan exists but its last day has already passed. */
@@ -19,31 +20,36 @@ export interface TodayPlanState {
 
 export function useTodayPlan(): TodayPlanState {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [plan, setPlan] = useState<LearningPlan | null>(null);
   const [today, setToday] = useState<DailyTask | null>(null);
 
   const refresh = useCallback(async () => {
-    if (!isStoreAvailable()) return;
-    const activePlan = await getActivePlan();
-    setPlan(activePlan);
-    if (activePlan) {
-      let todayTasks = await getTodayTasks(activePlan.id);
-      if (todayTasks) {
-        const dayStart = new Date(`${todayTasks.date}T00:00:00`).getTime();
-        const events = await getActivitySince(dayStart).catch(() => [] as ActivityEvent[]);
-        for (const task of todayTasks.tasks) {
-          if (task.completedAt != null) continue;
-          if (taskEvidenceMeetsTarget(task, events)) {
-            const count = countTaskEvidence(task, events);
-            await updateDayTask(activePlan.id, todayTasks.date, task.id, Date.now(), { at: Date.now(), count });
+    if (!isStoreAvailable()) { setLoading(false); return; }
+    try {
+      setError(false);
+      const activePlan = await getActivePlan();
+      setPlan(activePlan);
+      if (activePlan) {
+        let todayTasks = await getTodayTasks(activePlan.id);
+        if (todayTasks) {
+          const dayStart = new Date(`${todayTasks.date}T00:00:00`).getTime();
+          const events = await getActivitySince(dayStart).catch(() => [] as ActivityEvent[]);
+          for (const task of todayTasks.tasks) {
+            if (task.completedAt != null) continue;
+            if (taskEvidenceMeetsTarget(task, events)) {
+              const count = countTaskEvidence(task, events);
+              await updateDayTask(activePlan.id, todayTasks.date, task.id, Date.now(), { at: Date.now(), count });
+            }
           }
+          todayTasks = await getTodayTasks(activePlan.id);
         }
-        todayTasks = await getTodayTasks(activePlan.id);
+        setToday(todayTasks);
+      } else {
+        setToday(null);
       }
-      setToday(todayTasks);
-    } else {
-      setToday(null);
-    }
+    } catch { setError(true); }
+    finally { setLoading(false); }
   }, []);
 
   useEffect(() => {
@@ -88,5 +94,5 @@ export function useTodayPlan(): TodayPlanState {
     plan.days.length > 0 &&
     plan.days[plan.days.length - 1].date < currentDate;
 
-  return { loading, plan, today, isPlanConcluded, completeTask, refresh };
+  return { loading, error, plan, today, isPlanConcluded, completeTask, refresh };
 }

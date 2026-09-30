@@ -186,9 +186,9 @@ function AudioStudio({ kokoroModel }: { kokoroModel?: LocalModelState } = {}) {
 }
 
 
-export default function SpeechTab({ kokoroModel }: { kokoroModel?: LocalModelState } = {}) {
+export default function SpeechTab({ kokoroModel, initialTool = "anki" }: { kokoroModel?: LocalModelState; initialTool?: string } = {}) {
   const { t } = useT();
-  const [tool, setTool] = useState("anki");
+  const [tool, setTool] = useState(initialTool);
   return <div className="space-y-5">
     <Segmented label={t("Kokoro & Anki")} value={tool} onChange={setTool} options={[
       { value: "anki", label: t("Anki deck") },

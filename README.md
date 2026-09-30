@@ -2,7 +2,7 @@
 
 PhraseLoop is a local-first app for Brazilian A2-B1 self-study learners who want to turn real English and their own mistakes into daily production practice: listen, save one useful phrase, produce English without help, get feedback, retry, and review at the right time.
 
-PhraseLoop starts with a bounded tutor session: respond to a situation, receive focused feedback, retry, and return later to practice the same skill in another context. With AI connected, Today opens the recommended task; without AI, a local lesson and phrase review provide a starting point. Today and Phrases keep navigation focused, while Explore gives access to Content, Talk, and Progress. All shortcuts can be shown from the start; Kokoro audio and Anki export remain available in tools.
+PhraseLoop starts with a bounded tutor session: respond to a situation, receive focused feedback, retry, and return later to practice the same skill in another context. Today offers one recommended action and a clear place to stop. Without AI, a short local practice introduces one phrase, records a supported recall attempt, and schedules its review. Today, My library, and Explore keep navigation stable. Explore groups full lessons, conversation, content, correction, progress, plans, C1, audio, and Anki by purpose. All navigation shortcuts can be shown from the start. Interface language is a preference below B1; from B1 onward, the interface switches automatically to English.
 
 Progress shows the learner's actual answers: unaided recall, a linked improvement after feedback, and verified use in a new situation. Self-ratings and time spent are practice activity, not evidence of mastery. Weekly comparisons use matched phrases and evaluation conditions. See [the evidence criteria](docs/product.md#evidência-e-agenda).
 
@@ -168,8 +168,9 @@ OLLAMA_MODEL=llama3.1
 ## Features
 
 - **Review** — study saved phrases with local spaced repetition
-- **First lesson** — save and review bundled practice phrases from Home with no provider setup
-- **Phrases** — import YouTube audio, articles, or PDFs and keep phrases worth learning
+- **Short first practice** — save and try recalling one bundled phrase without provider setup; full guided lessons remain in Explore
+- **My library** — organize saved phrases, review, use them, and work on difficulties
+- **Content** — import YouTube audio, articles, or PDFs and keep phrases worth learning
 - **Mistakes** — turn writing or transcribed speech corrections into reviewable phrases
 - **Speak** — advanced conversation practice that reuses mistakes as learning material after the core loop is clear
 - **Advanced tools** — hidden depth for local Kokoro text-to-speech, theme phrase lists, and Anki export
@@ -178,7 +179,7 @@ OLLAMA_MODEL=llama3.1
 
 ## Phrases (YouTube → transcript → review)
 
-The **Phrases** tab turns native content into learning material. Paste a YouTube URL; the
+**Explore → Add a phrase or material** turns native content into learning material. Paste a YouTube URL; the
 app downloads the **audio only** (no video) with [yt-dlp](https://github.com/yt-dlp/yt-dlp)
 (YouTube.js can no longer decipher stream URLs) and transcribes it locally with
 [whisper.cpp](https://github.com/ggml-org/whisper.cpp), producing a timestamped
@@ -218,8 +219,10 @@ ollama serve                   # exposes the OpenAI-compatible API on :11434
 Settings, **Discover**, and **Correct** show a model picker populated from the models you've
 actually pulled (`ollama list`) — no need to hardcode `OLLAMA_MODEL`. If your server runs
 somewhere else, change its address in Settings or set `OLLAMA_BASE_URL` in `.env.local`.
-Desktop credentials are saved in the app's local user-data folder with restrictive file permissions and synchronized
-to the local backend without restarting PhraseLoop. Ollama uses its OpenAI-compatible endpoint, so structured-output quality
+Desktop credentials are saved without encryption in the app's local user-data folder with owner-only
+file permissions (`0600`) and synchronized to the local backend without restarting PhraseLoop.
+The app does not access the OS keychain or request the Mac login password. Keys encrypted by older
+versions must be pasted again in Settings; their stored ciphertext is preserved until replaced or removed. Ollama uses its OpenAI-compatible endpoint, so structured-output quality
 depends on the model: prefer an instruction-tuned one that handles JSON well (e.g. `llama3.1`,
 `qwen2.5`).
 

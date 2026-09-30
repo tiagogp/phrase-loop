@@ -104,7 +104,7 @@ export default function OnboardingDialog({ onStart }: Readonly<{ onStart: () => 
       <div>
         <p className="text-xs uppercase tracking-widest text-accent">{t("Welcome")}</p>
         <h2 id="welcome-title" className="mt-2 text-2xl font-semibold text-ink">{t("One situation. One answer of your own.")}</h2>
-        <p className="mt-3 text-sm leading-relaxed text-ink-soft">{t(hasAi ? "Try a short answer in English, understand one adjustment, and try again. Your next practice starts from what you did today." : "Start with a guided lesson: understand useful phrases, listen, and practice remembering. You can connect an AI later for personal feedback.")}</p>
+        <p className="mt-3 text-sm leading-relaxed text-ink-soft">{t(hasAi ? "Try a short answer in English, understand one adjustment, and try again. Your next practice starts from what you did today." : "Start with one useful phrase. Try remembering it and keep it for another day. You can connect an AI later for personal feedback.")}</p>
         <p className="mt-3 text-xs text-ink-muted">{t("Start with {level} English. You can change your level and goal whenever you need.", { level })}</p>
       </div>
       <Disclosure title={t("Adjust my starting point")} className="mt-5" contentClassName="space-y-5" nested>

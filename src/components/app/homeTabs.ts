@@ -1,7 +1,8 @@
 /** Stable destinations: core features never disappear behind a level or activity gate. */
 export const HOME_TABS = [
   { id: "hoje", label: "Today" },
-  { id: "study", label: "Phrases" },
+  { id: "study", label: "My library" },
+  { id: "explore", label: "Explore" },
   { id: "conversa", label: "Talk" },
   { id: "discover", label: "Content" },
   { id: "progress", label: "Progress" },

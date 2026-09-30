@@ -1,8 +1,7 @@
 "use client";
 
-import Disclosure from "@/components/ui/Disclosure";
 
-import { useRef, useState, type KeyboardEvent } from "react";
+import { useRef, type KeyboardEvent } from "react";
 import { cn } from "@/lib/cn";
 import { useT } from "@/i18n/I18nProvider";
 
@@ -16,19 +15,17 @@ interface ReviewWorkspaceNavProps {
   onChange: (view: ReviewView) => void;
 }
 
-export function ReviewWorkspaceNav({ value, due, onChange, hasPractice = true }: ReviewWorkspaceNavProps) {
+export function ReviewWorkspaceNav({ value, due, onChange }: ReviewWorkspaceNavProps) {
   const { t } = useT();
-  const [moreOpen, setMoreOpen] = useState(false);
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
   const allOptions: { value: ReviewView; label: string; count?: number }[] = [
+    { value: "library", label: t("Library") },
     { value: "review", label: t("Review"), count: due },
     { value: "use", label: t("Use it") },
-    { value: "progress", label: t("Focus") },
-    { value: "library", label: t("Library") },
+    { value: "progress", label: t("Difficulties") },
   ];
 
-  const options = hasPractice ? allOptions : allOptions.filter(option => option.value === "review" || option.value === "library" || option.value === value);
-  const moreOptions = allOptions.filter(option => !options.includes(option));
+  const options = allOptions;
 
   const select = (index: number) => {
     onChange(options[index].value);
@@ -92,13 +89,7 @@ export function ReviewWorkspaceNav({ value, due, onChange, hasPractice = true }:
           );
         })}
       </div>
-      {moreOptions.length > 0 && <Disclosure title={t("More ways to practice")} className="mt-2" open={moreOpen} onOpenChange={setMoreOpen}>
-        <div className="flex flex-wrap gap-2">{moreOptions.map(option => <button key={option.value} id={`review-view-tab-${option.value}`} type="button" className="min-h-10 rounded-md px-3 text-sm text-ink hover:bg-accent/5" onClick={() => {
-          setMoreOpen(false);
-          onChange(option.value);
-          requestAnimationFrame(() => document.getElementById(`review-view-tab-${option.value}`)?.focus());
-        }}>{option.label}</button>)}</div>
-      </Disclosure>}
+
     </div>
   );
 }

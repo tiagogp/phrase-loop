@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { computeUnlockedTabTier, tabsForUnlockTier } from "./useUnlockedTabs";
 
 describe("stable learning navigation", () => {
-  const destinations = ["hoje", "study", "conversa", "discover", "progress"];
+  const destinations = ["hoje", "study", "explore", "conversa", "discover", "progress"];
   it("keeps core destinations visible from day one, including progress and conversation", () => {
     expect(tabsForUnlockTier(0)).toEqual(destinations);
   });

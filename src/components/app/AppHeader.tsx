@@ -50,8 +50,9 @@ export default function AppHeader({
   const isClient = useIsClient();
   const isDark = isClient && resolvedTheme === "dark";
   const exploreRef = useRef<HTMLDetailsElement>(null);
-  const tabs = focusedNavigation ? allTabs.filter(tab => tab.id === "hoje" || tab.id === "study" || tab.id === activeTab) : allTabs;
-  const moreTabs = allTabs.filter(tab => !tabs.includes(tab));
+  const tabs = focusedNavigation ? allTabs.filter(tab => tab.id === "hoje" || tab.id === "study" || tab.id === "explore") : allTabs;
+  const moreTabs = tabs.some(tab => tab.id === "explore") ? [] : allTabs.filter(tab => !tabs.includes(tab));
+  const selectedTab = tabs.some(tab => tab.id === activeTab) ? activeTab : "explore";
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   useEffect(() => {
@@ -125,7 +126,7 @@ export default function AppHeader({
           data-ignore-window-double-click="true"
         >
           {tabs.map((tab, index) => {
-            const active = activeTab === tab.id;
+            const active = selectedTab === tab.id;
             const badge = badges?.[tab.id] ?? 0;
             return (
               <button
@@ -140,7 +141,7 @@ export default function AppHeader({
                 data-active={active}
                 role="tab"
                 aria-selected={active && !settingsOpen}
-                aria-controls={`panel-${tab.id}`}
+                aria-controls={`panel-${active ? activeTab : tab.id}`}
                 aria-label={badge > 0 ? t("{label}, {count} due", { label: t(tab.label), count: badge }) : t(tab.label)}
                 tabIndex={active ? 0 : -1}
                 type="button"

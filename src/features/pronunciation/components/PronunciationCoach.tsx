@@ -359,10 +359,10 @@ export function PronunciationCoach({
         </Button>
       </div>
 
-      {micFallbackAvailable({ allowTypedFallback, micDenied }) && !fallbackUsed && (
+      {(allowTypedFallback || micFallbackAvailable({ allowTypedFallback, micDenied })) && !fallbackUsed && (
         <div className="space-y-2 rounded border border-accent/30 bg-accent/5 p-3">
           <p className="text-xs text-ink-soft">
-            {t("Microphone access was denied. Type the phrase back once to continue with an accessibility fallback.")}
+            {t("Prefer typing? Type the phrase once to continue without a microphone.")}
           </p>
           <input
             value={fallbackText}

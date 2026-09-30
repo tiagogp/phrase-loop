@@ -65,7 +65,7 @@ const keyFields = {
   openrouter: "openrouterApiKey",
 } as const;
 
-/** Checking the UI status must never unlock the macOS keychain. */
+/** Checking the UI status must never fetch saved API keys. */
 export function isProviderConfigured(kind: "claude" | "openai" | "openrouter"): boolean {
   return Boolean(store().settings.configuredProviders?.[kind] || getProviderApiKey(kind));
 }
@@ -91,7 +91,7 @@ export async function ensureProviderApiKey(kind: "claude" | "openai" | "openrout
           }
         }
       } catch {
-        // A denied or unavailable keychain leaves environment credentials usable.
+        // An unavailable desktop secret service leaves environment credentials usable.
       }
     }
   }

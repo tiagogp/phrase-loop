@@ -97,6 +97,8 @@ export function DeckPreview({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <details className="relative"><summary className="cursor-pointer rounded-md px-3 py-2 text-xs text-ink-muted">{t("Export")}</summary>
+            <div className="absolute right-0 top-full z-20 flex min-w-48 flex-col rounded-lg border border-line bg-card p-2 shadow-lg">
           {data.apkg && (
             <>
               <Button
@@ -131,6 +133,8 @@ export function DeckPreview({
           >
             {t("Text")}
           </Button>
+            </div>
+          </details>
           <Button
             variant="primary"
             size="sm"

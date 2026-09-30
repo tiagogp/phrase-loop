@@ -24,7 +24,7 @@ function nextTaskId(tasks: TaskItem[], nextRoute?: MethodRoute): string | null {
   const open = tasks.filter((task) => task.completedAt == null);
   if (open.length === 0) return null;
   const preferred = nextRoute ? open.find((task) => ROUTE_TASK_TYPES[nextRoute].includes(task.type)) : undefined;
-  return (preferred ?? open[0]).id;
+  return nextRoute ? (preferred ?? open[0]).id : null;
 }
 
 /** The plan's executable front door: every task has a real destination and completion is evidence-driven. */
@@ -41,9 +41,10 @@ export function TodayPlanCard({
   nextRoute?: MethodRoute;
 }) {
   const { t } = useT();
-  const { loading, plan, today, isPlanConcluded, refresh } = useTodayPlan();
+  const { loading, error, plan, today, isPlanConcluded, refresh } = useTodayPlan();
 
-  if (loading) return null;
+  if (loading) return <p role="status">{t("Loading…")}</p>;
+  if (error) return <Card className="space-y-3 p-5"><p role="alert">{t("Could not load your plan. Your practice is still available in Today.")}</p><Button onClick={() => void refresh()}>{t("Try again")}</Button></Card>;
   if (!plan || isPlanConcluded || !today) {
     return (
       <Card className="space-y-3 p-5">

@@ -90,14 +90,25 @@ os resultados específicos do tutor ficam em seu próprio contrato.
 ## Primeira experiência e descoberta
 
 Uma tela curta de boas-vindas oferece começar, personalizar ou explorar. Com IA, começar abre
-a situação recomendada; sem IA, abre uma lição local. Nível, objetivo, tempo, CEFR, provedores
+a situação recomendada; sem IA, abre uma prática local curta: ver uma frase, tentar lembrar,
+salvar a tentativa e encerrar. A lição completa continua acessível em Explorar e ao final dessa
+prática. A tentativa após ver o exemplo é registrada com apoio, sem alegação de recuperação
+independente. Nível, objetivo, tempo, CEFR, provedores
 e Anki não devem competir com a primeira resposta. Tempo de 5/10/20 minutos orienta o tamanho
 da prática, sem prometer duração exata.
 
-Hoje e Frases formam a navegação essencial. Conteúdo, Conversa e Progresso ficam acessíveis
-em Explorar; “Mostrar todos os atalhos” funciona desde o início. Configurações mantém perfil,
+Hoje, Minha biblioteca e Explorar formam uma navegação estável. Minha biblioteca reúne
+frases salvas, revisão, uso e dificuldades. Explorar agrupa os destinos por intenção:
+praticar, trazer conteúdo, acompanhar aprendizado e ferramentas. Conteúdo, Conversa,
+Progresso, lições completas, correção, temas, plano, C1, áudio e Anki continuam acessíveis;
+“Mostrar todos os atalhos” funciona desde o início e só expande a navegação, não a tela Hoje.
+Configurações mantém perfil,
 conexão, ferramentas, C1 experimental, backup e exclusão acessíveis. Familiaridade nunca
 bloqueia uma ferramenta nem equivale a proficiência em inglês.
+
+Em A1 e A2, o idioma da interface pode ser escolhido em Configurações; perfis sem preferência
+usam o idioma nativo como padrão. A partir do B1, a interface muda automaticamente para inglês,
+inclusive em perfis com uma preferência anterior por português.
 
 ### Estados de experiência
 
@@ -105,7 +116,7 @@ Estados são derivados dos registros existentes. Não criar níveis pedagógicos
 
 | Estado | Aprendeu | Visível e reduzido | Próxima ação | Condição de transição |
 | --- | --- | --- | --- | --- |
-| NEW_USER · maturidade 0 | Ainda sem ação observável | Hoje, Frases, ação inicial; demais destinos em Explorar | Responder ou iniciar apoio local | Sessão iniciada, produção ou frase salva |
+| NEW_USER · maturidade 0 | Ainda sem ação observável | Hoje, Minha biblioteca, Explorar e uma ação inicial | Responder ou iniciar apoio local | Sessão iniciada, produção ou frase salva |
 | FIRST_ACTION · maturidade 0 | Encontrou um ponto de partida | Retomar atividade; ferramentas sob demanda | Receber feedback / revisar a frase | Tentativa avaliada elegível ou revisão da frase |
 | FIRST_RESULT · maturidade 1 | Viu retorno sobre uma tentativa | Feedback, retry, ajuda contextual | Reconstruir e encerrar | Sessão completa com tentativa válida e retry, ou resposta inicial atendida; caminho local exige salvar e revisar a mesma frase |
 | FIRST_LOOP_COMPLETE · maturidade 1 | Conhece um ciclo | Data de retorno, resultado, uma descoberta | Voltar quando houver prática devida | Nova prática em outro dia, pelo menos 24h após ciclo anterior |
@@ -116,11 +127,16 @@ Uma resposta incerta, contestada ou excluída não estabelece primeiro resultado
 
 ### Regras de apresentação
 
-- Hoje oferece uma ação dominante e no máximo uma descoberta contextual. Após a prática,
-  há um lugar claro para parar e uma data de retorno.
+- Hoje oferece uma ação dominante: retomar sessão, reconhecer a prática concluída, retomar
+  habilidade devida, revisar um lote limitado, usar uma ideia, seguir o plano ou iniciar uma
+  situação/prática local. A agenda fica em “Meu objetivo e plano”, sem outra recomendação
+  concorrente. Há no máximo uma descoberta contextual após concluir.
+- Após a prática há um lugar claro para parar, mesmo com outras revisões pendentes. Mostrar
+  uma data quando existir agendamento; a conclusão introdutória não altera a agenda FSRS.
+  Falha do tutor oferece prática local mantendo a sessão e a resposta existentes.
 - Dica permanece acessível; pergunta livre, histórico, estatísticas e parâmetros ficam sob demanda.
   Feedback, contestação e falhas operacionais permanecem encontráveis.
-- Frases vazias têm uma explicação e uma ação de lição. Biblioteca sempre acessível; busca só
+- Biblioteca vazia tem uma explicação e uma ação de prática curta. Biblioteca sempre acessível; busca só
   com material. Conteúdo prioriza captura manual e abre importação por intenção ou prefill.
 - Conversa começa com um cenário; parceiro, modo e nível ficam em ajustes opcionais.
 - Progresso vazio orienta a primeira prática. Com histórico, habilidades e respostas vêm antes

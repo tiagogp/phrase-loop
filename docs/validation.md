@@ -8,12 +8,19 @@ Critérios de evidência do app estão em [product.md](product.md#evidência-e-a
 
 Observar alunos A2–B1 com necessidades profissionais no percurso atual: boas-vindas →
 resposta própria → feedback → retry → encerramento → retorno elegível em outro dia.
-O caminho sem IA deve permitir lição, frase salva e revisão da mesma frase.
+O caminho sem IA começa com uma prática curta: uma frase, tentativa com apoio, agendamento
+e encerramento. As lições completas continuam disponíveis em Explorar.
 
 Perguntas: a pessoa começa sem orientação externa, entende o ajuste, reconhece a razão da
 retomada e aponta uma resposta concreta com menos apoio? Registrar abandono por excesso de
 opções, conexão, dificuldade ou falha técnica. Medir tempo até tentativa e resultado válido,
 retry/conclusão e retorno D1/D7, sem criar telemetria externa por esta documentação.
+
+Verificar também a hierarquia da experiência: em cinco segundos a pessoa identifica a
+ação em Hoje? Encontra uma ferramenta específica em Explorar sem ajuda? Entende que pode
+encerrar mesmo com revisão pendente? Ao retornar, reconhece a continuidade da prática?
+Registrar tempo até a primeira tentativa, primeira prática salva, abandono antes da tentativa,
+trocas de seção antes de começar e retorno em outro dia. Contagens de uso não provam aprendizado.
 
 A proposta exploratória anterior de 8–12 participantes por duas semanas serve para descoberta,
 não para alegações causais. Usar tarefas equivalentes inéditas, amostras de áudio/escrita/fala,

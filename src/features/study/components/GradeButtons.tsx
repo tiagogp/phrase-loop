@@ -34,7 +34,7 @@ export function GradeButtons({
 }) {
   const { t } = useT();
   return (
-    <div className="grid grid-cols-4 gap-2">
+    <div className="space-y-2"><p className="text-xs text-ink-muted">{t("How did remembering feel? This sets the next review.")}</p><div className="grid grid-cols-4 gap-2">
       {GRADES.map((grade) => (
         <motion.button
           key={grade}
@@ -53,6 +53,6 @@ export function GradeButtons({
           <span className="tabular-nums opacity-70">{previewInterval(srs, grade)}</span>
         </motion.button>
       ))}
-    </div>
+    </div></div>
   );
 }

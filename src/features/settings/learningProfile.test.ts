@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { resolveInterfaceLang } from "@/i18n/config";
 import {
   completeOnboarding,
   getLearningProfile,
@@ -51,6 +52,29 @@ describe("learning profile", () => {
       onboardingCompleted: false,
       unlockedTabTier: 0,
     });
+  });
+
+  it("switches to English at B1 without losing the preference for lower levels", () => {
+    installStorage();
+    saveLearningProfile({ level: "A2", interfaceLang: "pt" });
+    expect(resolveInterfaceLang(getLearningProfile())).toBe("pt");
+    saveLearningProfile({ level: "B1" });
+    expect(getLearningProfile().interfaceLang).toBe("pt");
+    expect(resolveInterfaceLang(getLearningProfile())).toBe("en");
+    saveLearningProfile({ level: "A2" });
+    expect(resolveInterfaceLang(getLearningProfile())).toBe("pt");
+    saveLearningProfile({ interfaceLang: "en" });
+    saveLearningProfile({ level: "A1" });
+    expect(getLearningProfile().interfaceLang).toBe("en");
+    expect(resolveInterfaceLang(getLearningProfile())).toBe("en");
+  });
+
+  it.each([undefined, "pt"])("opens saved B1 profiles in English with preference %s", (interfaceLang) => {
+    const store = installStorage();
+    store.setItem("phraseloop.learningProfile.v1", JSON.stringify({
+      level: "B1", nativeLang: "pt", interfaceLang,
+    }));
+    expect(resolveInterfaceLang(getLearningProfile())).toBe("en");
   });
 
   it("clamps the weekly goal and persists it through the existing goal key", () => {

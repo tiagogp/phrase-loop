@@ -82,14 +82,14 @@ export function Segmented<T extends string>({
             onKeyDown={(event) => onKeyDown(event, index)}
             className={cn(
               "relative z-10 min-h-9 pointer-coarse:min-h-11 min-w-0 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.97]",
-              active ? "text-ink" : "text-ink-muted enabled:hover:text-ink",
+              active ? "text-ink dark:text-surface" : "text-ink-muted enabled:hover:text-ink",
             )}
           >
             {active && (
               <m.span
                 layoutId={layoutId}
                 aria-hidden
-                className="absolute inset-0 -z-10 rounded-md bg-card shadow-[0_1px_4px_rgb(0_0_0/0.08)]"
+                className="absolute inset-0 -z-10 rounded-md bg-card shadow-[0_1px_4px_rgb(0_0_0/0.08)] dark:bg-ink"
                 transition={springSnappy}
               />
             )}
