@@ -1,5 +1,7 @@
 "use client";
 
+import Disclosure from "@/components/ui/Disclosure";
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card as PanelCard } from "@/components/ui/Card";
@@ -577,6 +579,7 @@ function LessonViewContent({
               })}{" "}
               {t("Playback {rate}%", { rate: Math.round(support.listening.playbackRate * 100) })}
             </p>
+            <Disclosure title={t("Listening details")} className="mt-3" nested>
             <p className="mt-1 text-xs text-ink-muted">
               {t("Input profile: {speaker} speakers · transcript {transcript} · connected speech {connected}", {
                 speaker: t(SPEAKER_FAMILIARITY_LABEL[listeningChallenge.synthesized ? "familiar" : "mixed"]),
@@ -584,6 +587,7 @@ function LessonViewContent({
                 connected: support.listening.connectedSpeech ? t("on") : t("off"),
               })}
             </p>
+            </Disclosure>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">

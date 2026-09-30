@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import Select from "@/components/ui/Select";
 import ProviderBadge from "@/components/ui/ProviderBadge";
 import { useT } from "@/i18n/I18nProvider";
@@ -11,6 +12,7 @@ type Selection = ReturnType<typeof useProviderSelection>;
 /** IA + Ollama model pickers, shared by Discover and Correct. */
 export function ProviderPicker({ selection, disabled }: { selection: Selection; disabled?: boolean }) {
   const { t } = useT();
+  const id = useId();
   const {
     providers,
     provider,
@@ -34,10 +36,12 @@ export function ProviderPicker({ selection, disabled }: { selection: Selection; 
       {selectableProviders.length > 1 && (
         <div className="grid grid-rows-[1.625rem_auto] gap-1.5">
           <div className="flex min-w-0 items-center gap-2">
-            <label className="text-xs font-medium text-ink-muted">{t("AI")}</label>
+            <label htmlFor={`${id}-provider`} className="text-xs font-medium text-ink-muted">{t("AI")}</label>
             {activeProvider && <ProviderBadge isLocal={activeProvider.isLocal} available={activeProvider.available} />}
           </div>
           <Select
+            id={`${id}-provider`}
+            aria-label={t("AI")}
             value={selectValue}
             onChange={(value) => setProviderOverride(value as ProviderKind)}
             options={selectableProviders.map((entry) => ({
@@ -52,9 +56,11 @@ export function ProviderPicker({ selection, disabled }: { selection: Selection; 
       {showModelPicker && (
         <div className="grid grid-rows-[1.625rem_auto] gap-1.5">
           <div className="flex min-w-0 items-center gap-2">
-            <label className="text-xs font-medium text-ink-muted">{t("Ollama model")}</label>
+            <label htmlFor={`${id}-model`} className="text-xs font-medium text-ink-muted">{t("Ollama model")}</label>
           </div>
           <Select
+            id={`${id}-model`}
+            aria-label={t("Ollama model")}
             value={selectedModel}
             onChange={setOllamaModel}
             options={ollamaModels.map((model) => ({ value: model, label: model }))}

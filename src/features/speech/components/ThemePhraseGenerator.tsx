@@ -15,6 +15,7 @@ import { getLearnerLangs } from "@/features/settings/learningProfile";
 import { ProviderPicker } from "@/features/cards/components/ProviderPicker";
 import { DeckPreview } from "@/features/cards/components/DeckPreview";
 import type { DeckPayload } from "@/features/cards/exportDeck";
+import { useT } from "@/i18n/I18nProvider";
 
 interface ThemeResponse {
   sourceId: string;
@@ -29,10 +30,12 @@ interface GenerateResponse extends DeckPayload {
 }
 
 export default function ThemePhraseGenerator({ embedded = false }: { embedded?: boolean }) {
+  const { t } = useT();
   const selection = useProviderSelection({ fallbackToEvaluator: true });
   const { provider, selectedModel, providerReady } = selection;
   const [theme, setTheme] = useState("");
   const [count, setCount] = useState(10);
+  const countValid = Number.isInteger(count) && count >= 3 && count <= 20;
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +52,7 @@ export default function ThemePhraseGenerator({ embedded = false }: { embedded?: 
   );
 
   const generatePhrases = async () => {
-    if (!theme.trim() || !providerReady) return;
+    if (!theme.trim() || !providerReady || !countValid) return;
     setLoading(true);
     setError(null);
     setResult(null);
@@ -70,11 +73,11 @@ export default function ThemePhraseGenerator({ embedded = false }: { embedded?: 
         }),
       });
       const data = (await response.json().catch(() => ({}))) as ThemeResponse;
-      if (!response.ok) throw new Error(data.error ?? "Could not generate phrases.");
+      if (!response.ok) throw new Error(data.error ?? t("Could not generate phrases."));
       setResult(data);
       setKept(new Set(data.candidates.map((candidate) => candidate.id)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not generate phrases.");
+      setError(err instanceof Error ? err.message : t("Could not generate phrases."));
     } finally {
       setLoading(false);
     }
@@ -103,10 +106,10 @@ export default function ThemePhraseGenerator({ embedded = false }: { embedded?: 
         }),
       });
       const data = (await response.json().catch(() => ({}))) as GenerateResponse;
-      if (!response.ok) throw new Error(data.error ?? "Could not generate cards.");
+      if (!response.ok) throw new Error(data.error ?? t("Could not generate cards."));
       setDeckPreview({ data, candidates: keptCandidates });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not generate cards.");
+      setError(err instanceof Error ? err.message : t("Could not generate cards."));
     } finally {
       setGenerating(false);
     }
@@ -124,16 +127,16 @@ export default function ThemePhraseGenerator({ embedded = false }: { embedded?: 
   return (
     <div className={embedded ? "space-y-4" : "space-y-4 rounded-lg border border-line bg-card p-5"}>
       <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_7rem_auto]">
-        <Field label="Theme" htmlFor="theme-phrase-input">
+        <Field label={t("Theme")} htmlFor="theme-phrase-input">
           <Input
             id="theme-phrase-input"
             value={theme}
             onChange={(event) => setTheme(event.target.value)}
-            placeholder="ordering at a restaurant"
+            placeholder={t("ordering at a restaurant")}
             disabled={loading || generating}
           />
         </Field>
-        <Field label="Phrases" htmlFor="theme-phrase-count">
+        <Field label={t("Phrases")} htmlFor="theme-phrase-count" error={!countValid ? t("Choose 3 to 20 phrases.") : undefined}>
           <Input
             id="theme-phrase-count"
             type="number"
@@ -147,11 +150,13 @@ export default function ThemePhraseGenerator({ embedded = false }: { embedded?: 
         <div className="flex items-end">
           <Button
             variant="primary"
-            className="h-10"
-            disabled={!theme.trim() || loading || generating || !providerReady}
+            className="min-h-11"
+            aria-busy={loading}
+            disabled={!theme.trim() || loading || generating || !providerReady || !countValid}
             onClick={() => void generatePhrases()}
           >
-            {loading ? <Spinner className="h-3.5 w-3.5" /> : "Generate"}
+            {loading && <Spinner className="h-3.5 w-3.5" />}
+            {loading ? t("Generating…") : t("Generate")}
           </Button>
         </div>
       </div>
@@ -170,18 +175,18 @@ export default function ThemePhraseGenerator({ embedded = false }: { embedded?: 
               disabled={keptCandidates.length === 0 || generating}
               onClick={() => void generateDeck()}
             >
-              {generating ? "Creating…" : `Make study list (${keptCandidates.length})`}
+              {generating ? t("Creating…") : t("Make study list ({count})", { count: keptCandidates.length })}
             </Button>
           </div>
           <ul className="divide-y divide-line">
             {result.candidates.map((candidate) => (
               <li key={candidate.id} className="flex items-start gap-3 px-4 py-2.5">
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 [overflow-wrap:anywhere]">
                   <p className="text-sm text-ink">{candidate.text}</p>
                   {candidate.note && <p className="text-xs text-ink-muted">{candidate.note}</p>}
                 </div>
                 <Chip active={kept.has(candidate.id)} onClick={() => toggle(candidate.id)}>
-                  {kept.has(candidate.id) ? "Saved" : "Save"}
+                  {kept.has(candidate.id) ? t("Selected") : t("Select")}
                 </Chip>
               </li>
             ))}
@@ -191,7 +196,7 @@ export default function ThemePhraseGenerator({ embedded = false }: { embedded?: 
 
       {deckPreview && (
         <DeckPreview
-          title="Theme study list preview"
+          title={t("Theme study list preview")}
           data={deckPreview.data}
           defaultFilename={`${result?.title || "Theme study list"}.apkg`}
           persist={(cards) => saveGeneratedDeck(cards, deckPreview.candidates)}

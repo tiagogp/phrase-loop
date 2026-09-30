@@ -9,6 +9,7 @@
  */
 
 import { useCallback, useMemo, useState } from "react";
+import { LoadingStatus } from "@/components/ui/LoadingStatus";
 import { Button } from "@/components/ui/Button";
 import { Card as UiCard } from "@/components/ui/Card";
 import { useT } from "@/i18n/I18nProvider";
@@ -175,9 +176,9 @@ export function LevelTestFlow({ currentLevel, targetLevel, focusGaps, onClose }:
       )}
 
       {(stage === "generating" || stage === "grading") && (
-        <p className="text-xs text-ink-muted">
+        <LoadingStatus>
           {stage === "generating" ? t("Preparing your test…") : t("Evaluating your writing…")}
-        </p>
+        </LoadingStatus>
       )}
 
       {stage === "comprehension" && test && (

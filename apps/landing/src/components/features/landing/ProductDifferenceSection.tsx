@@ -12,7 +12,7 @@ import { Reveal, SectionLabel } from "./LandingPrimitives";
 
 const PRODUCT_PATHS = [
   ["Entrada", "YouTube, artigos, PDFs, escrita e frases avulsas"],
-  ["Prática", "Cards com áudio, revisão e treino dos seus erros"],
+  ["Prática", "Situação, resposta, feedback, retry e retomada"],
 ] as const;
 
 export function ProductDifferenceSection({ language }: { language: LandingLanguage }) {
@@ -25,21 +25,21 @@ export function ProductDifferenceSection({ language }: { language: LandingLangua
           <div>
             <SectionLabel>{t("O ciclo completo de aprendizagem")}</SectionLabel>
             <h2 className="brand-wordmark text-4xl font-normal leading-[0.95] text-ink sm:text-5xl">
-              {t("Mais do que transformar texto em voz.")}
+              {t("O próximo esforço parte da sua resposta.")}
             </h2>
           </div>
           <p className="text-lg leading-8 text-ink-soft">
-            {t("O PhraseLoop conecta conteúdo real, frases escolhidas, cards com áudio, revisão espaçada e treinos criados a partir do que você erra.")}
+            {t("O tutor liga tentativa, dificuldade e retomada. Conteúdo, frases com áudio e revisões ajudam você a praticar entre essas oportunidades.")}
           </p>
         </div>
         <div className="mt-8 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
           <motion.div className="rounded-lg border border-line bg-card p-6 sm:p-8" style={warmPatternStyle} whileHover={cardHover}>
             <p className="text-sm font-semibold text-accent">{t("A diferença do produto")}</p>
             <h3 className="brand-wordmark mt-4 text-3xl font-normal leading-[0.98] text-ink sm:text-4xl">
-              {t("Você não estuda frases aleatórias. Estuda o que já encontrou, ouviu, guardou e precisa usar de novo.")}
+              {t("Veja o que conseguiu com ajuda e o que conseguiu sozinho depois.")}
             </h3>
             <p className="mt-5 max-w-2xl text-base leading-7 text-ink-muted">
-              {t("O app mantém fonte, áudio, card e histórico conectados, em vez de espalhar sua prática por várias ferramentas.")}
+              {t("O histórico guarda suas respostas, o apoio usado e a habilidade trabalhada para orientar quando e como voltar a ela.")}
             </p>
           </motion.div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
@@ -52,7 +52,7 @@ export function ProductDifferenceSection({ language }: { language: LandingLangua
           </div>
         </div>
         <div className="mt-12 max-w-2xl">
-          <SectionLabel>{t("O que continua ligado à frase")}</SectionLabel>
+          <SectionLabel>{t("Ferramentas que apoiam sua prática")}</SectionLabel>
           <h3 className="brand-wordmark text-3xl font-normal leading-[0.98] text-ink sm:text-4xl">
             {t("As partes importantes ficam juntas.")}
           </h3>

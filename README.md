@@ -2,9 +2,9 @@
 
 PhraseLoop is a local-first app for Brazilian A2-B1 self-study learners who want to turn real English and their own mistakes into daily production practice: listen, save one useful phrase, produce English without help, get feedback, retry, and review at the right time.
 
-PhraseLoop starts with a bounded daily loop: choose 5, 10, or 20 minutes, recall a few due phrases, use one idea in a new situation, and return later to see what stayed. A first lesson gets an empty library started. Five stable destinations — Today, Practice, Talk, Content, and Progress — keep the next step clear. Kokoro audio and Anki export are always one click away.
+PhraseLoop starts with a bounded tutor session: respond to a situation, receive focused feedback, retry, and return later to practice the same skill in another context. With AI connected, Today opens the recommended task; without AI, a local lesson and phrase review provide a starting point. Today and Phrases keep navigation focused, while Explore gives access to Content, Talk, and Progress. All shortcuts can be shown from the start; Kokoro audio and Anki export remain available in tools.
 
-Progress shows the learner's actual answers: unaided recall, a linked improvement after feedback, and verified use in a new situation. Self-ratings and time spent are practice activity, not evidence of mastery. Weekly comparisons use matched phrases and evaluation conditions. See [the product review and implementation notes](docs/learning-loop-review.md).
+Progress shows the learner's actual answers: unaided recall, a linked improvement after feedback, and verified use in a new situation. Self-ratings and time spent are practice activity, not evidence of mastery. Weekly comparisons use matched phrases and evaluation conditions. See [the evidence criteria](docs/product.md#evidência-e-agenda).
 
 It is research-aligned, not a substitute for a class, teacher, or immersion, and not yet a proven learning-effectiveness claim. Launch validation is tracking retention, transfer, retry resolution, and unaided production rather than streaks or volume.
 
@@ -189,9 +189,9 @@ on first use and audio decoding uses in-process WebAssembly. YouTube import requ
 `yt-dlp` (`brew install yt-dlp`); ffmpeg is optional. Article and PDF import need neither.
 
 > Product direction, active priorities, and research-backed roadmap live in
-> [docs/product.md](docs/product.md). Architecture and shipped feature history live in
-> [docs/README.md](docs/README.md). Validation materials live in
-> [docs/validation-log.md](docs/validation-log.md) and [docs/learning-efficacy-experiment.md](docs/learning-efficacy-experiment.md).
+> [docs/product.md](docs/product.md). Architecture lives in
+> [docs/README.md](docs/README.md), validation protocols in [docs/validation.md](docs/validation.md),
+> and implementation records in [docs/history.md](docs/history.md).
 
 ## Advanced AI Providers
 

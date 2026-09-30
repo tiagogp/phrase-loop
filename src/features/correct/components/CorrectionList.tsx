@@ -12,7 +12,7 @@ import { errorTypeLabel } from "@/lib/cards/errorTypeLabels";
 import LocalModelNotice from "@/features/speech/components/LocalModelNotice";
 import type { useKokoroModel } from "@/features/speech/hooks/useLocalModel";
 import type { ErrorEvent } from "@/lib/cards/schema";
-import { countPolishFeedback, prioritizeFeedback } from "@/features/correct/feedbackContract";
+import { countPolishFeedback, prioritizeFeedback, FEEDBACK_CATEGORY_LABEL, FEEDBACK_PRIORITY_LABEL } from "@/features/correct/feedbackContract";
 
 interface CorrectionListProps {
   events: ErrorEvent[];
@@ -102,7 +102,7 @@ export function CorrectionList({
       )}
 
       {(genError || genDone) && (
-        <div className={cn("border-b border-line px-5 py-2.5 text-xs", genError ? "bg-danger/8 text-danger" : "text-ink-soft")}>
+        <div role={genError ? "alert" : "status"} className={cn("border-b border-line px-5 py-2.5 text-xs", genError ? "bg-danger/8 text-danger" : "text-ink-soft")}>
           {genError ?? genDone}
           {showSettingsLink && (
             <>
@@ -132,12 +132,12 @@ export function CorrectionList({
               exit={{ opacity: 0, height: 0, transition: tweenSmooth }}
               className="flex items-start gap-3 overflow-hidden border-b border-line px-5 py-3 transition-colors hover:bg-accent/3"
             >
-              <div className="min-w-0 flex-1 space-y-1">
+              <div className="min-w-0 flex-1 space-y-1 [overflow-wrap:anywhere]">
                 <p className="text-sm leading-relaxed text-ink-muted line-through">{issue.event.original}</p>
                 <p className="text-sm font-medium leading-relaxed text-ink">{issue.event.corrected}</p>
                 <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                  <span className="rounded border border-accent/30 px-1.5 py-0.5 text-xs text-accent">{issue.priority}</span>
-                  <span className="rounded border border-line px-1.5 py-0.5 text-xs text-ink-muted">{issue.category}</span>
+                  <span className="rounded border border-accent/30 px-1.5 py-0.5 text-xs text-accent">{t(FEEDBACK_PRIORITY_LABEL[issue.priority])}</span>
+                  <span className="rounded border border-line px-1.5 py-0.5 text-xs text-ink-muted">{t(FEEDBACK_CATEGORY_LABEL[issue.category])}</span>
                   {issue.event.errorTypes.map((type) => (
                     <span key={type} className="rounded border border-line px-1.5 py-0.5 text-xs text-ink-muted">
                       {t(errorTypeLabel(type))}
@@ -145,7 +145,7 @@ export function CorrectionList({
                   ))}
                   {issue.evidence && <span className="text-xs text-ink-muted">{issue.evidence}</span>}
                 </div>
-                <p className="text-[11px] text-ink-muted">{issue.suggestedRetrySupport}</p>
+                <p className="text-xs text-ink-muted">{t(issue.suggestedRetrySupport)}</p>
               </div>
               <Chip
                 className="mt-0.5 shrink-0"
@@ -163,10 +163,10 @@ export function CorrectionList({
         <div className="border-t border-line px-5 py-2.5">
           <button
             type="button"
-            className="text-xs text-ink-muted underline hover:no-underline"
+            className="min-h-11 text-xs text-ink-muted underline hover:no-underline"
             onClick={() => setShowPolish((value) => !value)}
           >
-            {showPolish ? t("Hide {count} minor polish issue(s)") : t("Show {count} minor polish issue(s)")}
+            {showPolish ? t("Hide {count} minor polish issue(s)", { count: polishCount }) : t("Show {count} minor polish issue(s)", { count: polishCount })}
           </button>
         </div>
       )}

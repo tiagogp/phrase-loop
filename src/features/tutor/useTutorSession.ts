@@ -16,7 +16,8 @@ export function useTutorSession(initial: TutorSession | null) {
   const [error, setError] = useState<string | null>(null);
   const [fatal, setFatal] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [pendingAction, setPendingAction] = useState<TutorRequest["action"] | null>(null);
+  const busy = pendingAction !== null;
   const request = useRef<AbortController | null>(null);
   useEffect(() => { alive.current = true; return () => { alive.current = false; request.current?.abort(); }; }, []);
 
@@ -40,7 +41,7 @@ export function useTutorSession(initial: TutorSession | null) {
     if (request.current || fatalRef.current) return null;
     const controller = new AbortController();
     request.current = controller;
-    setBusy(true); setError(null);
+    setPendingAction(input.action); setError(null);
     try {
       await queue.current;
       if (controller.signal.aborted) return null;
@@ -51,9 +52,9 @@ export function useTutorSession(initial: TutorSession | null) {
       return null;
     } finally {
       request.current = null;
-      if (alive.current) setBusy(false);
+      if (alive.current) setPendingAction(null);
     }
   }, []);
 
-  return { session, commit, call, busy, saving, fatal, error, setError, cancel: () => request.current?.abort(), current };
+  return { session, commit, call, busy, pendingAction, saving, fatal, error, setError, cancel: () => request.current?.abort(), current };
 }

@@ -3,21 +3,21 @@
   letter-spacing: 0;
 }
 
-html[data-electron="true"] header {
+html[data-electron="true"] .app-header {
   -webkit-app-region: drag;
 }
 
-html[data-electron="true"] header button,
-html[data-electron="true"] header a,
-html[data-electron="true"] header input,
-html[data-electron="true"] header select,
-html[data-electron="true"] header textarea,
-html[data-electron="true"] header [role="button"],
-html[data-electron="true"] header [data-no-window-drag="true"] {
+html[data-electron="true"] .app-header button,
+html[data-electron="true"] .app-header a,
+html[data-electron="true"] .app-header input,
+html[data-electron="true"] .app-header select,
+html[data-electron="true"] .app-header textarea,
+html[data-electron="true"] .app-header [role="button"],
+html[data-electron="true"] .app-header [data-no-window-drag="true"] {
   -webkit-app-region: no-drag;
 }
 
-html[data-electron="true"] header > div:first-child {
+html[data-electron="true"] .app-header > div:first-child {
   min-height: 56px;
 }
 
@@ -46,6 +46,32 @@ html[data-electron="true"] header > div:first-child {
 .app-header-nav {
   width: min(100%, 31rem);
   justify-self: center;
+}
+
+.app-explore > summary::-webkit-details-marker {
+  display: none;
+}
+
+.app-explore > summary svg {
+  transition: transform 180ms ease-out;
+}
+
+.app-explore[open] > summary {
+  color: var(--text-primary);
+  background-color: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.app-explore[open] > summary svg {
+  transform: rotate(180deg);
+}
+
+.app-explore[open] > .app-explore-menu {
+  animation: explore-reveal 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes explore-reveal {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /*
@@ -86,6 +112,14 @@ html[data-electron="true"] header > div:first-child {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .app-explore > summary svg {
+    transition: none;
+  }
+
+  .app-explore[open] > .app-explore-menu {
+    animation: none;
+  }
+
   .due-pulse {
     animation: none;
   }

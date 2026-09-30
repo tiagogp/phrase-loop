@@ -37,7 +37,28 @@ export function Modal({
 
   useEffect(() => {
     if (!open) return;
+    const panel = panelRef.current;
+    if (!panel) return;
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+    panel.focus();
+
+    // Hide the background from keyboard and assistive technology without hiding
+    // Select portals, which mount directly under body after the dialog opens.
+    const background: { element: HTMLElement; inert: boolean }[] = [];
+    let branch: HTMLElement = panel;
+    while (branch.parentElement && branch.parentElement !== document.body) {
+      for (const sibling of branch.parentElement.children) {
+        if (sibling instanceof HTMLElement && sibling !== branch) {
+          background.push({ element: sibling, inert: sibling.inert });
+          sibling.inert = true;
+        }
+      }
+      branch = branch.parentElement;
+    }
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     const onKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return;
       if (event.key === "Escape") {
         onCloseRef.current?.();
         return;
@@ -45,34 +66,40 @@ export function Modal({
       if (event.key !== "Tab") return;
       const panel = panelRef.current;
       if (!panel) return;
-      const focusable = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+      const focusable = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
+        .filter((element) => element.getClientRects().length > 0 && !element.closest('[inert], [hidden], [aria-hidden="true"]'));
       if (focusable.length === 0) {
         event.preventDefault();
+        panel.focus();
         return;
       }
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === panel)) {
         event.preventDefault();
         last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
+      } else if (!event.shiftKey && (document.activeElement === last || document.activeElement === panel)) {
         event.preventDefault();
         first.focus();
       }
     };
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      background.forEach(({ element, inert }) => { element.inert = inert; });
+      document.body.style.overflow = previousOverflow;
+      const previous = previouslyFocusedRef.current;
+      if (previous?.isConnected) previous.focus();
+      previouslyFocusedRef.current = null;
+    };
   }, [open]);
 
   useEffect(() => {
-    if (open) {
-      previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+    // A wizard step can remove the focused control while the dialog stays open.
+    if (open && document.activeElement === document.body) {
       panelRef.current?.focus();
-    } else if (previouslyFocusedRef.current) {
-      previouslyFocusedRef.current.focus();
-      previouslyFocusedRef.current = null;
     }
-  }, [open]);
+  });
 
   return (
     <AnimatePresence>
@@ -102,7 +129,7 @@ export function Modal({
               // The panel scrolls itself: a centred grid item taller than the viewport would
               // otherwise overflow a fixed overlay that has nowhere to scroll, silently cutting
               // off the end of long dialogs (the placement check's later items and its buttons).
-              "max-h-[calc(100dvh-2rem)] w-[min(100%,30rem)] overflow-y-auto overscroll-contain rounded-xl border border-line bg-card p-6 shadow-[0_20px_60px_rgb(0_0_0/0.25)] outline-none",
+              "max-h-[calc(100dvh-2rem)] w-[min(100%,30rem)] overflow-y-auto overscroll-contain rounded-xl border border-line bg-card p-4 sm:p-6 shadow-[0_20px_60px_rgb(0_0_0/0.25)] outline-none",
               className,
             )}
           >

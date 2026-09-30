@@ -29,9 +29,20 @@ describe("tutor API", () => {
     const evaluation = { ...input, action: "evaluate", task: tutorSession().task, text: tutorAttempt().text };
     const body = await (await POST(request(evaluation))).json();
     expect(body.feedback.status).toBe("uncertain");
-    expect(body.judge).toMatchObject({ by: "model", model: "resolved-model", promptVersion: "tutor-2026-09-29" });
+    expect(body.judge).toMatchObject({ by: "model", model: "resolved-model", promptVersion: "tutor-evidence-v2" });
     mocked.complete.mockResolvedValue(JSON.stringify({ ...feedback, points: [{ original: "words the learner never wrote", revised: "x", explanation: "y" }] }));
     expect((await POST(request(evaluation))).status).toBe(502);
+  });
+  it("requires a grounded skill diagnosis and strips invented scenario verification", async () => {
+    const evaluation = { ...input, action: "evaluate", task: tutorSession().task, text: "I want change my appointment." };
+    const feedback = { ...tutorAttempt().feedback, status: "partial", skill: { label: "Pedido", conceptId: "polite-requests", result: "needs_work", evidence: "I want change" }, points: [] };
+    mocked.complete.mockResolvedValueOnce(JSON.stringify(feedback));
+    expect((await POST(request(evaluation))).status).toBe(502);
+    mocked.complete.mockResolvedValueOnce(JSON.stringify({ ...feedback, points: [{ original: "I want change", revised: "Could I change", explanation: "Make a polite request." }] }));
+    expect((await POST(request(evaluation))).status).toBe(200);
+    mocked.complete.mockResolvedValueOnce(JSON.stringify({ ...tutorSession().task, scenarioId: "request-meeting-v1" }));
+    const body = await (await POST(request(input))).json();
+    expect(body.task.scenarioId).toBeUndefined();
   });
   it("answers a question without manufacturing or changing any score", async () => {
     mocked.complete.mockResolvedValue(JSON.stringify({ answer: "Use to before the action here." }));
@@ -41,6 +52,20 @@ describe("tutor API", () => {
   it("rejects a follow-up that repeats the exact old situation", async () => {
     mocked.complete.mockResolvedValue(JSON.stringify(tutorSession().task));
     const response = await POST(request({ ...input, context: { ...input.context, previousTask: tutorSession().task } }));
+    expect(response.status).toBe(502);
+  });
+  it("requires the same canonical concept when evaluating a follow-up", async () => {
+    const evaluation = { ...input, action: "evaluate", task: tutorSession().task, text: tutorAttempt().text,
+      context: { ...input.context, targetSkill: "Present perfect para duração", targetConceptId: "present-perfect-duration" } };
+    mocked.complete.mockResolvedValueOnce(JSON.stringify(tutorAttempt().feedback));
+    expect((await POST(request(evaluation))).status).toBe(502);
+    mocked.complete.mockResolvedValueOnce(JSON.stringify({ ...tutorAttempt().feedback,
+      skill: { label: "Outra descrição da mesma habilidade", conceptId: "present-perfect-duration", evidence: "", result: "demonstrated" } }));
+    expect((await POST(request(evaluation))).status).toBe(200);
+  });
+  it("keeps the skill name out of the follow-up prompt shown to the learner", async () => {
+    mocked.complete.mockResolvedValue(JSON.stringify({ ...tutorSession().task, situation: "Nova reunião de trabalho", instruction: "Use Present perfect para duração para explicar o trabalho remoto." }));
+    const response = await POST(request({ ...input, context: { ...input.context, targetSkill: "Present perfect para duração", previousTask: tutorSession().task } }));
     expect(response.status).toBe(502);
   });
   it("rejects oversized or unsupported requests before calling any provider", async () => {

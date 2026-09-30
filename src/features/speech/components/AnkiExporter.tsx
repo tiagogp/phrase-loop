@@ -1,5 +1,7 @@
 "use client";
 
+import Disclosure from "@/components/ui/Disclosure";
+
 import { useCallback, useId, useRef, useState } from "react";
 import { useTtsSettings } from "@/features/speech/context/TtsSettingsContext";
 import { useKokoroModel, type LocalModelState } from "@/features/speech/hooks/useLocalModel";
@@ -81,6 +83,7 @@ export default function AnkiExporter({
   const [deckName, setDeckName] = useState("English - new method");
   const [enKokoroSpeed, setEnKokoroSpeed] = useState("1.15");
   const [status, setStatus] = useState<ExportStatus>("idle");
+  const [exportOptionsOpen, setExportOptionsOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [loadingSaved, setLoadingSaved] = useState(false);
@@ -111,6 +114,7 @@ export default function AnkiExporter({
     } catch {
       setError(t("Could not load your practice history."));
       setStatus("error");
+      setExportOptionsOpen(true);
     } finally {
       setLoadingSaved(false);
     }
@@ -132,6 +136,7 @@ export default function AnkiExporter({
       if (nextFile && !isJsonFile(nextFile)) {
         setError("Please upload a .json file.");
         setStatus("error");
+        setExportOptionsOpen(true);
         return;
       }
       resetFeedback();
@@ -208,6 +213,7 @@ export default function AnkiExporter({
       setStatus("done");
     } catch (err) {
       setStatus("error");
+      setExportOptionsOpen(true);
       setError(err instanceof Error ? err.message : "Export failed.");
     }
   }, [deckName, enKokoroSpeed, file, jsonText, voice, model]);
@@ -230,7 +236,8 @@ export default function AnkiExporter({
         <Button variant="secondary" size="sm" onClick={() => void loadSaved()} disabled={loadingSaved || status === "exporting"}>{t(loadingSaved ? "Loading…" : "Use my saved phrases")}</Button>
         {savedCount !== null && <p role="status" className="text-xs text-ink-muted">{savedCount > 0 ? t("{count} phrases loaded. Review the list before exporting.", { count: savedCount }) : t("Your library is empty. Add a phrase in Content or paste a list below.")}</p>}
       </div>
-      <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-5">
+      <Disclosure title={t("Review phrase list and export options")} className="mb-4" contentClassName="space-y-4" open={exportOptionsOpen} onOpenChange={setExportOptionsOpen}>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         <div className="space-y-4 lg:col-span-3">
           <Field
             label={t("Phrase list (JSON)")}
@@ -268,7 +275,7 @@ export default function AnkiExporter({
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label={t("English voice")}>
+            <Field group label={t("English voice")}>
               <div className="w-full rounded-md border border-line bg-input px-3 py-2 text-sm text-ink">
                 {`Kokoro · ${voice}`}
               </div>
@@ -339,6 +346,10 @@ export default function AnkiExporter({
               </div>
             </button>
           </Field>
+        </div>
+      </div>
+      </Disclosure>
+      <div className="space-y-4">
           <LocalModelNotice model={model} />
 
           <Button
@@ -379,7 +390,6 @@ export default function AnkiExporter({
           <p className="text-xs text-ink-muted">
             {t("The first export may take a while while the voice model is prepared.")}
           </p>
-        </div>
       </div>
     </div>
   );

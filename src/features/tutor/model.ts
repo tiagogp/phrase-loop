@@ -1,3 +1,6 @@
+import type { UiLang } from "@/i18n/config";
+import { translate } from "@/i18n/translate";
+import { localizeTutorText } from "./localization";
 import type { Card } from "@/lib/cards/schema";
 import type { ProductionAttempt } from "@/lib/performance/types";
 import type { ReviewRecord } from "@/lib/store/repository";
@@ -7,6 +10,8 @@ import type { TutorAttempt, TutorObservation, TutorPreferences, TutorSession } f
 export const DEFAULT_TUTOR_PREFERENCES: TutorPreferences = { id: "preferences", goal: "", explanationLanguage: "pt", ignoredEvidenceIds: [] };
 export const feedbackLabels = { met: "Objetivo atendido", partial: "Objetivo parcialmente atendido", not_met: "Ainda não atendeu ao objetivo", uncertain: "Avaliação inconclusiva" };
 const DAY = 86_400_000;
+import { allowedTutorAttempt, tutorSkillEvidence, tutorSkillKey } from "./learning";
+export { skillFromFirstAttempt, tutorSkillEvidence } from "./learning";
 
 export function createTutorSession(input: Pick<TutorSession, "task" | "level" | "minutes" | "explanationLanguage" | "reason" | "evidence" | "parentSessionId" | "supportUsed" | "provider" | "model">): TutorSession {
   const now = Date.now();
@@ -60,23 +65,56 @@ export function phraseObservation(card: Card): TutorObservation {
     detail: (card.direction === "production" ? card.front : card.back).slice(0, 800), createdAt: card.createdAt, supported: null };
 }
 
-export function tutorRecommendation(sessions: TutorSession[], preferences: TutorPreferences, profile: LearningProfile, now: number) {
+export function tutorRecommendation(sessions: TutorSession[], preferences: TutorPreferences, profile: LearningProfile, now: number, lang: UiLang = "pt") {
   const sorted = [...sessions].sort((a, b) => b.updatedAt - a.updatedAt);
   const active = sorted.find(s => s.phase !== "complete");
-  const due = sorted.filter(s => s.phase === "complete" && s.nextReviewAt && s.nextReviewAt <= now && !s.revisitedAt
-    && !preferences.ignoredEvidenceIds.includes(`session:${s.id}`)).sort((a, b) => a.nextReviewAt! - b.nextReviewAt!)[0];
+  const latestBySkill = new Map<string, TutorSession>();
+  for (const session of [...sessions].sort((a, b) => (b.attempts.at(-1)?.createdAt ?? 0) - (a.attempts.at(-1)?.createdAt ?? 0))) {
+    if (session.phase !== "complete" || !session.attempts.length) continue;
+    const key = session.skill ? tutorSkillKey(session.skill) : session.id;
+    if (!latestBySkill.has(key)) latestBySkill.set(key, session);
+  }
+  const candidates = [...latestBySkill.values()].filter(s => !s.revisitedAt && !preferences.ignoredEvidenceIds.includes(`session:${s.id}`))
+    .map(session => ({ session, at: session.skill ? nextTutorReview(session, session.completedAt ?? session.updatedAt, sessions, preferences) : session.nextReviewAt }))
+    .filter((c): c is { session: TutorSession; at: number } => c.at !== undefined);
+  const priority = (s: TutorSession) => {
+    if (!s.skill) return 5;
+    const evidence = tutorSkillEvidence(sessions, s.skill, preferences);
+    if (evidence.state === "developing") return 0;
+    if (evidence.initialDifficulty && evidence.independent === 0) return 1;
+    if (evidence.initialDifficulty && evidence.transfers === 0) return 2;
+    return evidence.state === "consistent" ? 4 : 3;
+  };
+  const due = candidates.filter(c => c.at <= now).sort((a, b) => priority(a.session) - priority(b.session) || a.at - b.at)[0]?.session;
   if (active) return { active, due: undefined, focus: active.task.goal, reason: "Você tem uma sessão em andamento. Sua resposta e o apoio usado estão guardados." };
-  if (due) return { active: undefined, due, focus: due.task.goal, reason: `Você praticou este objetivo em ${new Date(due.completedAt ?? due.updatedAt).toLocaleDateString("pt-BR")}. Vamos tentar outra situação antes de ver um exemplo.` };
+  if (due) {
+    const evidence = due.skill ? tutorSkillEvidence(sessions, due.skill, preferences) : null;
+    const reason = !evidence?.initialDifficulty ? "Você já praticou este objetivo. Vamos observar o que consegue recuperar em outra ocasião."
+      : evidence.state === "developing" ? "A última dificuldade ainda precisa de prática. Vamos trabalhar uma situação curta."
+        : !evidence.independent ? "Você conseguiu com apoio. Agora é hora de tentar antes de ver um exemplo."
+          : !evidence.transfers ? "Você já conseguiu usar sozinho. Falta observar essa habilidade em um contexto novo verificado."
+            : "Você já usou esta habilidade em outra situação. Vamos verificar o que ficou depois de um intervalo.";
+    return { active: undefined, due, focus: due.task.goal, reason };
+  }
+  const upcoming = candidates.filter(c => c.at > now).sort((a, b) => a.at - b.at)[0];
   const customFocus = ["Conversation", "Travel", "Work", "Study & exams", "Movies & podcasts"].includes(profile.focus) ? "" : profile.focus;
-  const focus = preferences.goal || customFocus || ({ conversation: "Pedir e combinar algo do dia a dia", professional: "Resolver uma situação de trabalho", travel: "Resolver uma situação de viagem", academic: "Explicar uma ideia de estudo", media: "Contar com suas palavras algo que assistiu" }[profile.objective]);
-  return { active: undefined, due: undefined, focus: focus.slice(0, 500), reason: sorted.length ? "Vamos trabalhar seu objetivo com uma resposta própria. O tutor pode usar os registros que você permitir." : "Vamos começar pelo seu objetivo. A primeira resposta ajuda o tutor a conhecer o que você já consegue fazer." };
+  const focus = preferences.goal || customFocus || (profile.objective === "professional" || !profile.onboardingCompleted
+    ? "Contar sua experiência profissional" : ({ conversation: "Combinar algo com um colega", travel: "Resolver uma situação de viagem", academic: "Explicar uma ideia de estudo", media: "Contar com suas palavras algo que assistiu" }[profile.objective]));
+  return { active: undefined, due: undefined, focus: focus.slice(0, 500), reason: upcoming
+    ? translate(lang, "Your next revisit starts on {date}. Today you can practice a new situation.", { date: new Date(upcoming.at).toLocaleDateString(lang === "pt" ? "pt-BR" : "en-US") })
+    : "Uma situação curta para produzir inglês. Sua resposta vai orientar o que praticar depois." };
 }
 
-/** Deterministic follow-up policy, separate from FSRS and never a claim of mastery. */
-export function nextTutorReview(session: TutorSession, now: number): number | undefined {
-  const last = session.attempts.at(-1);
+/** Scheduling uses the same valid evidence and exposure history as Progress. */
+export function nextTutorReview(session: TutorSession, now: number, sessions: TutorSession[] = [], preferences?: TutorPreferences): number | undefined {
+  const valid = session.attempts.filter(a => allowedTutorAttempt(a, preferences));
+  const last = valid.at(-1);
   if (!last) return undefined;
-  return now + (last.feedback.status === "met" && !last.supportUsed && !last.disputed ? 3 : 1) * DAY;
+  const history = [...sessions.filter(s => s.id !== session.id), session];
+  const evidence = session.skill ? tutorSkillEvidence(history, session.skill, preferences) : null;
+  const days = last.supportUsed || evidence?.supportedAttemptIds.includes(last.id) || last.feedback.status !== "met" || (session.skill && last.feedback.skill?.result !== "demonstrated") ? 1
+    : evidence?.state === "consistent" ? 14 : evidence?.state === "transfer_observed" ? 7 : 3;
+  return Math.max(now + days * DAY, (evidence?.lastSupportAt ?? 0) + DAY);
 }
 
 export function tutorProduction(session: TutorSession, attempt: TutorAttempt): ProductionAttempt {
@@ -94,11 +132,17 @@ export function tutorProduction(session: TutorSession, attempt: TutorAttempt): P
   };
 }
 
-export function tutorSummary(session: TutorSession): string {
+export function tutorSummary(session: TutorSession, preferences?: TutorPreferences, lang: UiLang = "pt"): string {
   const first = session.attempts[0];
   const last = session.attempts.at(-1);
-  if (!first || !last) return "Você encerrou sem enviar uma resposta. Nenhum resultado de aprendizagem foi registrado.";
-  if (last.disputed) return "Você contestou a última avaliação. Ela não será usada para orientar o tutor.";
+  if (!first || !last) return localizeTutorText("Você encerrou sem enviar uma resposta. Nenhum resultado de aprendizagem foi registrado.", lang);
+  if (last.disputed) return localizeTutorText("Você contestou a última avaliação. Ela não será usada para orientar o tutor.", lang);
+  if (!allowedTutorAttempt(last, preferences)) return localizeTutorText("Você excluiu a última avaliação da memória. Ela não conta no progresso da habilidade.", lang);
   const result = feedbackLabels[last.feedback.status];
-  return `${session.attempts.length} ${session.attempts.length === 1 ? "resposta registrada" : "respostas registradas"}. ${result}, segundo a IA, ${last.supportUsed ? "após apoio ou feedback" : "sem pedir apoio nesta sessão"}. A retomada em outro dia dará uma nova oportunidade de observar o que ficou.`;
+  return translate(lang, "{count} {answers}. {result}, according to the AI, {support}. Revisiting on another day will give you another chance to see what stayed.", {
+    count: session.attempts.length,
+    answers: translate(lang, session.attempts.length === 1 ? "answer recorded" : "answers recorded"),
+    result: localizeTutorText(result, lang),
+    support: translate(lang, last.supportUsed ? "after support or feedback" : "without asking for support in this session"),
+  });
 }

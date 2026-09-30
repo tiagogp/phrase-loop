@@ -45,7 +45,7 @@ export function LandingFooter({ language, onSectionLinkClick }: LandingFooterPro
           onClick={(event) => onSectionLinkClick(event, "waitlist")}
           whileHover={hoverLift}
           whileTap={tapPress}
-          className="mt-7 inline-flex items-center justify-center rounded border border-accent bg-accent px-5 py-3 text-sm font-semibold text-white"
+          className="mt-7 inline-flex items-center justify-center rounded border border-accent bg-accent px-5 py-3 text-sm font-semibold text-accent-contrast"
         >
           {t("Entrar na lista de espera")}
         </motion.a>

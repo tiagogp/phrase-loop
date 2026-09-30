@@ -2,11 +2,35 @@ import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
 import { clearAll, getAll, STORES } from "@/lib/store/db";
 import { exportLocalBackup, getProductionAttempts, restoreLocalBackup, validateLocalBackup } from "@/lib/store/repository";
-import { getTutorSessions, saveTutorPreferences, saveTutorSession } from "./store";
-import { tutorAttempt, tutorSession } from "./testFixtures";
+import { getTutorSessions, recordTutorExposure, saveTutorPreferences, saveTutorSession } from "./store";
+import { tutorSkillEvidence } from "./model";
+import { tutorAttempt, tutorSession, durationHistory } from "./testFixtures";
 
 beforeEach(() => clearAll());
 describe("tutor persistence", () => {
+  it("restores a skill and independent day-two use as one learning history", async () => {
+    const [initial, followup] = durationHistory();
+    const skill = initial.skill!;
+    await saveTutorSession(initial, 0);
+    await saveTutorSession(followup, 0);
+    const backup = JSON.parse(JSON.stringify(await exportLocalBackup()));
+    await clearAll();
+    expect((await restoreLocalBackup(backup)).ok).toBe(true);
+    expect(tutorSkillEvidence(await getTutorSessions(), skill)).toMatchObject({ initialDifficulty: true, assisted: 1, transfers: 1, contexts: 1 });
+  });
+  it("persists history exposure atomically and rejects a stale active writer", async () => {
+    const [initial] = durationHistory();
+    await saveTutorSession(initial, 0);
+    await recordTutorExposure([initial.id, initial.id], "history", 90_000_000);
+    const saved = (await getTutorSessions())[0];
+    expect(saved.revision).toBe(2);
+    expect(saved.updatedAt).toBe(initial.updatedAt);
+    expect(saved.exposures?.at(-1)).toMatchObject({ kind: "history", at: 90_000_000 });
+    await expect(saveTutorSession({ ...initial, revision: 2, draft: "stale" }, 1)).rejects.toThrow();
+    const backup = JSON.parse(JSON.stringify(await exportLocalBackup()));
+    await clearAll(); await restoreLocalBackup(backup);
+    expect((await getTutorSessions())[0].exposures).toEqual(saved.exposures);
+  });
   it("resumes the exact draft and linked attempts after a portable backup round-trip", async () => {
     const initial = tutorSession({ draft: "I want change" });
     await saveTutorSession(initial, 0);

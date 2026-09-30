@@ -61,8 +61,8 @@ function AudioStudio({ kokoroModel }: { kokoroModel?: LocalModelState } = {}) {
               onChange={(event) => setText(event.target.value.slice(0, MAX_CHARS))}
               aria-label={t("English text")}
               placeholder={t("Type or paste English text here…")}
-              rows={12}
-              className="bg-card px-4 py-3 leading-relaxed"
+              rows={6}
+              className="bg-card px-4 pt-3 pb-9 leading-relaxed lg:min-h-80"
             />
             <span
               className={cn(
@@ -78,14 +78,14 @@ function AudioStudio({ kokoroModel }: { kokoroModel?: LocalModelState } = {}) {
             <button
               onClick={() => setText("")}
               type="button"
-              className="cursor-pointer rounded px-2 py-1 text-xs text-ink-muted transition-colors hover:text-ink"
+              className="min-h-11 cursor-pointer rounded px-2 py-1 text-xs text-ink-muted transition-colors hover:text-ink"
             >
               {t("Clear")}
             </button>
             <button
               onClick={() => setText(EXAMPLE_TEXT)}
               type="button"
-              className="cursor-pointer rounded px-2 py-1 text-xs text-ink-muted transition-colors hover:text-ink"
+              className="min-h-11 cursor-pointer rounded px-2 py-1 text-xs text-ink-muted transition-colors hover:text-ink"
             >
               {t("Load example")}
             </button>

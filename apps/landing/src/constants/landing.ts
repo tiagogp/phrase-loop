@@ -70,25 +70,25 @@ export const accentPanelStyle = {
 
 export const flowSteps = [
   {
-    label: "YouTube / PDF / artigo / escrita",
-    title: "Traga inglês real",
-    body: "Cole um vídeo, carregue um documento, salve um artigo ou escreva suas próprias frases.",
+    "label": "Prática",
+    "title": "Responda primeiro",
+    "body": "Comece com uma entrevista, reunião ou pedido. Tente com suas palavras antes de pedir ajuda."
   },
   {
-    label: "Transcrição / correção",
-    title: "Guarde o que importa",
-    body: "Revise trechos, ajuste frases e guarde as linhas que valem aprender.",
+    "label": "Feedback e retry",
+    "title": "Entenda e reconstrua",
+    "body": "Veja um ajuste específico da sua resposta e faça uma nova tentativa."
   },
   {
-    label: "Cards para lembrar ativamente",
-    title: "Transforme em revisão",
-    body: "Crie cards com contexto, áudio e perguntas ligadas ao que ainda precisa de prática.",
+    "label": "Memória",
+    "title": "Guarde a dificuldade",
+    "body": "O tutor registra a habilidade trabalhada, o apoio usado e quando voltar a ela."
   },
   {
-    label: "Revisão / treino",
-    title: "Feche o ciclo",
-    body: "Revise no PhraseLoop e transforme seus pontos fracos no próximo treino curto.",
-  },
+    "label": "Recuperação",
+    "title": "Use em outra situação",
+    "body": "Em outro dia, tente antes de ver um exemplo. O contexto e o apoio contam na leitura do resultado."
+  }
 ] as const;
 
 export const features = [
@@ -102,26 +102,26 @@ export const features = [
   },
   {
     title: "Seus erros viram treino",
-    body: "As correções não somem em uma anotação. Elas viram frases para você revisar amanhã.",
+    body: "As dificuldades registradas no tutor orientam a retomada. Frases úteis também podem ser salvas para revisão.",
   },
   {
     title: "Reforço do que ainda falha",
-    body: "O PhraseLoop acompanha padrões esquecidos e os transforma em prática focada.",
+    body: "O tutor acompanha habilidades de um catálogo inicial e volta às que ainda precisam de prática.",
   },
 ] as const;
 
 export const differences = [
   {
-    title: "Inglês real, não frases soltas",
-    body: "Comece com entrevistas, artigos, PDFs e sua própria escrita. O contexto continua ligado ao card.",
+    title: "Uma próxima ação clara",
+    body: "Abra Hoje e comece uma situação curta. Retome uma sessão ou pratique algo novo quando quiser.",
   },
   {
-    title: "O áudio faz parte da memória",
-    body: "Trechos de vídeos mantêm o áudio original; frases de texto podem ganhar áudio gerado no próprio Mac.",
+    title: "Seu conteúdo também vira prática",
+    body: "Traga uma frase do seu trabalho, de um vídeo ou de um artigo e use-a como ponto de partida para uma resposta própria.",
   },
   {
-    title: "A revisão volta aos seus erros",
-    body: "Revisões e correções trabalham juntas para que erros repetidos virem o próximo alvo de prática.",
+    title: "Progresso com evidências",
+    body: "Compare uma dificuldade observada com um uso posterior em outra situação. Consultar exemplos conta como apoio.",
   },
 ] as const;
 
@@ -173,4 +173,4 @@ export const landingNavItems: ReadonlyArray<{
 
 // The landing preview has no "Hoje" home surface and no microphone, so the
 // speaking tab is also left out; it opens straight on Discover.
-export const LANDING_TABS = HOME_TABS.filter((item) => item.id !== "hoje");
+export const LANDING_TABS = HOME_TABS;

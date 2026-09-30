@@ -49,7 +49,7 @@ export function PlanTaskRow({
 
       <div className="flex min-w-0 flex-1 items-center gap-2">
         {highlight && !done && (
-          <span className="shrink-0 rounded bg-accent px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white">
+          <span className="shrink-0 rounded bg-accent px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent-contrast">
             {t("Next")}
           </span>
         )}

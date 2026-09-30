@@ -10,7 +10,7 @@ import { getCard, saveGeneratedDeck } from "@/lib/store/repository";
 import { emitActivity } from "@/lib/store/activityLog";
 import { buildManualPhrase } from "../manualPhrase";
 
-export function QuickPhraseForm({ onStudy }: { onStudy?: () => void }) {
+export function QuickPhraseForm({ onStudy, onPracticeSource }: { onStudy?: () => void; onPracticeSource?: (cardId: string) => void }) {
   const { t } = useT();
   const id = useId();
   const [english, setEnglish] = useState("");
@@ -18,13 +18,14 @@ export function QuickPhraseForm({ onStudy }: { onStudy?: () => void }) {
   const [busy, setBusy] = useState(false);
   const saving = useRef(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [savedCardId, setSavedCardId] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
   const save = async () => {
     if (saving.current) return;
     saving.current = true;
     setBusy(true);
     setMessage(null);
-    setFailed(false);
+    setFailed(false); setSavedCardId(null);
     try {
       const { cards, candidate } = await buildManualPhrase(english, meaning);
       if (await getCard(cards[0].id)) {
@@ -34,6 +35,7 @@ export function QuickPhraseForm({ onStudy }: { onStudy?: () => void }) {
         void emitActivity("cards_created", { count: added, source: "discover" }).catch(() => undefined);
         setMessage("Phrase saved in both directions. Try recalling it now, or export it with Kokoro & Anki.");
       }
+      setSavedCardId(cards[0].id);
     } catch {
       setFailed(true);
       setMessage("Could not save this phrase. Your text is still here; try again.");
@@ -42,7 +44,7 @@ export function QuickPhraseForm({ onStudy }: { onStudy?: () => void }) {
       setBusy(false);
     }
   };
-  const edit = () => { setMessage(null); setFailed(false); };
+  const edit = () => { setMessage(null); setFailed(false); setSavedCardId(null); };
   return <Card className="space-y-4 p-5">
     <div><h2 className="text-lg font-semibold text-ink">{t("Keep one useful phrase")}</h2>
       <p className="mt-1 text-sm text-ink-muted">{t("Already know what you want to practice? Add the phrase and its meaning. No AI needed.")}</p></div>
@@ -62,7 +64,8 @@ export function QuickPhraseForm({ onStudy }: { onStudy?: () => void }) {
       <p className="text-xs text-ink-muted">{t("Use a phrase you checked in a reliable source. Manual entries are saved as you write them.")}</p>
       <div className="flex flex-wrap gap-2">
         <Button type="submit" variant="primary" disabled={busy || !english.trim() || !meaning.trim()}>{t(busy ? "Saving…" : "Save phrase")}</Button>
-        {message && !failed && onStudy && <Button type="button" variant="secondary" onClick={onStudy}>{t("Practice now")}</Button>}
+        {savedCardId && onPracticeSource && <Button type="button" onClick={() => onPracticeSource(savedCardId)}>{t("Practice a situation with this phrase")}</Button>}
+        {message && !failed && onStudy && <Button type="button" variant="secondary" onClick={onStudy}>{t("Review saved phrases")}</Button>}
       </div>
       {message && <Notice role="status" tone={failed ? "error" : "success"}>{t(message)}</Notice>}
     </form>

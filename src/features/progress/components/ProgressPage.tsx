@@ -1,5 +1,7 @@
 "use client";
 
+import Disclosure from "@/components/ui/Disclosure";
+
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -12,15 +14,17 @@ import { LearningWins } from "./LearningWins";
 import { ProgressOverview } from "./ProgressOverview";
 import { TutorProgressCard } from "@/features/tutor/components/TutorProgressCard";
 
-export default function ProgressPage({ onPractice, onTutor }: { onPractice: () => void; onTutor?: () => void }) {
+export default function ProgressPage({ onPractice, onTutor, active = true }: { onPractice: () => void; onTutor?: () => void; active?: boolean }) {
   const { t } = useT();
   const { evidence, loading, error, refresh } = useLearningEvidence();
   const [details, setDetails] = useState(false);
   return (
     <div className="space-y-5">
       <PageHeader eyebrow={t("Your learning, made visible")} title={t("Progress")}
-        description={t("What you remembered, improved, and used on your own. These are observations from the last 30 days.")}
-        aside={<Button variant="secondary" onClick={onPractice}>{t("Keep practicing")}</Button>} />
+        description={t("What you achieved with support, recalled independently, and used in another situation.")}
+        aside={<Button variant="secondary" onClick={onTutor ?? onPractice}>{t("Keep practicing")}</Button>} />
+      {active && <TutorProgressCard onOpen={onTutor ?? onPractice} />}
+      <Disclosure title={t("Reviews and extra exercises · last 30 days")} contentClassName="space-y-4">
       {loading ? <p role="status" className="text-sm text-ink-muted">{t("Loading progress…")}</p>
         : error ? <Notice tone="error">{t("Could not load your practice history.")} <Button variant="ghost" onClick={() => void refresh()}>{t("Try again")}</Button></Notice>
           : <>
@@ -39,11 +43,12 @@ export default function ProgressPage({ onPractice, onTutor }: { onPractice: () =
                 </>}
             </Card>
           </>}
-      {onTutor && <TutorProgressCard onOpen={onTutor} />}
+
       <Button variant="ghost" onClick={() => setDetails(!details)} aria-expanded={details} aria-controls="progress-details">
         {t(details ? "Hide detailed stats" : "Show detailed stats")}
       </Button>
       {details && <div id="progress-details"><ProgressOverview showCheckIn /></div>}
+      </Disclosure>
     </div>
   );
 }

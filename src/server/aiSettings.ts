@@ -59,6 +59,45 @@ export function getProviderApiKey(kind: "claude" | "openai" | "openrouter"): str
   return store().settings.openaiApiKey || process.env.OPENAI_API_KEY || undefined;
 }
 
+const keyFields = {
+  claude: "anthropicApiKey",
+  openai: "openaiApiKey",
+  openrouter: "openrouterApiKey",
+} as const;
+
+/** Checking the UI status must never unlock the macOS keychain. */
+export function isProviderConfigured(kind: "claude" | "openai" | "openrouter"): boolean {
+  return Boolean(store().settings.configuredProviders?.[kind] || getProviderApiKey(kind));
+}
+
+/** Fetch a saved key only for an actual cloud request or connection test. */
+export async function ensureProviderApiKey(kind: "claude" | "openai" | "openrouter"): Promise<string | undefined> {
+  const s = store().settings;
+  if (s[keyFields[kind]]) return s[keyFields[kind]];
+  if (s.configuredProviders?.[kind]) {
+    const port = process.env.PHRASELOOP_SECRET_PORT;
+    const token = process.env.PHRASELOOP_SECRET_TOKEN;
+    if (port && token && /^\d+$/.test(port)) {
+      try {
+        const response = await fetch(`http://127.0.0.1:${port}/secret/${kind}`, {
+          headers: { authorization: `Bearer ${token}` },
+          cache: "no-store",
+        });
+        if (response.ok) {
+          const result = await response.json() as { secret?: unknown };
+          if (typeof result.secret === "string" && result.secret) {
+            s[keyFields[kind]] = result.secret;
+            return result.secret;
+          }
+        }
+      } catch {
+        // A denied or unavailable keychain leaves environment credentials usable.
+      }
+    }
+  }
+  return getProviderApiKey(kind);
+}
+
 export function isInternalSettingsRequest(req: Request): boolean {
   const expected = process.env.PHRASELOOP_SETTINGS_TOKEN;
   return Boolean(expected) && req.headers.get("x-phraseloop-settings-token") === expected;

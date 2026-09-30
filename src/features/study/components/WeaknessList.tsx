@@ -79,7 +79,7 @@ export function WeaknessList({ weaknesses, genError, generatingKey, onPractice, 
                   variant="ghost"
                   size="sm"
                   onClick={() => onGenerate(weakness)}
-                  disabled={generatingKey !== null}
+                  loading={generatingKey === key} disabled={generatingKey !== null}
                   title={t("Create new practice phrases for this weak spot from existing sources")}
                 >
                   {generatingKey === key ? t("Creating…") : t("Create variants")}

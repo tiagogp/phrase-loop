@@ -1,6 +1,6 @@
 "use client";
 
-import { type RefObject, useCallback, useMemo, useRef, useState } from "react";
+import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export type AudioState = {
   isPlaying: boolean;
@@ -11,6 +11,7 @@ export type AudioState = {
 export type UseAudioState = {
   state: AudioState;
   progressPct: number;
+  error: boolean;
   formatTime: (seconds: number) => string;
   audioHandlers: {
     onPlay: () => void;
@@ -18,6 +19,7 @@ export type UseAudioState = {
     onEnded: () => void;
     onTimeUpdate: () => void;
     onLoadedMetadata: () => void;
+    onError: () => void;
   };
   togglePlay: () => void;
   stop: () => void;
@@ -34,6 +36,10 @@ export function useAudioState(
   });
   const rafIdRef = useRef<number | null>(null);
   const pendingTimeRef = useRef<number | null>(null);
+  const [error, setError] = useState(false);
+  useEffect(() => () => {
+    if (rafIdRef.current !== null) cancelAnimationFrame(rafIdRef.current);
+  }, []);
 
   const formatTime = useCallback((seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -46,7 +52,10 @@ export function useAudioState(
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    if (audio.paused) audio.play();
+    if (audio.paused) {
+      setError(false);
+      void audio.play().catch(() => setError(true));
+    }
     else audio.pause();
   }, [audioRef]);
 
@@ -71,7 +80,8 @@ export function useAudioState(
 
   const audioHandlers = useMemo(
     () => ({
-      onPlay: () => setState((s) => ({ ...s, isPlaying: true })),
+      onPlay: () => { setError(false); setState((s) => ({ ...s, isPlaying: true })); },
+      onError: () => { setError(true); setState((s) => ({ ...s, isPlaying: false })); },
       onPause: () => {
         if (rafIdRef.current !== null) {
           cancelAnimationFrame(rafIdRef.current);
@@ -107,5 +117,5 @@ export function useAudioState(
     [audioRef],
   );
 
-  return { state, progressPct, formatTime, audioHandlers, togglePlay, stop, seekToPct };
+  return { state, error, progressPct, formatTime, audioHandlers, togglePlay, stop, seekToPct };
 }

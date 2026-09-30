@@ -20,15 +20,15 @@ export function WorkflowSection({ language }: { language: LandingLanguage }) {
     >
       <Reveal className="mx-auto max-w-7xl">
         <p className="mb-3 text-xs font-semibold uppercase text-accent">
-          {t("Do conteúdo real para uma lembrança duradoura")}
+          {t("Da tentativa à recuperação em outro dia")}
         </p>
         <div className="mb-8 grid gap-5 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
           <h2 className="brand-wordmark text-4xl font-normal leading-[0.95] sm:text-5xl">
-            {t("Um ciclo do conteúdo que você gosta ao inglês que você usa.")}
+            {t("Pratique. Entenda. Tente de novo. Recupere depois.")}
           </h2>
           <p className="text-lg leading-8 text-[#d8d3ca]">
             {t(
-              "Encontre uma frase, guarde o trecho útil, revise com o mesmo áudio e volte ao que ainda falha quando você tenta usar o inglês.",
+              "A resposta de hoje orienta a próxima prática. O progresso separa acertos com apoio de usos independentes e de usos em um contexto novo verificado.",
             )}
           </p>
         </div>

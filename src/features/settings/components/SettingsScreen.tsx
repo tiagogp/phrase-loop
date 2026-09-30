@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { setFullNavigation, useExperiencePreferences } from "@/features/activation/experiencePreferences";
 import Select from "@/components/ui/Select";
 import { ENGLISH_LEVELS } from "@/features/discover/constants";
 import type { EnglishLevel } from "@/features/discover/types";
 import {
   DEFAULT_LEARNING_PROFILE,
+  OBJECTIVE_OPTIONS,
   getLearningProfile,
   saveLearningProfile,
   subscribeToProfile,
@@ -89,6 +91,9 @@ export default function SettingsScreen({
   showAdvancedAi?: boolean;
 }) {
   const { t } = useT();
+  const { fullNavigation } = useExperiencePreferences();
+  const objective = useSyncExternalStore(subscribeToProfile, () => getLearningProfile().objective, () => DEFAULT_LEARNING_PROFILE.objective);
+  const minutes = useSyncExternalStore(subscribeToProfile, () => getLearningProfile().dailyMinutes ?? 10, () => 10);
   const { settings, loading, save, test, refresh } = useAiSettings();
   const restoreInputRef = useRef<HTMLInputElement | null>(null);
   const [ollamaUrlDraft, setOllamaUrl] = useState<string | null>(null);
@@ -399,7 +404,7 @@ export default function SettingsScreen({
 
       {!settings.writable && !loading && (
         <Notice role="note" className="mb-5">
-          {t("Settings are read-only in the browser. Configure providers with environment variables or open the desktop app.")}
+          {t("AI connections are read-only in the browser. Your learning preferences below can still be changed. Configure AI in the desktop app or with environment variables.")}
         </Notice>
       )}
 
@@ -647,6 +652,17 @@ export default function SettingsScreen({
         <Field label={t("English level")} className="mt-3 max-w-52">
           <Select value={learnerLevel} onChange={changeLearnerLevel} options={ENGLISH_LEVELS} />
         </Field>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <Field label={t("Main goal")}><Select value={objective} options={OBJECTIVE_OPTIONS.map(item => ({ value: item.objective, label: t(item.label) }))} onChange={value => {
+            const option = OBJECTIVE_OPTIONS.find(item => item.objective === value);
+            if (option) saveLearningProfile({ objective: option.objective, focus: option.label });
+          }} /></Field>
+          <Field label={t("Time for today")}><Select value={String(minutes)} options={[5, 10, 20].map(value => ({ value: String(value), label: t("{count} min", { count: value }) }))} onChange={value => saveLearningProfile({ dailyMinutes: Number(value) })} /></Field>
+        </div>
+        <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-lg border border-line p-4 text-sm text-ink">
+          <input type="checkbox" className="mt-1 accent-accent" checked={fullNavigation} onChange={event => setFullNavigation(event.target.checked)} />
+          <span>{t("Show all shortcuts")}<span className="mt-1 block text-xs text-ink-muted">{t("Keep all sections in the navigation. Every tool remains available in Explore, More options, or Settings even with this turned off.")}</span></span>
+        </label>
         <p className="mt-2 text-xs text-ink-muted">
           {t("From B1 the interface switches to English.")}
         </p>

@@ -190,6 +190,7 @@ export default function C1Tab({ onOpenSettings }: { onOpenSettings?: () => void 
             </p>
             <div className="mt-2 flex gap-2">
               <Input
+                aria-label={t("What's this for?")}
                 value={domainDraft}
                 onChange={(event) => setDomainDraft(event.target.value)}
                 placeholder={t("e.g. work")}
@@ -268,9 +269,9 @@ export default function C1Tab({ onOpenSettings }: { onOpenSettings?: () => void 
             {note}
           </p>
         )}
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs text-ink-muted">
-            {sampleText.trim().length}/{MIN_SAMPLE_CHARS}
+            {t("{count} characters · minimum {minimum}", { count: sampleText.trim().length, minimum: MIN_SAMPLE_CHARS })}
           </p>
           <Button
             variant="primary"

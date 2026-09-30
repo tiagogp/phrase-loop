@@ -20,7 +20,7 @@ export function WorkflowSteps({ label, steps, current }: WorkflowStepsProps) {
               key={step}
               aria-current={active ? "step" : undefined}
               className={cn(
-                "flex min-w-0 items-center justify-center gap-1.5 rounded-md px-2 py-2 text-center text-[11px] font-medium sm:text-xs",
+                "flex min-w-0 flex-col items-center justify-center gap-1.5 rounded-md px-2 py-2 text-center text-xs font-medium sm:flex-row",
                 active ? "bg-accent/10 text-ink" : complete ? "text-ink-soft" : "text-ink-muted",
               )}
             >
@@ -29,7 +29,7 @@ export function WorkflowSteps({ label, steps, current }: WorkflowStepsProps) {
                 className={cn(
                   "grid size-5 shrink-0 place-items-center rounded-full border text-[10px] tabular-nums",
                   active
-                    ? "border-accent bg-accent text-white"
+                    ? "border-accent bg-accent text-accent-contrast"
                     : complete
                       ? "border-success/40 bg-success/10 text-success"
                       : "border-line-strong text-ink-muted",
@@ -37,7 +37,7 @@ export function WorkflowSteps({ label, steps, current }: WorkflowStepsProps) {
               >
                 {complete ? "✓" : number}
               </span>
-              <span className="truncate">{step}</span>
+              <span>{step}</span>
             </li>
           );
         })}

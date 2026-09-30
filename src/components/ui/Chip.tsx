@@ -16,12 +16,13 @@ export const Chip = forwardRef<HTMLButtonElement, ChipProps>(
       ref={ref}
       type={type}
       data-active={active}
+      aria-pressed={active}
       data-tone={tone}
       whileHover={{ y: -1 }}
       whileTap={tapPress}
       transition={springSnappy}
       className={cn(
-        "inline-flex items-center justify-center gap-1.5 rounded border px-2.5 py-1 text-xs font-medium cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50",
+        "inline-flex min-h-8 pointer-coarse:min-h-11 items-center justify-center gap-1.5 rounded border px-2.5 py-1 text-xs font-medium cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50",
         tone === "danger"
           ? "border-danger/55 text-danger enabled:hover:border-danger enabled:hover:bg-danger/10"
           : "border-line text-ink-muted enabled:hover:border-line-strong enabled:hover:text-ink",

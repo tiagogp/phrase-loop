@@ -47,6 +47,7 @@ export function AiEvaluateForm({
   return (
     <div className="space-y-2">
       <Textarea
+        aria-label={t("English text")}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={t("Write or record a few sentences in English. The AI will find what a native speaker would say differently.")}

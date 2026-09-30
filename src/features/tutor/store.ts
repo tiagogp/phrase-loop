@@ -1,8 +1,10 @@
+import { resolveInterfaceLang } from "@/i18n/config";
+import { getLearningProfile } from "@/features/settings/learningProfile";
 import { get, getAll, openDb, put, STORES } from "@/lib/store/db";
 import { getCards, getProductionAttempts, getReviews } from "@/lib/store/repository";
 import { isTutorPreferences, isTutorSession } from "./contract";
 import { DEFAULT_TUTOR_PREFERENCES, tutorObservations, tutorProduction } from "./model";
-import type { TutorPreferences, TutorSession } from "./types";
+import type { TutorExposure, TutorPreferences, TutorSession } from "./types";
 
 export async function getTutorSessions(): Promise<TutorSession[]> {
   const rows = await getAll<unknown>(STORES.tutorSessions);
@@ -12,7 +14,7 @@ export async function getTutorSessions(): Promise<TutorSession[]> {
 
 export async function getTutorPreferences(): Promise<TutorPreferences> {
   const row = await get<unknown>(STORES.tutorPreferences, "preferences");
-  if (row === undefined) return { ...DEFAULT_TUTOR_PREFERENCES, ignoredEvidenceIds: [] };
+  if (row === undefined) return { ...DEFAULT_TUTOR_PREFERENCES, explanationLanguage: resolveInterfaceLang(getLearningProfile()) === "pt" ? "pt" : "en", ignoredEvidenceIds: [] };
   if (!isTutorPreferences(row)) throw new Error("Não foi possível ler as preferências do tutor.");
   return row;
 }
@@ -43,7 +45,7 @@ export async function saveTutorSession(next: TutorSession, expectedRevision: num
       const previous = request.result as TutorSession | undefined;
       if ((previous?.revision ?? 0) !== expectedRevision) { conflict = true; tx.abort(); return; }
       changedEvidence = JSON.stringify(previous?.attempts ?? []) !== JSON.stringify(next.attempts);
-      changedSession = !previous || previous.phase !== next.phase || previous.savedPhraseId !== next.savedPhraseId;
+      changedSession = !previous || previous.phase !== next.phase || previous.savedPhraseId !== next.savedPhraseId || JSON.stringify(previous.exposures) !== JSON.stringify(next.exposures);
       sessions.put(next);
       if (changedEvidence) for (const attempt of next.attempts) tx.objectStore(STORES.productionAttempts).put(tutorProduction(next, attempt));
       if (next.parentSessionId && next.attempts.length && !previous?.attempts.length) {
@@ -60,6 +62,27 @@ export async function saveTutorSession(next: TutorSession, expectedRevision: num
   // Autosaving each keystroke must not reload the entire learning history in every tab.
   if (changedSession || changedEvidence) notify();
   if (changedEvidence && typeof window !== "undefined") window.dispatchEvent(new Event("phraseloop:performance-evidence"));
+}
+
+/** Persist exposure before showing a stored answer. Increment revisions to avoid silent overwrites. */
+export async function recordTutorExposure(sessionIds: string[], kind: TutorExposure["kind"], at = Date.now()): Promise<void> {
+  const db = await openDb();
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(STORES.tutorSessions, "readwrite");
+    const store = tx.objectStore(STORES.tutorSessions);
+    for (const id of new Set(sessionIds)) {
+      const request = store.get(id);
+      request.onsuccess = () => {
+        if (!isTutorSession(request.result)) return;
+        const session = request.result;
+        store.put({ ...session, revision: session.revision + 1, exposures: [...session.exposures ?? [], { id: crypto.randomUUID(), kind, at }] });
+      };
+    }
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error ?? new Error("Não foi possível registrar a consulta à resposta."));
+    tx.onabort = () => reject(tx.error ?? new Error("Não foi possível registrar a consulta à resposta."));
+  });
+  notify();
 }
 
 export async function loadTutorMemory() {

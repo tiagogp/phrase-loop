@@ -49,7 +49,14 @@ function cleanSetting(value, maxLength) {
 
 // API keys are the only genuinely sensitive fields here; base URL/model picks aren't secrets.
 const SECRET_SETTINGS_FIELDS = ["anthropicApiKey", "openaiApiKey", "openrouterApiKey"];
+const CLOUD_SECRET_FIELDS = {
+  claude: "anthropicApiKey",
+  openai: "openaiApiKey",
+  openrouter: "openrouterApiKey",
+};
 const SAFE_STORAGE_PREFIX = "safeStorage:v1:";
+const SECRET_TOKEN = crypto.randomBytes(32).toString("hex");
+let secretServer = null;
 
 // OS keychain (Keychain on macOS) when available; falls back to the 0o600 plaintext file
 // on platforms/setups without one (e.g. a Linux box with no secret-service daemon running).
@@ -75,34 +82,55 @@ function decryptSecret(value) {
   }
 }
 
-function loadSecureAiSettings() {
+function readStoredAiSettings() {
   if (!fs.existsSync(AI_SETTINGS_FALLBACK_FILE)) return {};
   try {
     const parsed = JSON.parse(fs.readFileSync(AI_SETTINGS_FALLBACK_FILE, "utf8"));
-    if (!parsed || typeof parsed !== "object") return {};
-    const settings = { ...parsed };
-    for (const field of SECRET_SETTINGS_FIELDS) {
-      if (!(field in settings)) continue;
-      const decrypted = decryptSecret(settings[field]);
-      if (decrypted === undefined) delete settings[field];
-      else settings[field] = decrypted;
-    }
-    return settings;
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
   } catch {
     return {};
   }
 }
 
+function publicAiSettings() {
+  const stored = readStoredAiSettings();
+  const { anthropicApiKey, openaiApiKey, openrouterApiKey, ...settings } = stored;
+  return {
+    ...settings,
+    configuredProviders: {
+      claude: typeof anthropicApiKey === "string" && anthropicApiKey.length > 0,
+      openai: typeof openaiApiKey === "string" && openaiApiKey.length > 0,
+      openrouter: typeof openrouterApiKey === "string" && openrouterApiKey.length > 0,
+    },
+  };
+}
+
 function saveSecureAiSettings(settings) {
-  const toWrite = { ...settings };
-  for (const field of SECRET_SETTINGS_FIELDS) {
-    if (typeof toWrite[field] === "string" && toWrite[field]) {
-      toWrite[field] = encryptSecret(toWrite[field]);
-    }
-  }
   fs.mkdirSync(path.dirname(AI_SETTINGS_FALLBACK_FILE), { recursive: true });
-  fs.writeFileSync(AI_SETTINGS_FALLBACK_FILE, `${JSON.stringify(toWrite, null, 2)}\n`, { mode: 0o600 });
+  fs.writeFileSync(AI_SETTINGS_FALLBACK_FILE, `${JSON.stringify(settings, null, 2)}\n`, { mode: 0o600 });
   fs.chmodSync(AI_SETTINGS_FALLBACK_FILE, 0o600);
+}
+
+function startSecretServer() {
+  return new Promise((resolve, reject) => {
+    const server = http.createServer((req, res) => {
+      const kind = req.url?.startsWith("/secret/") ? req.url.slice("/secret/".length) : "";
+      const field = Object.hasOwn(CLOUD_SECRET_FIELDS, kind) ? CLOUD_SECRET_FIELDS[kind] : undefined;
+      if (req.method !== "GET" || !field || req.headers.authorization !== `Bearer ${SECRET_TOKEN}`) {
+        res.writeHead(404).end();
+        return;
+      }
+      const stored = readStoredAiSettings();
+      const secret = decryptSecret(stored[field]);
+      res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
+      res.end(JSON.stringify({ secret: typeof secret === "string" ? secret : null }));
+    });
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      secretServer = server;
+      resolve(server.address().port);
+    });
+  });
 }
 
 function prependPathValue(current, value) {
@@ -166,7 +194,7 @@ async function internalSettingsRequest(pathname, method, body) {
 }
 
 async function syncSecureAiSettings() {
-  const result = await internalSettingsRequest("/api/settings/runtime", "PUT", loadSecureAiSettings());
+  const result = await internalSettingsRequest("/api/settings/runtime", "PUT", publicAiSettings());
   return typeof result?.version === "number" ? result.version : 0;
 }
 
@@ -314,6 +342,7 @@ function forkBackend(serverJs, cwd, env) {
 
 function killChildren() {
   shuttingDown = true;
+  secretServer?.close();
   for (const child of children) {
     if (child.pid && !child.killed) {
       try {
@@ -433,7 +462,7 @@ ipcMain.handle("phrase-loop:ai-settings-save", async (event, rawPatch) => {
   try {
     if (!event.senderFrame?.url.startsWith(FRONTEND_URL)) throw new Error("Untrusted settings request.");
     const patch = rawPatch && typeof rawPatch === "object" ? rawPatch : {};
-    const current = loadSecureAiSettings();
+    const current = readStoredAiSettings();
     const next = { ...current };
     if (["ollama", "openrouter", "claude", "openai"].includes(patch.defaultProvider)) {
       next.defaultProvider = patch.defaultProvider;
@@ -447,7 +476,7 @@ ipcMain.handle("phrase-loop:ai-settings-save", async (event, rawPatch) => {
     ]) {
       if (!(input in patch)) continue;
       const value = cleanSetting(patch[input], max);
-      if (value) next[stored] = value;
+      if (value) next[stored] = SECRET_SETTINGS_FIELDS.includes(stored) ? encryptSecret(value) : value;
       else delete next[stored];
     }
     saveSecureAiSettings(next);
@@ -601,6 +630,7 @@ async function boot() {
   const standaloneServer = path.join(NEXT_ROOT, "server.js");
   const built = app.isPackaged || fs.existsSync(path.join(PROJECT_ROOT, ".next", "BUILD_ID"));
   const dataDir = app.getPath("userData");
+  const secretPort = secretServer?.address().port ?? await startSecretServer();
   const bundledModelsDir = path.join(process.resourcesPath, "models", "native");
   migrateLegacyModels(dataDir);
   fs.mkdirSync(path.join(dataDir, "logs"), { recursive: true });
@@ -613,6 +643,8 @@ async function boot() {
       : {}),
     PHRASELOOP_SETTINGS_STORAGE: secureStorageMode(),
     PHRASELOOP_SETTINGS_TOKEN: SETTINGS_TOKEN,
+    PHRASELOOP_SECRET_PORT: String(secretPort),
+    PHRASELOOP_SECRET_TOKEN: SECRET_TOKEN,
   };
 
   // Frontend and all local ML services live in the standalone Node server.

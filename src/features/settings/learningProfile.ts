@@ -28,6 +28,14 @@ export const METHOD_OBJECTIVES: readonly MethodObjective[] = [
   "media",
 ];
 
+export const OBJECTIVE_OPTIONS: readonly { objective: MethodObjective; label: string }[] = [
+  { objective: "professional", label: "Work" },
+  { objective: "conversation", label: "Conversation" },
+  { objective: "travel", label: "Travel" },
+  { objective: "academic", label: "Study & exams" },
+  { objective: "media", label: "Movies & podcasts" },
+];
+
 export interface LearningProfile {
   /** CEFR level of the language being learned (`targetLang`). */
   level: EnglishLevel;

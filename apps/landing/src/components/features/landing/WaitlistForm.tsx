@@ -21,6 +21,7 @@ export function WaitlistForm({ language }: { language: LandingLanguage }) {
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (status === "saving" || status === "saved") return;
     if (!platform) {
       setStatus("error");
       return;
@@ -46,11 +47,14 @@ export function WaitlistForm({ language }: { language: LandingLanguage }) {
           Email
         </span>
         <input
+          autoComplete="email"
+          name="email"
+          disabled={status === "saving"}
           required
           type="email"
           value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          className="mt-1 w-full rounded border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent/50"
+          onChange={(event) => { setEmail(event.target.value); setStatus("idle"); }}
+          className="mt-1 min-h-11 w-full rounded border border-line bg-surface px-3 py-2 text-base text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent/50 sm:text-sm"
           placeholder="voce@email.com"
         />
       </label>
@@ -60,12 +64,12 @@ export function WaitlistForm({ language }: { language: LandingLanguage }) {
           {translateLanding(language, "Qual computador você usa?")}
         </span>
         <select
+          name="platform"
+          disabled={status === "saving"}
           required
           value={platform}
-          onChange={(event) =>
-            setPlatform(event.target.value as WaitlistPlatform | "")
-          }
-          className="mt-1 w-full rounded border border-line bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent/50"
+          onChange={(event) => { setPlatform(event.target.value as WaitlistPlatform | ""); setStatus("idle"); }}
+          className="mt-1 min-h-11 w-full rounded border border-line bg-surface px-3 py-2 text-base text-ink focus:outline-none focus:ring-2 focus:ring-accent/50 sm:text-sm"
         >
           <option value="">
             {translateLanding(language, "Selecione uma opção")}
@@ -86,13 +90,15 @@ export function WaitlistForm({ language }: { language: LandingLanguage }) {
           )}
         </span>
         <textarea
+          name="workflow"
+          disabled={status === "saving"}
           required
           minLength={8}
           maxLength={2_000}
           rows={4}
           value={workflow}
-          onChange={(event) => setWorkflow(event.target.value)}
-          className="mt-1 w-full resize-y rounded border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent/50"
+          onChange={(event) => { setWorkflow(event.target.value); setStatus("idle"); }}
+          className="mt-1 w-full resize-y rounded border border-line bg-surface px-3 py-2 text-base text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent/50 sm:text-sm"
           placeholder={translateLanding(
             language,
             "Ex.: salvo frases no Anki, anoto em um caderno, só assisto ao vídeo…",
@@ -102,8 +108,9 @@ export function WaitlistForm({ language }: { language: LandingLanguage }) {
 
       <button
         type="submit"
+        aria-busy={status === "saving"}
         disabled={status === "saving" || status === "saved"}
-        className="inline-flex w-full items-center justify-center rounded border border-accent bg-accent px-5 py-3 text-sm font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-70"
+        className="inline-flex w-full items-center justify-center rounded border border-accent bg-accent px-5 py-3 text-sm font-semibold text-accent-contrast transition-opacity disabled:cursor-not-allowed disabled:opacity-70"
       >
         {status === "saving"
           ? translateLanding(language, "Enviando...")
@@ -114,7 +121,7 @@ export function WaitlistForm({ language }: { language: LandingLanguage }) {
 
       <div aria-live="polite">
         {status === "error" && (
-          <p className="text-xs text-[#c73a1d]">
+          <p role="alert" className="text-sm text-danger">
             {translateLanding(
               language,
               "Não foi possível salvar agora. Tente de novo em alguns segundos.",
@@ -122,7 +129,7 @@ export function WaitlistForm({ language }: { language: LandingLanguage }) {
           </p>
         )}
         {status === "saved" && (
-          <p className="text-xs text-[#2f7d3d]">
+          <p role="status" className="text-sm text-success">
             {translateLanding(
               language,
               "Obrigado. Nesta rodada, os primeiros convites vão para quem usa Mac com Apple Silicon.",

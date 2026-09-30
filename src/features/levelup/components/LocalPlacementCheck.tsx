@@ -12,6 +12,8 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card as UiCard } from "@/components/ui/Card";
+import { Field, Input, Textarea } from "@/components/ui/Field";
+import { Notice } from "@/components/ui/Notice";
 import { useT } from "@/i18n/I18nProvider";
 import { LESSONS } from "@/features/learn/lessonDeck";
 import type { EnglishLevel } from "@/features/discover/types";
@@ -50,16 +52,17 @@ export function LocalPlacementCheck({ onAccept, onClose, translate }: LocalPlace
   const [writingSample, setWritingSample] = useState("");
   const [selfRating, setSelfRating] = useState<PlacementSelfRating | null>(null);
   const [result, setResult] = useState<PlacementResult | null>(null);
+  const [audioError, setAudioError] = useState(false);
 
   const play = useCallback((clip: string) => {
     const audio = audioRef.current;
     if (!audio) return;
+    setAudioError(false);
     audio.pause();
     audio.src = clip;
     audio.currentTime = 0;
     void audio.play().catch(() => {
-      // A blocked or missing clip must not strand the learner mid-check — the item can be
-      // skipped, and a skipped item is scored as unanswered rather than wrong.
+      setAudioError(true);
     });
   }, []);
 
@@ -86,17 +89,18 @@ export function LocalPlacementCheck({ onAccept, onClose, translate }: LocalPlace
 
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold tracking-[-0.01em] text-ink">{t("Find your starting level")}</p>
+          <h2 id="placement-title" className="text-lg font-semibold tracking-[-0.01em] text-ink">{t("Find your starting level")}</h2>
           <p className="text-xs text-ink-muted">{t("Works offline · no AI needed")}</p>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="shrink-0 cursor-pointer text-xs font-medium text-ink-muted transition-opacity hover:opacity-80"
+          className="min-h-11 shrink-0 cursor-pointer px-2 text-sm font-medium text-ink-muted transition-opacity hover:opacity-80"
         >
           {stage === "result" ? t("Close") : t("Cancel")}
         </button>
       </div>
+      {audioError && <Notice tone="error">{t("Could not play this audio. Try again or skip this question.")}</Notice>}
 
       {stage === "intro" && (
         <div className="space-y-3">
@@ -128,7 +132,7 @@ export function LocalPlacementCheck({ onAccept, onClose, translate }: LocalPlace
                 </div>
                 <div className="space-y-1">
                   {item.options.map((option) => (
-                    <label key={option} className="flex cursor-pointer items-center gap-2 text-sm text-ink-soft">
+                    <label key={option} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-ink-soft hover:bg-accent/5">
                       <input
                         type="radio"
                         name={item.id}
@@ -141,17 +145,14 @@ export function LocalPlacementCheck({ onAccept, onClose, translate }: LocalPlace
                 </div>
               </div>
             ) : (
-              <div key={item.id} className="space-y-1">
-                <p className="text-sm text-ink">{item.sentence}</p>
-                <p className="text-xs text-ink-muted">{item.meaning}</p>
-                <input
+              <Field key={item.id} label={item.sentence} hint={item.meaning}>
+                <Input
                   type="text"
                   value={answers[index] ?? ""}
                   onChange={(event) => setAnswer(index, event.target.value)}
-                  className="w-full rounded border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-accent"
                   placeholder={t("Missing word")}
                 />
-              </div>
+              </Field>
             ),
           )}
 
@@ -163,14 +164,14 @@ export function LocalPlacementCheck({ onAccept, onClose, translate }: LocalPlace
 
       {stage === "writing" && (
         <div className="space-y-3">
-          <p className="text-sm text-ink">{check.writing.prompt}</p>
-          <textarea
+          <Field label={check.writing.prompt}>
+          <Textarea
             value={writingSample}
             onChange={(event) => setWritingSample(event.target.value)}
             rows={5}
-            className="w-full rounded border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-accent"
             placeholder={t("Write 2-4 sentences…")}
           />
+          </Field>
           <div className="space-y-1.5">
             <p className="text-xs text-ink-muted">{t("How did that feel?")}</p>
             <div className="flex flex-wrap gap-2">
@@ -178,8 +179,9 @@ export function LocalPlacementCheck({ onAccept, onClose, translate }: LocalPlace
                 <button
                   key={rating}
                   type="button"
+                  aria-pressed={selfRating === rating}
                   onClick={() => setSelfRating(rating)}
-                  className={`cursor-pointer rounded-full border px-3 py-1 text-xs transition-colors ${
+                  className={`min-h-11 cursor-pointer rounded-full border px-3 py-1 text-xs transition-colors ${
                     selfRating === rating
                       ? "border-accent bg-accent/10 text-ink"
                       : "border-line text-ink-soft hover:border-accent/50"

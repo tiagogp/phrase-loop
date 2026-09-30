@@ -60,7 +60,7 @@ export function Segmented<T extends string>({
       aria-label={label}
       className={cn(
         "relative rounded-[0.55rem] bg-line/45 p-1",
-        variant === "fill" ? "grid" : "inline-flex gap-1",
+        variant === "fill" ? "grid" : "inline-flex flex-wrap gap-1",
         className,
       )}
       style={variant === "fill" ? { gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` } : undefined}
@@ -81,7 +81,7 @@ export function Segmented<T extends string>({
             onClick={() => onChange(option.value)}
             onKeyDown={(event) => onKeyDown(event, index)}
             className={cn(
-              "relative z-10 min-w-0 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.97]",
+              "relative z-10 min-h-9 pointer-coarse:min-h-11 min-w-0 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.97]",
               active ? "text-ink" : "text-ink-muted enabled:hover:text-ink",
             )}
           >

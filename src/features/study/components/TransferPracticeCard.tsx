@@ -461,7 +461,7 @@ export function TransferPracticeCard({ onCompleted, onOpenSettings }: { onComple
       )}
       {audioNote && <p className="text-xs text-danger">{t(audioNote)}</p>}
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant="primary" onClick={() => void submit()} disabled={!value.trim() || Boolean(pendingAttempt) || checking || audio.recording || audio.transcribing}>
+        <Button variant="primary" loading={checking} onClick={() => void submit()} disabled={!value.trim() || Boolean(pendingAttempt) || checking || audio.recording || audio.transcribing}>
           {checking ? t("Checking…") : t("Check response")}
         </Button>
         <Button

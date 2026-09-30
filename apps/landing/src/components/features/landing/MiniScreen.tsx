@@ -30,7 +30,7 @@ export function MiniScreen({
       {kind === "discover" ? (
         <div className="space-y-2">
           <div className="grid grid-cols-3 gap-1 text-center text-[11px] font-medium">
-            <span className="rounded bg-accent py-1 text-white">YouTube</span>
+            <span className="rounded bg-accent py-1 text-accent-contrast">YouTube</span>
             <span className="rounded border border-line py-1 text-ink-muted">
               {translateLanding(language, "Artigo")}
             </span>

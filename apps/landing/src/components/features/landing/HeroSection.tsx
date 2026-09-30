@@ -38,10 +38,10 @@ export function HeroSection({ language, onSectionLinkClick }: HeroSectionProps) 
               className="mb-4 text-sm font-semibold text-accent"
               variants={listItem}
             >
-              {t("Inglês real. O áudio da sua fonte. Pronto para revisar.")}
+              {t("Inglês para o trabalho. Uma situação de cada vez.")}
             </motion.p>
             <motion.h1
-              className="brand-wordmark text-6xl font-normal leading-[0.9] text-ink sm:text-7xl lg:text-8xl"
+              className="brand-wordmark text-[clamp(2.75rem,12vw,3.75rem)] font-normal leading-[0.9] text-ink sm:text-7xl lg:text-8xl"
               variants={listItem}
             >
               PhraseLoop<span className="text-fin">.</span>
@@ -51,7 +51,7 @@ export function HeroSection({ language, onSectionLinkClick }: HeroSectionProps) 
               variants={listItem}
             >
               {t(
-                "Cole um vídeo do YouTube. Em 2 minutos, as melhores frases viram cards de revisão com o áudio original — e os seus próprios erros viram o treino de amanhã.",
+                "Pratique uma resposta, receba feedback e tente de novo. Volte em outro dia para usar a mesma habilidade em uma situação diferente, antes de ver uma dica.",
               )}
             </motion.p>
             <motion.div
@@ -63,7 +63,7 @@ export function HeroSection({ language, onSectionLinkClick }: HeroSectionProps) 
                 onClick={(event) => onSectionLinkClick(event, "waitlist")}
                 whileHover={hoverLift}
                 whileTap={tapPress}
-                className="inline-flex items-center justify-center rounded border border-accent bg-accent px-5 py-3 text-sm font-semibold text-white"
+                className="inline-flex items-center justify-center rounded border border-accent bg-accent px-5 py-3 text-sm font-semibold text-accent-contrast"
               >
                 {t("Entrar na lista de espera")}
               </motion.a>
@@ -79,7 +79,7 @@ export function HeroSection({ language, onSectionLinkClick }: HeroSectionProps) 
             </motion.div>
             <motion.p className="mt-4 text-sm text-ink-muted" variants={listItem}>
               {t(
-                "Para estudantes A2-B1 que estudam por conta própria e usam Mac com Apple Silicon.",
+                "Para brasileiros A2–B1 que querem usar inglês no trabalho. Primeiros convites para Mac com Apple Silicon.",
               )}
             </motion.p>
           </motion.div>

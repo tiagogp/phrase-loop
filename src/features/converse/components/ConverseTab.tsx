@@ -51,7 +51,8 @@ import {
   transcribeAudio,
 } from "@/features/correct/api";
 import { NaturalnessReview } from "@/features/correct/components/NaturalnessReview";
-import { countPolishFeedback, focusFeedback, prioritizeFeedback, type FeedbackIssue } from "@/features/correct/feedbackContract";
+import { countPolishFeedback, focusFeedback, prioritizeFeedback, FEEDBACK_CATEGORY_LABEL, FEEDBACK_PRIORITY_LABEL, type FeedbackIssue } from "@/features/correct/feedbackContract";
+import { errorTypeLabel } from "@/lib/cards/errorTypeLabels";
 import { sendConversationTurn, synthesizeSpeech } from "@/features/converse/api";
 import LocalModelNotice from "@/features/speech/components/LocalModelNotice";
 import { useWhisperModel } from "@/features/speech/hooks/useLocalModel";
@@ -1033,10 +1034,10 @@ export default function ConverseTab({
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold tracking-[-0.01em] text-ink">
-                Review · {review.context}
+                {t("Review")} · {review.context}
               </p>
               <p className="text-xs text-ink-muted">
-                {userTurns} {userTurns === 1 ? "turn" : "turns"} you spoke
+                {t("{count} speaking turns completed", { count: userTurns })}
               </p>
             </div>
                 <Button variant="secondary" onClick={closeReview} disabled={Boolean(errors?.length) && retryResolution === "pending"} className="h-9 shrink-0">
@@ -1089,14 +1090,13 @@ export default function ConverseTab({
                 ))}
               </ul>
               {polishCount > 0 && (
-                <details className="rounded border border-line px-3 py-2 text-xs text-ink-muted">
-                  <summary className="cursor-pointer">{t("Show {count} minor polish issues", { count: polishCount })}</summary>
+                <Disclosure title={t("Show {count} minor polish issues", { count: polishCount })} nested>
                   <ul className="mt-2 space-y-2">
                     {allPrioritizedErrors.filter((issue) => issue.priority === "polish").map((issue) => (
                       <ErrorRow key={issue.event.id} issue={issue} />
                     ))}
                   </ul>
-                </details>
+                </Disclosure>
               )}
               <NaturalnessReview refinements={refinements} overall={advanced?.overall} />
               <div className="space-y-3 rounded-lg border border-accent/30 bg-accent/5 p-4">
@@ -1131,7 +1131,7 @@ export default function ConverseTab({
                   </Button>
                   <Button
                     variant="secondary"
-                    onClick={() => void checkConversationRetry()}
+                    loading={retryChecking} onClick={() => void checkConversationRetry()}
                     disabled={!retryText.trim() || retryChecking || retryTranscribing || !hasEvaluator}
                   >
                     {retryChecking ? t("Checking retry…") : t("Check my retry")}
@@ -1166,7 +1166,7 @@ export default function ConverseTab({
               </div>
               <Button
                 variant="primary"
-                onClick={() => void generateReviewCards()}
+                loading={generating} onClick={() => void generateReviewCards()}
                 disabled={generating || reviewCarded}
                 className="h-10"
               >
@@ -1239,9 +1239,8 @@ export default function ConverseTab({
             </>
           )}
           <p className={cn("text-ink-muted", topicFirst ? "text-sm" : "text-xs")}>
-            {t("This practice uses up to {turns} learner turns with {depth} follow-ups.", {
+            {t("This practice has up to {turns} of your replies.", {
               turns: progressionSupport.conversation.maxTurns,
-              depth: progressionSupport.conversation.followUpDepth,
             })}
           </p>
         </Notice>
@@ -1261,7 +1260,7 @@ export default function ConverseTab({
                 placeholder={t("e.g. whether remote work actually helps junior engineers")}
               />
             </Field>
-            <Field label={t("Or start from one of these")}>
+            <Field group label={t("Or start from one of these")}>
               <div className="flex flex-wrap gap-1.5">
                 {scenarios.map((s) => (
                   <Chip key={s.id} active={scenarioId === s.id} onClick={() => setScenarioId(s.id)}>
@@ -1273,7 +1272,7 @@ export default function ConverseTab({
           </>
         ) : (
           <>
-            <Field label={t("Scenario")}>
+            <Field group label={t("Scenario")}>
               <div className="flex flex-wrap gap-1.5">
                 {scenarios.map((s) => (
                   <Chip key={s.id} active={scenarioId === s.id} onClick={() => setScenarioId(s.id)}>
@@ -1299,7 +1298,8 @@ export default function ConverseTab({
           </>
         )}
 
-        <Field label={t("Level")} hint={t("Sets how challenging your partner's English is.")}>
+        <Disclosure title={`${t("Adjust conversation")} · ${level} · ${t(freeTalk ? "Free talk" : "Guided")}`} contentClassName="space-y-4" nested>
+        <Field group label={t("Level")} hint={t("Sets how challenging your partner's English is.")}>
           <Segmented<ConversationLevel>
             label={t("CEFR level")}
             value={level}
@@ -1309,7 +1309,7 @@ export default function ConverseTab({
           />
         </Field>
 
-        <Field label={t("Partner")} hint={t("Supportive keeps the role-play simple. Challenging asks follow-ups and pushes your reasoning.")}>
+        <Field group label={t("Partner")} hint={t("Supportive keeps the role-play simple. Challenging asks follow-ups and pushes your reasoning.")}>
           <Segmented<"supportive" | "challenging">
             label={t("Conversation partner style")}
             value={challenge ? "challenging" : "supportive"}
@@ -1322,6 +1322,7 @@ export default function ConverseTab({
         </Field>
 
         <Field
+          group
           label={t("Mode")}
           hint={
             freeTalk
@@ -1339,6 +1340,8 @@ export default function ConverseTab({
             ]}
           />
         </Field>
+
+        </Disclosure>
 
         {cloudNote && <p className="text-xs text-ink-muted">{cloudNote}</p>}
         {note && <p className="text-xs text-danger">{note}</p>}
@@ -1439,7 +1442,7 @@ export default function ConverseTab({
           {conversation.turns.map((turn, i) => (
             <TurnBubble key={i} turn={turn} items={repertoire} />
           ))}
-          {preparingAudio && <li role="status" className="text-xs text-ink-muted">Preparando áudio… Você já pode ler e responder.</li>}
+          {preparingAudio && <li role="status" className="text-xs text-ink-muted">{t("Preparing audio… You can already read and reply.")}</li>}
           {busy && (
             <li className="flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-2 text-xs font-medium text-ink-muted shadow-sm">
               <Spinner className="h-3.5 w-3.5" /> {t("Thinking…")}
@@ -1534,24 +1537,25 @@ function formatWhen(ts: number, t: ReturnType<typeof useT>["t"]): string {
 }
 
 function ErrorRow({ issue }: { issue: FeedbackIssue }) {
+  const { t } = useT();
   const { event: error } = issue;
   return (
-    <li className="rounded-lg border border-line p-3">
+    <li className="rounded-lg border border-line p-3 [overflow-wrap:anywhere]">
       <p className="text-sm text-ink-muted line-through">{error.original}</p>
       <p className="text-sm text-ink">{error.corrected}</p>
       <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
         <span className="rounded border border-accent/30 px-1.5 py-0.5 text-[0.65rem] font-medium text-accent">
-          {issue.priority}
+          {t(FEEDBACK_PRIORITY_LABEL[issue.priority])}
         </span>
         <span className="rounded border border-line px-1.5 py-0.5 text-[0.65rem] font-medium text-ink-muted">
-          {issue.category}
+          {t(FEEDBACK_CATEGORY_LABEL[issue.category])}
         </span>
-        {error.errorTypes.map((t) => (
+        {error.errorTypes.map((type) => (
           <span
-            key={t}
+            key={type}
             className="rounded border border-line px-1.5 py-0.5 text-[0.65rem] font-medium text-ink-muted"
           >
-            {t}
+            {t(errorTypeLabel(type))}
           </span>
         ))}
       </div>

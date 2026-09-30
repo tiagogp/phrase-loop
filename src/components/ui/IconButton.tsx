@@ -19,7 +19,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
       whileTap={{ scale: 0.95 }}
       transition={springSnappy}
       className={cn(
-        "inline-flex h-8 w-8 items-center justify-center rounded-md text-ink-muted cursor-pointer transition-colors enabled:hover:bg-accent/10 enabled:hover:text-ink data-[active=true]:bg-accent/10 data-[active=true]:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50",
+        "inline-flex h-10 w-10 pointer-coarse:h-11 pointer-coarse:w-11 items-center justify-center rounded-md text-ink-muted cursor-pointer transition-colors enabled:hover:bg-accent/10 enabled:hover:text-ink data-[active=true]:bg-accent/10 data-[active=true]:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       {...props}

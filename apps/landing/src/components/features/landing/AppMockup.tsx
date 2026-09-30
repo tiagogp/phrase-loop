@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { motion } from "motion/react";
 import AppHeader from "@/components/app/AppHeader";
 import AppProviders from "@/components/app/AppProviders";
+import { Notice } from "@/components/ui/Notice";
 import type { HomeTab } from "@/components/app/homeTabs";
 import CorrectTab from "@/features/correct/components/CorrectTab";
 import DiscoverTab from "@/features/discover/components/DiscoverTab";
@@ -18,21 +19,25 @@ import {
   type LandingLanguage,
 } from "@landing/lib/landingLanguage";
 import { LANDING_TABS } from "@landing/constants/landing";
+import { TutorLoopDemo } from "./TutorLoopDemo";
 import { useLandingDemoApi } from "@landing/hooks/useLandingDemoApi";
 
 function DemoTabContent({
   tab,
+  language,
   onOpenSettings,
   onOpenDiscover,
   onOpenPractice,
   onOpenConversation,
 }: {
   tab: HomeTab;
+  language: LandingLanguage;
   onOpenSettings: () => void;
   onOpenDiscover: () => void;
   onOpenPractice: () => void;
   onOpenConversation: () => void;
 }) {
+  if (tab === "hoje") return <TutorLoopDemo language={language} />;
   if (tab === "discover") {
     return (
       <DiscoverTab
@@ -57,7 +62,12 @@ function DemoTabContent({
     );
   }
 
-  if (tab === "conversa") return <ConversationTab onOpenSettings={onOpenSettings} />;
+  if (tab === "conversa") return <div className="space-y-4">
+    <Notice>{language === "pt"
+      ? "Conversa ilustrativa com respostas fixas, por texto. A demonstração não avalia suas respostas."
+      : "Illustrative text conversation with fixed replies. The demo does not evaluate your answers."}</Notice>
+    <ConversationTab onOpenSettings={onOpenSettings} />
+  </div>;
   if (tab === "progress") return <ProgressPage onPractice={onOpenPractice} />;
 
   return <SpeechTab />;
@@ -65,7 +75,7 @@ function DemoTabContent({
 
 export function AppMockup({ language }: { language: LandingLanguage }) {
   useLandingDemoApi(language);
-  const [tab, setTab] = useState<HomeTab>("discover");
+  const [tab, setTab] = useState<HomeTab>("hoje");
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const changeTab = useCallback((next: HomeTab) => {
@@ -102,7 +112,7 @@ export function AppMockup({ language }: { language: LandingLanguage }) {
             onSettingsOpen={() => setSettingsOpen(true)}
             tabs={LANDING_TABS}
           />
-          <main className="min-h-0 flex-1">
+          <div className="min-h-0 flex-1">
             {settingsOpen ? (
               <div
                 className="h-full overflow-y-auto pb-12 app-scroll-region"
@@ -122,7 +132,8 @@ export function AppMockup({ language }: { language: LandingLanguage }) {
                   <section
                     key={item.id}
                     hidden={!active}
-                    aria-labelledby={`landing-tab-${item.id}`}
+                    id={`panel-${item.id}`}
+                    aria-labelledby={`tab-${item.id}`}
                     role="tabpanel"
                     tabIndex={0}
                     className="h-full overflow-y-auto app-scroll-region"
@@ -138,17 +149,18 @@ export function AppMockup({ language }: { language: LandingLanguage }) {
                     >
                       <DemoTabContent
                         tab={item.id}
+                        language={language}
                         onOpenSettings={() => setSettingsOpen(true)}
                         onOpenDiscover={() => changeTab("discover")}
                         onOpenPractice={() => changeTab("study")}
-                        onOpenConversation={() => changeTab("discover")}
+                        onOpenConversation={() => changeTab("conversa")}
                       />
                     </motion.div>
                   </section>
                 );
               })
             )}
-          </main>
+          </div>
         </div>
       </AppProviders>
     </motion.div>

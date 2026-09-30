@@ -131,7 +131,7 @@ export function RepertoireRecall({
         >
           {audio.transcribing ? t("Transcribing…") : audio.recording ? t("Stop recording") : t("Say it")}
         </Button>
-        <Button variant="secondary" onClick={() => void check()} disabled={!text.trim() || checking}>
+        <Button variant="secondary" onClick={() => void check()} loading={checking} disabled={!text.trim() || checking}>
           {checking ? t("Checking…") : t("Check")}
         </Button>
       </div>

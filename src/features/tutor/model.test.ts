@@ -1,16 +1,30 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_LEARNING_PROFILE } from "@/features/settings/learningProfile";
-import { DEFAULT_TUTOR_PREFERENCES, allowedTutorEvidence, nextTutorReview, selectTutorEvidence, tutorObservations, tutorProduction, tutorRecommendation, tutorSummary } from "./model";
+import { DEFAULT_TUTOR_PREFERENCES, allowedTutorEvidence, nextTutorReview, selectTutorEvidence, skillFromFirstAttempt, tutorObservations, tutorProduction, tutorRecommendation, tutorSkillEvidence, tutorSummary } from "./model";
 import { isTutorFeedback, isTutorRequest, isTutorSession } from "./contract";
-import { tutorAttempt, tutorSession } from "./testFixtures";
+import { tutorAttempt, tutorSession, durationHistory } from "./testFixtures";
 import { buildTutorPhrase } from "./phrase";
 import { buildTutorPrompt } from "./prompts";
 import { deriveLearningEvidence } from "@/features/progress/learningEvidence";
 
 const DAY = 86_400_000;
 describe("continuous tutor learning contract", () => {
+  it("carries one difficulty from day 1 into a different day 2 context and credits only unaided transfer", () => {
+    const [origin, followup] = durationHistory();
+    const first = origin.attempts[0];
+    const skill = skillFromFirstAttempt(origin, first)!;
+    origin.skill = skill;
+    expect(tutorSkillEvidence([origin], skill)).toMatchObject({ initialDifficulty: true, assisted: 1, transfers: 0 });
+    expect(tutorRecommendation([origin], DEFAULT_TUTOR_PREFERENCES, DEFAULT_LEARNING_PROFILE, 4000 + DAY)).toMatchObject({ focus: origin.task.goal, due: { id: origin.id } });
+    expect(tutorSkillEvidence([origin, followup], skill)).toMatchObject({ assisted: 1, independent: 1, transfers: 1, contexts: 1 });
+    expect(nextTutorReview(followup, 5000 + DAY, [origin])).toBe(5000 + 8 * DAY);
+    expect(nextTutorReview({ ...followup, attempts: [{ ...followup.attempts[0], supportUsed: true }] }, 5000 + DAY, [origin])).toBe(5000 + 2 * DAY);
+    const copied = { ...followup, attempts: [tutorAttempt({ id: "copied", text: origin.attempts[1].text, feedback: { ...tutorAttempt().feedback, skill: { label: skill.label, result: "demonstrated" } } })] };
+    expect(tutorSkillEvidence([origin, copied], skill).transfers).toBe(0);
+    expect(tutorSkillEvidence([origin, { ...followup, attempts: [{ ...followup.attempts[0], supportUsed: true }] }], skill).transfers).toBe(0);
+  });
   it("resumes an unfinished session before recommending a due return", () => {
-    const due = tutorSession({ id: "old", phase: "complete", nextReviewAt: 100 });
+    const due = tutorSession({ id: "old", phase: "complete", attempts: [tutorAttempt()], nextReviewAt: 100 });
     const active = tutorSession();
     expect(tutorRecommendation([due, active], DEFAULT_TUTOR_PREFERENCES, DEFAULT_LEARNING_PROFILE, 1000).active?.id).toBe(active.id);
     expect(tutorRecommendation([due], DEFAULT_TUTOR_PREFERENCES, DEFAULT_LEARNING_PROFILE, 1000).due?.id).toBe(due.id);
@@ -19,9 +33,10 @@ describe("continuous tutor learning contract", () => {
   });
   it("schedules actual attempts and returns sooner after support, uncertainty or dispute", () => {
     expect(nextTutorReview(tutorSession(), 1000)).toBeUndefined();
+    expect(nextTutorReview(tutorSession({ attempts: [tutorAttempt({ disputed: true })] }), 1000)).toBeUndefined();
     const independent = tutorSession({ attempts: [tutorAttempt()] });
     expect(nextTutorReview(independent, 1000)).toBe(1000 + 3 * DAY);
-    for (const attempt of [tutorAttempt({ supportUsed: true }), tutorAttempt({ disputed: true }), tutorAttempt({ feedback: { ...tutorAttempt().feedback, status: "uncertain" } })]) {
+    for (const attempt of [tutorAttempt({ supportUsed: true }), tutorAttempt({ feedback: { ...tutorAttempt().feedback, status: "uncertain" } })]) {
       expect(nextTutorReview(tutorSession({ attempts: [attempt] }), 1000)).toBe(1000 + DAY);
     }
   });

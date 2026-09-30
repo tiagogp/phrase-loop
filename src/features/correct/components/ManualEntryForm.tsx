@@ -41,7 +41,7 @@ export function ManualEntryForm({ draft, onChange, onToggleType, onAdd }: Manual
         </Field>
       </div>
 
-      <Field label={<>{t("Error type")} {optionalHint}</>}>
+      <Field group label={<>{t("Error type")} {optionalHint}</>}>
         <div className="flex flex-wrap gap-1.5">
           {CORRECTION_ERROR_TYPES.map((type) => (
             <Chip key={type} active={draft.errorTypes.includes(type)} onClick={() => onToggleType(type)}>

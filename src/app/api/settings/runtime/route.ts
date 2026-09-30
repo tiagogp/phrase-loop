@@ -8,6 +8,7 @@ import type { ProviderKind } from "@/lib/cards/provider";
 import type { SecureAiSettings } from "@/types/aiSettings";
 import { isProviderKind, optionalString, readJsonObject } from "@/server/http/validation";
 import { MAX_SETTINGS_JSON_BYTES } from "@/lib/constants";
+import { isPlainObject } from "@/lib/isObject";
 
 export const runtime = "nodejs";
 
@@ -27,10 +28,16 @@ export async function PUT(req: Request) {
   if (!raw) {
     return NextResponse.json({ error: "Invalid settings." }, { status: 400 });
   }
+  const configuredProviders = isPlainObject(raw.configuredProviders) ? raw.configuredProviders : {};
   const settings: SecureAiSettings = {
     defaultProvider: provider(raw.defaultProvider),
     ollamaBaseUrl: value(raw.ollamaBaseUrl, 2048),
     ollamaModel: value(raw.ollamaModel, 100),
+    configuredProviders: {
+      claude: configuredProviders.claude === true,
+      openai: configuredProviders.openai === true,
+      openrouter: configuredProviders.openrouter === true,
+    },
     anthropicApiKey: value(raw.anthropicApiKey, 500),
     openaiApiKey: value(raw.openaiApiKey, 500),
     openrouterApiKey: value(raw.openrouterApiKey, 500),

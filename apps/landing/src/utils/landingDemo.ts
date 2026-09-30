@@ -119,6 +119,11 @@ export function demoFetchResponse(
   init: RequestInit | undefined,
   language: LandingLanguage,
 ) {
+  const unavailable = () => jsonResponse({
+    error: language === "pt"
+      ? "Esta ação está disponível no aplicativo completo. A demonstração usa apenas dados de exemplo."
+      : "This action is available in the full app. The demo only uses sample data.",
+  }, { status: 503 });
   if (pathname === "/api/settings") {
     if (init?.method === "PATCH") return jsonResponse({ ok: true, version: 2 });
     return jsonResponse({
@@ -205,9 +210,22 @@ export function demoFetchResponse(
     return jsonResponse({ ...demoDiscoverResult(language), hasAudio: false });
   }
   if (pathname.startsWith("/api/discover/audio/")) {
-    return new Response(
-      new Blob(["PhraseLoop demo audio"], { type: "audio/wav" }),
-    );
+    return unavailable();
+  }
+
+  if (pathname === "/api/conversation") {
+    const body = typeof init?.body === "string" ? JSON.parse(init.body) : {};
+    const turns = Array.isArray(body.history)
+      ? body.history.filter((turn: { role?: string }) => turn.role === "user").length
+      : 0;
+    const replies = [
+      "Hi! Let's practice talking about work. What are you working on this week?",
+      "What is the most interesting part of your work?",
+      "Could you give me an example?",
+      "What would you like to work on next?",
+      "Thanks for sharing. This is the end of our sample conversation.",
+    ];
+    return jsonResponse({ reply: replies[Math.min(turns, replies.length - 1)] });
   }
 
   if (pathname === "/api/cards/mine") {
@@ -260,10 +278,11 @@ export function demoFetchResponse(
   }
 
   if (pathname === "/api/tts") {
-    return new Response(
-      new Blob(["PhraseLoop demo speech"], { type: "audio/wav" }),
-    );
+    return unavailable();
   }
 
+  // Never send app-only requests to the marketing server. In particular, do
+  // not turn an unsupported preview action into an unexplained 404.
+  if (pathname.startsWith("/api/") && pathname !== "/api/waitlist") return unavailable();
   return null;
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { providerRegistry, isProviderAvailable } from "@/lib/cards/registry";
+import { providerRegistry } from "@/lib/cards/registry";
 import type { ProviderKind } from "@/lib/cards/provider";
 import {
   getDefaultProvider,
@@ -9,6 +9,7 @@ import {
   replaceRuntimeAiSettings,
   isAuthorizedSettingsRequest,
   getSettingsVersion,
+  isProviderConfigured,
 } from "@/server/aiSettings";
 import type { ProviderStatus, PublicAiSettings } from "@/types/aiSettings";
 import { getOllamaStatus, ollamaRoot } from "@/server/integrations/ollama";
@@ -32,7 +33,7 @@ export async function GET() {
   const order: ProviderKind[] = ["ollama", "openrouter", "claude", "openai"];
   const providers: ProviderStatus[] = await Promise.all(
     order.map(async (kind) => {
-      const configured = kind === "ollama" ? true : await isProviderAvailable(kind);
+      const configured = kind === "ollama" ? true : isProviderConfigured(kind);
       const available = kind === "ollama" ? ollamaOnline && models.length > 0 : configured;
       return {
         kind,

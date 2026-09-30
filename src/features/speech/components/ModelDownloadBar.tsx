@@ -126,6 +126,8 @@ function ModelRow({
             aria-valuenow={hasProgress ? percent : undefined}
           >
             <m.div
+              initial={false}
+              style={{ width: hasProgress ? `${percent}%` : "33%" }}
               className={cn(
                 "h-full rounded",
                 done ? "bg-success" : "bg-accent",
@@ -149,7 +151,7 @@ function ModelRow({
         </>
       ) : (
         <>
-          <p className="min-w-0 flex-1 truncate text-xs text-ink-muted">
+          <p className="min-w-0 flex-1 text-xs text-ink-muted">
             {model.error ? copy.failed : copy.waiting}
           </p>
           <Button

@@ -7,10 +7,10 @@ import {
 } from "@landing/lib/landingLanguage";
 
 const steps = [
-  ["Descobrir", "Encontre uma frase em uma fonte real."],
-  ["Guardar", "Salve a linha que vale lembrar."],
-  ["Revisar", "Crie um card com contexto e áudio."],
-  ["Reforçar", "Pratique de novo quando ela virar um ponto fraco."],
+  ["Pratique", "Responda a uma situação ligada ao seu objetivo."],
+  ["Tente novamente", "Entenda um ajuste e reconstrua a resposta."],
+  ["Memória", "Guarde a habilidade e o apoio usado."],
+  ["Recupere depois", "Volte a outra situação e tente sem consultar ajuda."],
 ];
 
 export function YourSection({ language }: { language: LandingLanguage }) {

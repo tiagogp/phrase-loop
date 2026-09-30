@@ -1,5 +1,7 @@
 "use client";
 
+import Disclosure from "@/components/ui/Disclosure";
+
 import { useState, useSyncExternalStore } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
@@ -11,6 +13,7 @@ import type { EnglishLevel } from "@/features/discover/types";
 import { NATIVE_LANGUAGES } from "@/features/settings/languages";
 import {
   completeOnboarding,
+  OBJECTIVE_OPTIONS,
   getLearningProfile,
   isOnboardingComplete,
   type MethodObjective,
@@ -22,35 +25,20 @@ import { LevelTestFlow } from "@/features/levelup/components/LevelTestFlow";
 import { LocalPlacementCheck } from "@/features/levelup/components/LocalPlacementCheck";
 
 const subscribe = () => () => {};
-type Step = "level" | "welcome" | "profile";
-// Start with the purpose; provider setup stays available where a feature needs it.
-const STEPS: Step[] = ["welcome", "level", "profile"];
 
-/** `objective` drives the method's study distribution; `label` is display/prompt text
- * only. Keep them separate — a translated label must never change the distribution. */
-const GOAL_OPTIONS: readonly { objective: MethodObjective; label: string }[] = [
-  { objective: "conversation", label: "Conversation" },
-  { objective: "travel", label: "Travel" },
-  { objective: "professional", label: "Work" },
-  { objective: "academic", label: "Study & exams" },
-  { objective: "media", label: "Movies & podcasts" },
-];
 
-export default function OnboardingDialog({ onOpenSettings }: Readonly<{ onOpenSettings: () => void }>) {
+export default function OnboardingDialog({ onStart }: Readonly<{ onStart: () => void }>) {
   const { t } = useT();
   const [dismissed, setDismissed] = useState(false);
-  const [step, setStep] = useState<Step>("welcome");
   const [levelCheckOpen, setLevelCheckOpen] = useState<"local" | "ai" | null>(null);
   const [profile] = useState(getLearningProfile);
-  const [level, setLevel] = useState<EnglishLevel>(profile.level);
+  const [level, setLevel] = useState<EnglishLevel>(profile.createdAt ? profile.level : "A2");
   const [nativeLang, setNativeLang] = useState(profile.nativeLang);
-  const [objective, setObjective] = useState<MethodObjective>(profile.objective);
+  const [objective, setObjective] = useState<MethodObjective>(profile.createdAt ? profile.objective : "professional");
   const [dailyMinutes, setDailyMinutes] = useState(profile.dailyMinutes ?? 10);
-  const { settings } = useAiSettings();
+  const { settings, loading } = useAiSettings();
+  const hasAi = settings.providers.some(provider => provider.available);
   const defaultProvider = settings.providers.find((provider) => provider.kind === settings.defaultProvider);
-  // Any usable provider, not just the default one: the question here is whether the method
-  // can run whole, not which model happens to be preferred.
-  const aiReady = settings.providers.some((provider) => provider.available);
   const levelCheckTarget = nextLevelOf(level);
   const firstVisit = useSyncExternalStore(
     subscribe,
@@ -61,8 +49,8 @@ export default function OnboardingDialog({ onOpenSettings }: Readonly<{ onOpenSe
 
   const languageOptions = NATIVE_LANGUAGES.map((l) => ({ value: l.code, label: t(l.label) }));
 
-  const finish = async () => {
-    const focus = GOAL_OPTIONS.find((item) => item.objective === objective)?.label ?? "";
+  const finish = (start: boolean) => {
+    const focus = OBJECTIVE_OPTIONS.find((item) => item.objective === objective)?.label ?? "";
     completeOnboarding({
       track: "beginner",
       level,
@@ -74,15 +62,13 @@ export default function OnboardingDialog({ onOpenSettings }: Readonly<{ onOpenSe
       dailyMinutes,
     });
     setDismissed(true);
+    if (start) onStart();
   };
 
-  const currentIndex = STEPS.indexOf(step);
-  const canGoBack = currentIndex > 0;
-  const canContinue = currentIndex < STEPS.length - 1;
 
   if (levelCheckOpen === "local") {
     return (
-      <Modal open={open} onClose={() => void finish()} labelledBy="welcome-title" className="w-[min(100%,34rem)]">
+      <Modal open={open} onClose={() => setLevelCheckOpen(null)} labelledBy="placement-title" className="w-[min(100%,34rem)]">
         <LocalPlacementCheck
           translate={t}
           onAccept={(suggested) => {
@@ -97,7 +83,7 @@ export default function OnboardingDialog({ onOpenSettings }: Readonly<{ onOpenSe
 
   if (levelCheckOpen === "ai" && levelCheckTarget) {
     return (
-      <Modal open={open} onClose={() => void finish()} labelledBy="welcome-title" className="w-[min(100%,34rem)]">
+      <Modal open={open} onClose={() => setLevelCheckOpen(null)} labelledBy="level-test-title" className="w-[min(100%,34rem)]">
         <LevelTestFlow
           currentLevel={level}
           targetLevel={levelCheckTarget}
@@ -114,23 +100,20 @@ export default function OnboardingDialog({ onOpenSettings }: Readonly<{ onOpenSe
   }
 
   return (
-    <Modal open={open} onClose={() => void finish()} labelledBy="welcome-title" className="w-[min(100%,34rem)]">
-      <div className="mb-5 flex gap-1.5" aria-hidden="true">
-        {STEPS.map((item) => (
-          <span
-            key={item}
-            className={`h-1.5 flex-1 rounded-full ${STEPS.indexOf(item) <= currentIndex ? "bg-accent" : "bg-line"}`}
-          />
-        ))}
+    <Modal open={open} closeOnBackdrop={false} labelledBy="welcome-title" className="w-[min(100%,34rem)]">
+      <div>
+        <p className="text-xs uppercase tracking-widest text-accent">{t("Welcome")}</p>
+        <h2 id="welcome-title" className="mt-2 text-2xl font-semibold text-ink">{t("One situation. One answer of your own.")}</h2>
+        <p className="mt-3 text-sm leading-relaxed text-ink-soft">{t(hasAi ? "Try a short answer in English, understand one adjustment, and try again. Your next practice starts from what you did today." : "Start with a guided lesson: understand useful phrases, listen, and practice remembering. You can connect an AI later for personal feedback.")}</p>
+        <p className="mt-3 text-xs text-ink-muted">{t("Start with {level} English. You can change your level and goal whenever you need.", { level })}</p>
       </div>
-
-      {step === "level" && (
+      <Disclosure title={t("Adjust my starting point")} className="mt-5" contentClassName="space-y-5" nested>
         <div className="space-y-4">
           <div>
             <p className="text-xs uppercase tracking-widest text-accent">{t("Your level")}</p>
-            <h2 id="welcome-title" className="mt-1 text-xl font-semibold text-ink">
+            <h3 className="mt-1 text-lg font-semibold text-ink">
               {t("Choose your English level first")}
-            </h2>
+            </h3>
             <p className="mt-2 text-sm text-ink-soft">
               {t("This helps PhraseLoop start with phrases that are useful without being too easy.")}
             </p>
@@ -162,33 +145,13 @@ export default function OnboardingDialog({ onOpenSettings }: Readonly<{ onOpenSe
             </div>
           </Field>
         </div>
-      )}
 
-      {step === "welcome" && (
-        <div>
-          <p className="text-xs uppercase tracking-widest text-accent">{t("Welcome")}</p>
-          <h2 id="welcome-title" className="mt-1 text-xl font-semibold text-ink">
-            {t("Start with one short lesson")}
-          </h2>
-          <p className="mt-2 text-sm text-ink-soft">
-            {t("Listen, save one useful phrase, and use it in a sentence of your own.")}
-          </p>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <MethodTile title={t("Listen")} text={t("Hear a phrase in context.")} />
-            <MethodTile title={t("Save")} text={t("Keep a phrase you want to review.")} />
-            <MethodTile title={t("Speak")} text={t("Say the phrase in your own voice.")} />
-            <MethodTile title={t("Write")} text={t("Use the phrase in an English sentence.")} />
-          </div>
-        </div>
-      )}
-
-      {step === "profile" && (
         <div className="space-y-4">
           <div>
             <p className="text-xs uppercase tracking-widest text-accent">{t("Your routine")}</p>
-            <h2 id="welcome-title" className="mt-1 text-xl font-semibold text-ink">
+            <h3 className="mt-1 text-lg font-semibold text-ink">
               {t("Calibrate the first week")}
-            </h2>
+            </h3>
             <p className="mt-2 text-sm text-ink-soft">
               {t("Three choices are enough to start. You can tune the rest later.")}
             </p>
@@ -201,74 +164,37 @@ export default function OnboardingDialog({ onOpenSettings }: Readonly<{ onOpenSe
                 options={languageOptions}
               />
             </Field>
-            <Field label={t("Learning")}>
+            <Field group label={t("Learning")}>
               <div className="rounded border border-line bg-surface px-3 py-2 text-sm text-ink-soft">
                 {t("English")}
               </div>
             </Field>
           </div>
-          <Field label={t("Main goal")}>
+          <Field group label={t("Main goal")}>
             <Segmented
               label={t("Main goal")}
               value={objective}
               onChange={setObjective}
-              variant="fill"
-              options={GOAL_OPTIONS.map((item) => ({
+              variant="inline"
+              className="flex w-full flex-wrap [&>button]:flex-1 [&>button]:basis-28"
+              options={OBJECTIVE_OPTIONS.map((item) => ({
                 value: item.objective,
                 label: t(item.label),
               }))}
             />
           </Field>
-          <Field label={t("Time for today")} hint={t("A small review batch, then one answer of your own. Change it on Home whenever you need.")}>
+          <Field group label={t("Time for today")} hint={t("A small review batch, then one answer of your own. Change it in Settings whenever you need.")}>
             <Segmented label={t("Time for today")} value={String(dailyMinutes)}
               onChange={(value) => setDailyMinutes(Number(value))}
               options={[5, 10, 20].map((value) => ({ value: String(value), label: t("{count} min", { count: value }) }))} />
           </Field>
         </div>
-      )}
+      </Disclosure>
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-2">
-        <Button
-          variant="ghost"
-          onClick={() => setStep(STEPS[currentIndex - 1])}
-          disabled={!canGoBack}
-        >
-          {t("Back")}
-        </Button>
-        <div className="flex flex-wrap justify-end gap-2">
-          {canContinue ? (
-            <Button variant="primary" onClick={() => setStep(STEPS[currentIndex + 1])}>
-              {t("Continue")}
-            </Button>
-          ) : (
-            <>
-              {!aiReady && (
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    void finish();
-                    onOpenSettings();
-                  }}
-                >
-                  {t("Connect an AI")}
-                </Button>
-              )}
-              <Button variant="primary" onClick={() => void finish()}>
-                {t("Start my loop")}
-              </Button>
-            </>
-          )}
-        </div>
+      <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
+        <Button variant="ghost" onClick={() => finish(false)}>{t("Explore on my own")}</Button>
+        <Button variant="primary" disabled={loading} onClick={() => finish(true)}>{t("Start my first practice")} →</Button>
       </div>
     </Modal>
-  );
-}
-
-function MethodTile({ title, text }: { title: string; text: string }) {
-  return (
-    <div className="rounded border border-line bg-surface px-3 py-3">
-      <p className="text-sm font-medium text-ink">{title}</p>
-      <p className="mt-1 text-xs text-ink-muted">{text}</p>
-    </div>
   );
 }

@@ -1,3 +1,5 @@
+import { tutorMessages } from "./tutorMessages";
+import { experienceMessages } from "./experienceMessages";
 import type { UiLang } from "./config";
 
 /**
@@ -10,6 +12,39 @@ import type { UiLang } from "./config";
  * falls back to English for them.
  */
 export const messages: Record<string, Partial<Record<UiLang, string>>> = {
+  ...tutorMessages,
+  ...experienceMessages,
+  "{count} characters · minimum {minimum}": { pt: "{count} caracteres · mínimo de {minimum}" },
+  "Pause": { pt: "Pausar" },
+  "Theme": { pt: "Tema" },
+  "Generate": { pt: "Gerar" },
+  "Selected": { pt: "Selecionada" },
+  "Select": { pt: "Selecionar" },
+  "Choose 3 to 20 phrases.": { pt: "Escolha de 3 a 20 frases." },
+  "ordering at a restaurant": { pt: "fazer um pedido no restaurante" },
+  "Could not generate phrases.": { pt: "Não foi possível gerar as frases. Tente novamente." },
+  "Could not generate cards.": { pt: "Não foi possível criar os cards. Tente novamente." },
+  "Make study list ({count})": { pt: "Criar lista de estudo ({count})" },
+  "Theme study list preview": { pt: "Prévia da lista de estudo por tema" },
+  "{count} speaking turns completed": { pt: "{count} turnos de fala concluídos" },
+  "Audio position": { pt: "Posição do áudio" },
+  "Could not play this audio. Try again or generate it again.": { pt: "Não foi possível tocar este áudio. Tente novamente ou gere outro áudio." },
+  "Clear": { pt: "Limpar" },
+  "Voice": { pt: "Voz" },
+  "Speed": { pt: "Velocidade" },
+  "Slow": { pt: "Lento" },
+  "Normal": { pt: "Normal" },
+  "Fast": { pt: "Rápido" },
+  "Download WAV": { pt: "Baixar WAV" },
+  "Restore": { pt: "Restaurar" },
+  "Recent": { pt: "Recentes" },
+  "Clear all": { pt: "Limpar tudo" },
+  "Clear all recent audio history?": { pt: "Limpar todo o histórico recente de áudio?" },
+  "Could not play this audio. Try again or skip this question.": { pt: "Não foi possível tocar o áudio. Tente novamente ou pule esta pergunta." },
+  "Showing {shown} of {total} phrases": { pt: "Exibindo {shown} de {total} frases" },
+  "Show more phrases": { pt: "Mostrar mais frases" },
+  "Practice with my tutor": { pt: "Praticar com meu tutor" },
+  "Skip to content": { pt: "Pular para o conteúdo" },
   "Connect your AI and manage your learning preferences.": { pt: "Conecte sua IA e ajuste suas preferências de aprendizado." },
   "Choose a provider, connect it, and return to your activity.": { pt: "Escolha uma IA, conecte e volte à sua atividade." },
   "Choose an AI provider": { pt: "Escolha sua IA" },
@@ -4759,7 +4794,7 @@ export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   "yesterday": { pt: "ontem" },
   "{count} days ago": { pt: "{count} dias atrás" },
   "Speaking stage: {stage}": { pt: "Estágio de fala: {stage}" },
-  "This practice uses up to {turns} learner turns with {depth} follow-ups.": { pt: "Esta prática usa até {turns} turnos do aluno com acompanhamentos {depth}." },
+  "This practice has up to {turns} of your replies.": { pt: "Esta prática inclui até {turns} respostas suas." },
   "Speak with an AI partner in a role-play. Keep going naturally; your mistakes become cards afterward.": { pt: "Fale com um parceiro de IA em uma simulação. Siga naturalmente; seus erros viram cards depois." },
   "This {stage} practice is complete. Finish it to review your output.": { pt: "Esta prática de {stage} está completa. Encerre para revisar o que você produziu." },
   "Couldn't start the conversation.": { pt: "Não consegui começar a conversa." },

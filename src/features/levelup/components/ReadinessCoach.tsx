@@ -218,7 +218,7 @@ export function ReadinessCoach({ weaknesses, generatingKey, onPractice, onGenera
                     <Button
                       variant="secondary"
                       size="sm"
-                      disabled={generatingKey !== null}
+                      loading={generatingKey === key} disabled={generatingKey !== null}
                       onClick={() => onGenerate(gap.weakness)}
                     >
                       {generatingKey === key ? t("Creating…") : t("New phrases")}

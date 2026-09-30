@@ -1,6 +1,8 @@
 "use client";
 
-import { useRef, type KeyboardEvent } from "react";
+import Disclosure from "@/components/ui/Disclosure";
+
+import { useRef, useState, type KeyboardEvent } from "react";
 import { cn } from "@/lib/cn";
 import { useT } from "@/i18n/I18nProvider";
 
@@ -10,18 +12,23 @@ interface ReviewWorkspaceNavProps {
   value: ReviewView;
   /** The only count shown: due is the one number that asks for action. */
   due: number;
+  hasPractice?: boolean;
   onChange: (view: ReviewView) => void;
 }
 
-export function ReviewWorkspaceNav({ value, due, onChange }: ReviewWorkspaceNavProps) {
+export function ReviewWorkspaceNav({ value, due, onChange, hasPractice = true }: ReviewWorkspaceNavProps) {
   const { t } = useT();
+  const [moreOpen, setMoreOpen] = useState(false);
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
-  const options: { value: ReviewView; label: string; count?: number }[] = [
+  const allOptions: { value: ReviewView; label: string; count?: number }[] = [
     { value: "review", label: t("Review"), count: due },
     { value: "use", label: t("Use it") },
     { value: "progress", label: t("Focus") },
     { value: "library", label: t("Library") },
   ];
+
+  const options = hasPractice ? allOptions : allOptions.filter(option => option.value === "review" || option.value === "library" || option.value === value);
+  const moreOptions = allOptions.filter(option => !options.includes(option));
 
   const select = (index: number) => {
     onChange(options[index].value);
@@ -40,11 +47,12 @@ export function ReviewWorkspaceNav({ value, due, onChange }: ReviewWorkspaceNavP
   };
 
   return (
-    <div className="sticky top-0 z-20 -mx-1 bg-surface/95 px-1 py-2 backdrop-blur-sm">
+    <div className="sticky top-0 z-10 -mx-1 bg-surface/95 px-1 py-2 backdrop-blur-sm">
       <div
         role="tablist"
         aria-label={t("Review sections")}
-        className="grid grid-cols-4 gap-1 rounded-panel border border-line/75 bg-card p-1 shadow-(--shadow-soft)"
+        style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
+        className="grid gap-1 rounded-panel border border-line/75 bg-card p-1 shadow-(--shadow-soft)"
       >
         {options.map((option, index) => {
           const active = option.value === value;
@@ -63,18 +71,18 @@ export function ReviewWorkspaceNav({ value, due, onChange }: ReviewWorkspaceNavP
               onClick={() => onChange(option.value)}
               onKeyDown={(event) => onKeyDown(event, index)}
               className={cn(
-                "flex min-h-10 min-w-0 items-center justify-center gap-1 rounded-lg px-2 py-2 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent sm:gap-2 sm:px-3 sm:text-sm",
+                "flex min-h-11 min-w-0 items-center justify-center gap-1 rounded-lg px-0.5 py-2 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent sm:gap-2 sm:px-3 sm:text-sm",
                 active
                   ? "bg-accent/10 text-ink"
                   : "text-ink-muted hover:bg-surface hover:text-ink",
               )}
             >
-              <span className="truncate">{option.label}</span>
+              <span>{option.label}</span>
               {option.count !== undefined && option.count > 0 && (
                 <span
                   className={cn(
                     "hidden min-w-5 rounded-full px-1.5 py-0.5 text-center text-[10px] font-semibold tabular-nums sm:block",
-                    active ? "bg-accent text-white" : "bg-line/70 text-ink-soft",
+                    active ? "bg-accent text-accent-contrast" : "bg-line/70 text-ink-soft",
                   )}
                 >
                   {option.count}
@@ -84,6 +92,13 @@ export function ReviewWorkspaceNav({ value, due, onChange }: ReviewWorkspaceNavP
           );
         })}
       </div>
+      {moreOptions.length > 0 && <Disclosure title={t("More ways to practice")} className="mt-2" open={moreOpen} onOpenChange={setMoreOpen}>
+        <div className="flex flex-wrap gap-2">{moreOptions.map(option => <button key={option.value} id={`review-view-tab-${option.value}`} type="button" className="min-h-10 rounded-md px-3 text-sm text-ink hover:bg-accent/5" onClick={() => {
+          setMoreOpen(false);
+          onChange(option.value);
+          requestAnimationFrame(() => document.getElementById(`review-view-tab-${option.value}`)?.focus());
+        }}>{option.label}</button>)}</div>
+      </Disclosure>}
     </div>
   );
 }

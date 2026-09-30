@@ -15,6 +15,7 @@ export interface NoticeProps extends ComponentProps<"div"> {
 export function Notice({ className, tone = "default", ...props }: NoticeProps) {
   return (
     <div
+      role={tone === "error" ? "alert" : tone === "success" ? "status" : undefined}
       className={cn("rounded-md border bg-card px-3.5 py-2.5 text-sm text-ink-soft", toneClass[tone], className)}
       {...props}
     />

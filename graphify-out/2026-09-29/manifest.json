@@ -85,8 +85,8 @@
     "semantic_hash": "96a7b12b279dd38d6cf1eb65f6257ddf"
   },
   "electron/main.js": {
-    "mtime": 1790713419.4722986,
-    "ast_hash": "147c1db5e62e2131b81d14b61a83dbac",
+    "mtime": 1790732646.1824884,
+    "ast_hash": "f7b8206c048e4203cdfb84b19fd77e44",
     "semantic_hash": ""
   },
   "electron/preload.js": {
@@ -335,8 +335,8 @@
     "semantic_hash": ""
   },
   "src/components/app/HomeClient.tsx": {
-    "mtime": 1790731012.880405,
-    "ast_hash": "75463dd0fd1ab951624cb840bbf1a798",
+    "mtime": 1790737982.9138343,
+    "ast_hash": "0b2517962aab1375b5413fd0603bb5e8",
     "semantic_hash": ""
   },
   "src/components/app/ThemeProvider.tsx": {
@@ -345,8 +345,8 @@
     "semantic_hash": "5d51c447fbbc31e9bbec1e31c5d1c237"
   },
   "src/components/app/homeTabs.ts": {
-    "mtime": 1790715255.6601732,
-    "ast_hash": "69dd1181b997b0a4b3ec52d1c5152fb4",
+    "mtime": 1790737982.864114,
+    "ast_hash": "d320ed168ab8cfa79690a099e6be932a",
     "semantic_hash": ""
   },
   "src/components/app/useDockDueBadge.ts": {
@@ -605,8 +605,8 @@
     "semantic_hash": "17e7dcfcb50eb8a8000fc6f1fc02ec73"
   },
   "src/features/home/components/HojeHome.tsx": {
-    "mtime": 1790730936.1841269,
-    "ast_hash": "b37c97d7cd92aed3ec0ea0c60727d219",
+    "mtime": 1790737745.4739974,
+    "ast_hash": "30cc49dba7daf52fcbc5203f841b817a",
     "semantic_hash": ""
   },
   "src/features/learn/components/LessonView.tsx": {
@@ -750,8 +750,8 @@
     "semantic_hash": ""
   },
   "src/features/settings/components/SettingsScreen.tsx": {
-    "mtime": 1790713419.5854428,
-    "ast_hash": "5f5bd9e4b03d7616557be4892a5d3469",
+    "mtime": 1790733007.1469827,
+    "ast_hash": "03c05cf19ac2d3b21492b355464021d7",
     "semantic_hash": ""
   },
   "src/features/settings/context/AiSettingsContext.tsx": {
@@ -910,8 +910,8 @@
     "semantic_hash": "626e67d4231ecd1b4c46fd729cc021a4"
   },
   "src/i18n/messages.ts": {
-    "mtime": 1790716014.5687628,
-    "ast_hash": "0ef84a093fde53d27a03c3307dc5162b",
+    "mtime": 1790732824.3428957,
+    "ast_hash": "d0a9ebcccab5ff3f376483bacbbfe93b",
     "semantic_hash": ""
   },
   "src/i18n/translate.test.ts": {
@@ -2415,13 +2415,13 @@
     "semantic_hash": ""
   },
   "src/app/api/tutor/route.test.ts": {
-    "mtime": 1790725820.904607,
-    "ast_hash": "5ce6b4e6d7199a868db5e4e10a9a9c91",
+    "mtime": 1790738057.8701875,
+    "ast_hash": "74ba014a90a56435b7cbc6e692d4ae0a",
     "semantic_hash": ""
   },
   "src/app/api/tutor/route.ts": {
-    "mtime": 1790725711.8105958,
-    "ast_hash": "79014eae6759559de6b3c824e41aab33",
+    "mtime": 1790738052.208158,
+    "ast_hash": "bbc996eb28d11421c9f7a7474d417f2b",
     "semantic_hash": ""
   },
   "src/features/tutor/api.ts": {
@@ -2430,8 +2430,8 @@
     "semantic_hash": ""
   },
   "src/features/tutor/components/TutorHomeCard.tsx": {
-    "mtime": 1790730962.702178,
-    "ast_hash": "14bffffdb75520175cb3be161318a8d0",
+    "mtime": 1790737996.2338195,
+    "ast_hash": "c1c64cbe45fd315f137a3f7ad77da87a",
     "semantic_hash": ""
   },
   "src/features/tutor/components/TutorMemoryPanel.tsx": {
@@ -2440,33 +2440,33 @@
     "semantic_hash": ""
   },
   "src/features/tutor/components/TutorPractice.tsx": {
-    "mtime": 1790731184.937652,
-    "ast_hash": "a79755c2299c18160489ba1b8a00a6ca",
+    "mtime": 1790738045.7497613,
+    "ast_hash": "8a4e9c57e4da830f7b359e3e1c4d9101",
     "semantic_hash": ""
   },
   "src/features/tutor/components/TutorProgressCard.tsx": {
-    "mtime": 1790725630.9392583,
-    "ast_hash": "6eba15917d58ad2ddb020f9a83143cc2",
+    "mtime": 1790737758.0782397,
+    "ast_hash": "76c9b6eaef2c2b5a338e6c74da020e6a",
     "semantic_hash": ""
   },
   "src/features/tutor/components/TutorWorkspace.tsx": {
-    "mtime": 1790725820.7105134,
-    "ast_hash": "4eebed7e6fe77ecfaed76dab25afa96e",
+    "mtime": 1790737897.7733486,
+    "ast_hash": "eab2fe8a2d3eb30e4e203a573b7fd974",
     "semantic_hash": ""
   },
   "src/features/tutor/contract.ts": {
-    "mtime": 1790725757.3774753,
-    "ast_hash": "449b492a187fbd22b293e916ef864fcf",
+    "mtime": 1790737622.2068923,
+    "ast_hash": "31ca1b3840335b70eeb6ccc9b5687c0b",
     "semantic_hash": ""
   },
   "src/features/tutor/model.test.ts": {
-    "mtime": 1790725820.8417253,
-    "ast_hash": "e727d8392ad64a9b1a89b3bfb7151f55",
+    "mtime": 1790738039.4361234,
+    "ast_hash": "b4d491dabb1bc90f29c6ac6d89094d31",
     "semantic_hash": ""
   },
   "src/features/tutor/model.ts": {
-    "mtime": 1790725820.653857,
-    "ast_hash": "e2d95a30e94317aecd4e91bc33005a2b",
+    "mtime": 1790738116.4820995,
+    "ast_hash": "aeede6090f2ecc2b474e15ad8f00aae0",
     "semantic_hash": ""
   },
   "src/features/tutor/phrase.ts": {
@@ -2475,13 +2475,13 @@
     "semantic_hash": ""
   },
   "src/features/tutor/prompts.ts": {
-    "mtime": 1790725466.675811,
-    "ast_hash": "a0bf6edd433f5f2585135a8d85d9262a",
+    "mtime": 1790738039.387951,
+    "ast_hash": "24a20f91fda2513248505d02aace8dc8",
     "semantic_hash": ""
   },
   "src/features/tutor/store.test.ts": {
-    "mtime": 1790725295.555596,
-    "ast_hash": "5b0dcd693396537b4ce164d001a24fc2",
+    "mtime": 1790737856.8774087,
+    "ast_hash": "39e8ff54e82321d8359cf61d44a2fa87",
     "semantic_hash": ""
   },
   "src/features/tutor/store.ts": {
@@ -2490,13 +2490,13 @@
     "semantic_hash": ""
   },
   "src/features/tutor/testFixtures.ts": {
-    "mtime": 1790725295.394653,
-    "ast_hash": "6aa9a6e80050a209412bd9ca3beca509",
+    "mtime": 1790737782.0968406,
+    "ast_hash": "d650331d082e88929207142d64e3f743",
     "semantic_hash": ""
   },
   "src/features/tutor/types.ts": {
-    "mtime": 1790725757.3156023,
-    "ast_hash": "2ea68b537b0a83b26f2bf556912182f7",
+    "mtime": 1790737622.1524935,
+    "ast_hash": "f06fffac28d12b81f275af8c1681a1ae",
     "semantic_hash": ""
   },
   "src/features/tutor/useTutorMemory.ts": {
@@ -2547,6 +2547,21 @@
   "src/lib/store/sharedResource.ts": {
     "mtime": 1790731345.9012806,
     "ast_hash": "9baed47f8e3e47fef4c6be5ddd91955e",
+    "semantic_hash": ""
+  },
+  "src/features/settings/connectProvider.test.ts": {
+    "mtime": 1790732721.943358,
+    "ast_hash": "dca46cc861ad695e6ee386095a0dfab6",
+    "semantic_hash": ""
+  },
+  "src/features/settings/connectProvider.ts": {
+    "mtime": 1790732646.2604368,
+    "ast_hash": "8eb6a15e5c6ac2b8331da16a9b9b9a57",
+    "semantic_hash": ""
+  },
+  "docs/product-refocus-diagnosis.md": {
+    "mtime": 1790737581.463595,
+    "ast_hash": "a47bb00ad55c95cc3780e4bf2c855237",
     "semantic_hash": ""
   }
 }

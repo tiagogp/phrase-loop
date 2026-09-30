@@ -44,13 +44,16 @@ export function useLandingNavigation() {
 
   const handleSectionLinkClick = useCallback(
     (event: MouseEvent<HTMLAnchorElement>, sectionId: LandingSectionId) => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       setActiveSection(sectionId);
 
       const target = document.getElementById(sectionId);
       if (!target) return;
 
       event.preventDefault();
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      target.tabIndex = -1;
+      target.focus({ preventScroll: true });
+      target.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
       window.history.replaceState(null, "", `#${sectionId}`);
     },
     [],

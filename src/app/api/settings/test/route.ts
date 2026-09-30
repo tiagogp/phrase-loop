@@ -3,7 +3,7 @@ import OpenAI from "openai";
 import { NextResponse } from "next/server";
 import {
   getOllamaBaseUrl,
-  getProviderApiKey,
+  ensureProviderApiKey,
   isAuthorizedSettingsRequest,
 } from "@/server/aiSettings";
 import { ollamaRoot } from "@/server/integrations/ollama";
@@ -33,19 +33,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, detail: "Connected to Ollama." });
     }
     if (raw.provider === "claude") {
-      const apiKey = str(raw.anthropicApiKey, 500) || getProviderApiKey("claude");
+      const apiKey = str(raw.anthropicApiKey, 500) || await ensureProviderApiKey("claude");
       if (!apiKey) return NextResponse.json({ ok: false, detail: "Enter an Anthropic API key." });
       await new Anthropic({ apiKey }).models.list({ limit: 1 });
       return NextResponse.json({ ok: true, detail: "Connected to Claude." });
     }
     if (raw.provider === "openai") {
-      const apiKey = str(raw.openaiApiKey, 500) || getProviderApiKey("openai");
+      const apiKey = str(raw.openaiApiKey, 500) || await ensureProviderApiKey("openai");
       if (!apiKey) return NextResponse.json({ ok: false, detail: "Enter an OpenAI API key." });
       await new OpenAI({ apiKey }).models.list();
       return NextResponse.json({ ok: true, detail: "Connected to OpenAI." });
     }
     if (raw.provider === "openrouter") {
-      const apiKey = str(raw.openrouterApiKey, 500) || getProviderApiKey("openrouter");
+      const apiKey = str(raw.openrouterApiKey, 500) || await ensureProviderApiKey("openrouter");
       if (!apiKey) return NextResponse.json({ ok: false, detail: "Enter an OpenRouter API key." });
       await new OpenAI({ apiKey, baseURL: "https://openrouter.ai/api/v1" }).models.list();
       return NextResponse.json({ ok: true, detail: "Connected to OpenRouter." });

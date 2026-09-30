@@ -1,5 +1,7 @@
 "use client";
 
+import Disclosure from "@/components/ui/Disclosure";
+
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -13,10 +15,14 @@ import type { TaskItem } from "@/features/plan/schema";
 import { useLearningEvidence } from "@/features/progress/useLearningEvidence";
 import { LearningWins } from "@/features/progress/components/LearningWins";
 import { deriveDailyLoop } from "../dailyLoop";
+import { useExperience } from "@/features/activation/useExperience";
+import { dismissDiscovery, useExperiencePreferences } from "@/features/activation/experiencePreferences";
 import { TutorHomeCard } from "@/features/tutor/components/TutorHomeCard";
+import { useAiSettings } from "@/features/settings/context/AiSettingsContext";
 
 interface HojeHomeProps {
   onTutor: () => void;
+  onNewTutor: () => void;
   onTutorSettings: () => void;
   onStudy: () => void;
   onDiscover: () => void;
@@ -34,10 +40,17 @@ interface HojeHomeProps {
 
 export function HojeHome(props: HojeHomeProps) {
   const { t } = useT();
+  const experience = useExperience();
+  const { settings, loading: settingsLoading } = useAiSettings();
+  const hasAi = settings.providers.some(provider => provider.available);
+  const { dismissed, fullNavigation } = useExperiencePreferences();
+  const discovery = experience.ready && !experience.active && experience.discovery && !dismissed.includes(experience.discovery) ? experience.discovery : null;
   const { data, evidence, loading, error, refresh, now } = useLearningEvidence();
   const [due, setDue] = useState<number | null>(null);
   const [dueError, setDueError] = useState(false);
   const [showPlan, setShowPlan] = useState(false);
+  const [practiceOptionsOpen, setPracticeOptionsOpen] = useState<boolean | null>(null);
+  const [showDailyLoop, setShowDailyLoop] = useState(false);
   const minutes = useSyncExternalStore(subscribeToProfile, () => getLearningProfile().dailyMinutes ?? 10, () => DEFAULT_LEARNING_PROFILE.dailyMinutes ?? 10);
 
   useEffect(() => {
@@ -55,9 +68,40 @@ export function HojeHome(props: HojeHomeProps) {
 
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow={t("A little English, put to use")} title={t("Today")}
-        description={t("Remember a little. Say something of your own. Come back and see what stayed.")} />
-      <Card className="surface-grid-glow overflow-hidden p-5 sm:p-7">
+      <PageHeader eyebrow={t("Today's English mistakes become tomorrow's practice")} title={t("Today")}
+        description={t("Practice a real situation. PhraseLoop remembers the difficulty and checks it again in another context.")} />
+      <TutorHomeCard onOpen={props.onTutor} onSettings={props.onTutorSettings} onLesson={props.onFirstLesson} onStudy={props.onStudy} onProgress={props.onProgress} />
+      {experience.ready && !settingsLoading && !experience.firstLoopComplete && <ol aria-label={t("Your first practice")} className="grid gap-3 sm:grid-cols-3">
+        {hasAi ? <>
+        <LoopStep number={1} title={t("Try in your own words")} done={experience.hasResult} detail={t("One short answer is enough to begin.")} />
+        <LoopStep number={2} title={t("Understand one adjustment")} done={experience.hasResult} detail={t("Feedback comes from what you tried to say.")} />
+        <LoopStep number={3} title={t("Try again, then pause")} done={false} detail={t("Keep the useful part for your next practice.")} />
+        </> : <>
+          <LoopStep number={1} title={t("Choose a useful phrase")} done={experience.cards > 0} detail={t("Start from a guided lesson or your own material.")} />
+          <LoopStep number={2} title={t("Save what you want to remember")} done={experience.cards > 0} detail={t("Your saved phrases stay in Phrases.")} />
+          <LoopStep number={3} title={t("Try remembering before you look")} done={false} detail={t("Review a saved phrase, then return when it is due.")} />
+        </>}
+      </ol>}
+      {discovery && <aside className="rounded-lg border border-line bg-card p-4" aria-label={t("A next possibility")}>
+        <p className="text-sm text-ink-soft">{t(discovery === "review" ? "You saved a phrase. Try remembering it before looking."
+          : discovery === "content" ? "You have practiced a complete cycle. Now try a phrase from your own day."
+            : "Take an idea you practiced into a conversation.")}</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button variant="secondary" size="sm" onClick={() => { dismissDiscovery(discovery); (discovery === "review" ? props.onStudy : discovery === "content" ? props.onDiscover : props.onSpeak)(); }}>{t(discovery === "review" ? "Review my phrases" : discovery === "content" ? "Add content" : "Have a free conversation")}</Button>
+          <Button variant="ghost" size="sm" onClick={() => dismissDiscovery(discovery)}>{t("Not now")}</Button>
+        </div>
+      </aside>}
+      <Disclosure title={t("More ways to practice")} open={practiceOptionsOpen ?? fullNavigation} onOpenChange={setPracticeOptionsOpen} contentClassName="space-y-5">
+      <section aria-labelledby="explore-title">
+        <h2 id="explore-title" className="mb-3 text-sm font-semibold text-ink">{t("Other options")}</h2>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Shortcut title={t("Practice something new")} detail={t("Choose a different situation with the tutor.")} onClick={props.onNewTutor} />
+          <Shortcut title={t("Add something I found")} detail={t("Use a phrase or content as a starting point.")} onClick={props.onDiscover} />
+          <Shortcut title={t("See my progress")} detail={t("See what improved with help and what you used independently.")} onClick={props.onProgress} />
+        </div>
+      </section>
+      <Button variant="ghost" size="sm" onClick={() => setShowDailyLoop(!showDailyLoop)} aria-expanded={showDailyLoop} aria-controls="daily-card-loop">{showDailyLoop ? t("Hide phrase review") : t("Review my phrases")}</Button>
+      {showDailyLoop && <div id="daily-card-loop" className="space-y-5"><Card className="surface-grid-glow overflow-hidden p-5 sm:p-7">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-xs font-medium uppercase tracking-wider text-accent">{t("Your daily loop")}</p>
           <div role="group" aria-label={t("Time for today")} className="flex gap-1 rounded-lg border border-line bg-surface p-1">
@@ -96,22 +140,17 @@ export function HojeHome(props: HojeHomeProps) {
               </ol>
             </>}
       </Card>
-      <TutorHomeCard onOpen={props.onTutor} onSettings={props.onTutorSettings} />
       {ready && <LearningWins wins={evidence.wins} compact />}
-      <section aria-labelledby="explore-title">
-        <h2 id="explore-title" className="mb-3 text-sm font-semibold text-ink">{t("Make it relevant to your life")}</h2>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <Shortcut title={t("Conversation")} detail={t("Rehearse a situation you actually need.")} onClick={props.onSpeak} />
-          <Shortcut title={t("Add content")} detail={t("Turn your videos, articles, and phrases into practice.")} onClick={props.onDiscover} />
-          <Shortcut title={t("Kokoro & Anki")} detail={t("Create audio and take your phrases to Anki.")} onClick={props.onTools} />
-        </div>
-      </section>
+      </div>}
       <div className="flex flex-wrap gap-2 border-t border-line pt-4">
+        <Button variant="ghost" size="sm" onClick={props.onSpeak}>{t("Have a free conversation")}</Button>
         <Button variant="ghost" size="sm" onClick={() => props.onLesson()}>{t("Explore a lesson")}</Button>
         <Button variant="ghost" size="sm" onClick={props.onCorrect}>{t("Work on a correction")}</Button>
+        <Button variant="ghost" size="sm" onClick={props.onTools}>Kokoro & Anki</Button>
         <Button variant="ghost" size="sm" onClick={() => setShowPlan(!showPlan)} aria-expanded={showPlan} aria-controls="today-plan">{t(showPlan ? "Hide my plan" : "My longer-term plan")}</Button>
       </div>
       {showPlan && <div id="today-plan"><TodayPlanCard onOpenTask={props.onOpenPlanTask} onCreatePlan={props.onCreatePlan} onInstallDefault={props.onInstallDefaultPlan} /></div>}
+      </Disclosure>
     </div>
   );
 }

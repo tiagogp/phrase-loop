@@ -72,6 +72,7 @@ function waitForAudioEvent(
 export default function DiscoverTab({
   onOpenSettings,
   onStudyNow,
+  onPracticeSource,
   onCorrect,
   prefill,
   active = true,
@@ -79,14 +80,16 @@ export default function DiscoverTab({
   active?: boolean;
   onOpenSettings?: () => void;
   onStudyNow?: () => void;
+  onPracticeSource?: (cardId: string) => void;
   onCorrect?: () => void;
   prefill?: { url: string; nonce: number } | null;
 }) {
   const { t } = useT();
   const { loading: settingsLoading } = useAiSettings();
   const initialCurationNote = prefill
-    ? "Vídeo sugerido preenchido. Toque em “Buscar frases para aprender” para testar com uma fonte real."
+    ? t("A suggested video is ready. Select \u201cFind phrases to learn\u201d to try a real source.")
     : null;
+  const [practiceSourceId, setPracticeSourceId] = useState<string | null>(null);
   const [sourceKind, setSourceKind] = useState<DiscoverSourceKind>("youtube");
   const [url, setUrl] = useState(prefill?.url ?? "");
   const [file, setFile] = useState<File | null>(null);
@@ -124,13 +127,13 @@ export default function DiscoverTab({
   const generation = useDeckGeneration({
     timeoutMs: GENERATION_TIMEOUT_MS,
     timeoutMessage:
-      "Está demorando mais do que o esperado. Tente um vídeo mais curto ou uma IA mais rápida.",
-    cancelMessage: "Geração cancelada. As frases selecionadas continuam aqui.",
+      t("This is taking longer than expected. Try a shorter video or a faster AI."),
+    cancelMessage: t("Generation canceled. Your selected phrases are still here."),
     stages: [
-      { untilSeconds: 8, label: "Criando frases focadas para praticar…" },
-      { untilSeconds: 25, label: "Revisando a qualidade das frases…" },
-      { untilSeconds: 90, label: "Preparando áudio e cards de revisão…" },
-      { untilSeconds: Infinity, label: "Ainda trabalhando. O processamento local e os áudios podem demorar um pouco…" },
+      { untilSeconds: 8, label: t("Creating focused practice phrases\u2026") },
+      { untilSeconds: 25, label: t("Reviewing phrase quality\u2026") },
+      { untilSeconds: 90, label: t("Preparing audio and review cards\u2026") },
+      { untilSeconds: Infinity, label: t("Still working. Local processing and audio can take a little longer\u2026") },
     ],
   });
   const {
@@ -445,8 +448,8 @@ export default function DiscoverTab({
         sourceKind === "youtube"
           ? discoverFailureMessage("unknown")
           : sourceKind === "article"
-            ? "Não consegui abrir esse artigo. Tente outro link ou continue pela lição inicial e Estudar."
-            : "Não consegui ler esse PDF. Tente um arquivo menor ou continue pela lição inicial e Estudar.";
+            ? t("Could not open this article. Try another link, or continue with the first lesson and Study.")
+            : t("Could not read this PDF. Try a smaller file, or continue with the first lesson and Study.");
       // Server copy already names the real cause — don't overwrite it with a guess.
       const message = err instanceof Error && isAuthoredSourceError(err) ? err.message : "";
       setError(message || fallback);
@@ -510,6 +513,7 @@ export default function DiscoverTab({
         createdAt: candidate.createdAt,
       }));
       const saved = await saveGeneratedDeck(cards, candidates);
+      setPracticeSourceId(cards[0]?.id ?? null);
       const activation = markFirstRunPhrasesSaved({ sourceId: result.sourceId });
       void emitActivity("cards_created", { count: saved.added, source: "discover", activation });
       void emitActivity("own_source_completed", { cardsCreated: saved.added });
@@ -559,13 +563,13 @@ export default function DiscoverTab({
         description={t("Bring in useful English, choose what matters, and turn it into focused daily practice.")}
       />
 
-      <WorkflowSteps
+      {(result || loading || prefill) && <WorkflowSteps
         label={t("Phrase workflow")}
         steps={[t("Choose source"), t("Pick phrases"), t("Use one now")]}
         current={productionPrompt ? 3 : result ? 2 : 1}
-      />
+      />}
 
-      {!result && !loading && <QuickPhraseForm onStudy={onStudyNow} />}
+      {!result && !loading && <QuickPhraseForm onStudy={onStudyNow} onPracticeSource={onPracticeSource} />}
 
       {(!result || loading) && <Card className="space-y-4 p-5 sm:p-6">
         <div className="space-y-1" aria-live="polite">
@@ -599,7 +603,7 @@ export default function DiscoverTab({
             title={t("Use your own content")}
             description={t("YouTube, article, and PDF import for the source you already care about.")}
             nested
-            defaultOpen
+            defaultOpen={!!prefill}
           >
             <div className="space-y-4">
               <SourcePicker
@@ -640,6 +644,12 @@ export default function DiscoverTab({
                 </Field>
               )}
 
+              <Disclosure
+                title={t("Advanced options")}
+                description={t("Optional focus and AI choice for your own material.")}
+                nested
+              >
+                <div className="space-y-4">
               <Field label={t("English level")} className="max-w-52">
                 <Select
                   value={targetLevel}
@@ -649,12 +659,7 @@ export default function DiscoverTab({
                 />
               </Field>
 
-              <Disclosure
-                title={t("Advanced options")}
-                description={t("Optional focus and AI choice for your own material.")}
-                nested
-              >
-                <div className="space-y-4">
+
                   <Field
                     label={
                       <>
@@ -726,7 +731,7 @@ export default function DiscoverTab({
           <Notice tone="error" className="text-xs">
             <span>{error}</span>
             <span className="mt-1 block">
-              {t("Caminho seguro: volte para a lição inicial ou abra Estudar para revisar o que já foi salvo.")}
+              {t("You can return to the first lesson or open Study to review what you have saved.")}
             </span>
           </Notice>
         )}
@@ -768,6 +773,7 @@ export default function DiscoverTab({
           defaultFilename={`${result?.title || "study-list"}.apkg`}
           persist={async (cards) => {
             await saveGeneratedDeck(cards, deckPreview.candidates);
+            setPracticeSourceId(cards[0]?.id ?? null);
             const activation = markFirstRunPhrasesSaved({ sourceId: result?.sourceId });
             void emitActivity("cards_created", { count: cards.length, source: "discover", activation });
             void emitActivity("own_source_completed", { cardsCreated: cards.length });
@@ -797,8 +803,9 @@ export default function DiscoverTab({
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            {practiceSourceId && onPracticeSource && <Button variant="primary" size="sm" onClick={() => onPracticeSource(practiceSourceId)}>{t("Practice a situation with this source")}</Button>}
             {onCorrect && (
-              <Button variant="primary" size="sm" onClick={onCorrect}>
+              <Button variant="ghost" size="sm" onClick={onCorrect}>
                 {t("Open Mistakes")}
               </Button>
             )}

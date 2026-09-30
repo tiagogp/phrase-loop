@@ -1,24 +1,30 @@
 "use client";
 
 import * as RadixSelect from "@radix-ui/react-select";
+import type { AriaAttributes } from "react";
+import { useFieldControl } from "./Field";
 
 export interface SelectOption {
   value: string;
   label: string;
 }
 
-interface SelectProps {
+interface SelectProps extends AriaAttributes {
+  id?: string;
   value: string;
   onChange: (value: string) => void;
   options: SelectOption[];
   disabled?: boolean;
 }
 
-export default function Select({ value, onChange, options, disabled }: SelectProps) {
+export default function Select({ value, onChange, options, disabled, ...props }: SelectProps) {
+  const field = useFieldControl();
   return (
     <RadixSelect.Root value={value} onValueChange={onChange} disabled={disabled}>
       <RadixSelect.Trigger
-        className="flex w-full items-center justify-between rounded border border-line bg-input px-3 py-2 text-sm text-ink outline-none transition-colors focus:border-accent data-disabled:cursor-not-allowed data-disabled:opacity-50"
+        {...field}
+        {...props}
+        className="flex min-h-11 w-full min-w-0 items-center justify-between gap-2 rounded-md border border-line bg-input px-3 py-2 text-left text-sm text-ink outline-none transition-colors focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/30 aria-[invalid=true]:border-danger data-disabled:cursor-not-allowed data-disabled:opacity-50 [&>span:first-child]:truncate"
       >
         <RadixSelect.Value />
         <RadixSelect.Icon>
@@ -38,14 +44,14 @@ export default function Select({ value, onChange, options, disabled }: SelectPro
         <RadixSelect.Content
           position="popper"
           sideOffset={4}
-          className="z-[110] w-(--radix-select-trigger-width) overflow-hidden rounded-md border border-line bg-card text-sm shadow-[0_4px_16px_rgba(0,0,0,0.12)]"
+          className="z-[110] max-h-(--radix-select-content-available-height) w-(--radix-select-trigger-width) overflow-hidden rounded-md border border-line bg-card text-sm shadow-[0_4px_16px_rgba(0,0,0,0.12)]"
         >
           <RadixSelect.Viewport className="p-1 max-h-64 overflow-y-auto">
             {options.map((opt) => (
               <RadixSelect.Item
                 key={opt.value}
                 value={opt.value}
-                className="flex cursor-pointer select-none items-center rounded px-3 py-2 text-ink outline-none transition-colors data-highlighted:bg-surface"
+                className="flex min-h-11 cursor-pointer select-none items-center gap-2 rounded px-3 py-2 text-ink outline-none transition-colors data-highlighted:bg-accent/10"
               >
                 <RadixSelect.ItemText>{opt.label}</RadixSelect.ItemText>
                 <RadixSelect.ItemIndicator className="ml-auto">

@@ -2,7 +2,7 @@ import type { EnglishLevel } from "@/features/discover/types";
 import type { ProviderKind } from "@/lib/cards/provider";
 import type { JudgeStamp } from "@/lib/evaluation/judge";
 
-export const TUTOR_PROMPT_VERSION = "tutor-2026-09-29";
+export const TUTOR_PROMPT_VERSION = "tutor-evidence-v2";
 export const MAX_TUTOR_ATTEMPTS = 3;
 
 export interface TutorTask {
@@ -10,6 +10,8 @@ export interface TutorTask {
   situation: string;
   instruction: string;
   successCriteria: string;
+  /** Only exact matches to an authored scenario are eligible for transfer credit. */
+  scenarioId?: string;
 }
 
 export interface TutorFeedback {
@@ -19,6 +21,23 @@ export interface TutorFeedback {
   points: { original: string; revised: string; explanation: string }[];
   example: { english: string; meaning: string };
   retryInstruction: string;
+  /** One teachable capability, evaluated independently from the whole task. */
+  skill?: { label: string; result: "demonstrated" | "needs_work" | "uncertain"; conceptId?: string; evidence?: string };
+}
+
+export interface TutorSkill {
+  /** Legacy episode ID, or a stable concept ID for new records. */
+  id: string;
+  label: string;
+  originContext: string;
+  conceptId?: string;
+  originSessionId?: string;
+}
+
+export interface TutorExposure {
+  id: string;
+  kind: "feedback" | "hint" | "history" | "source";
+  at: number;
 }
 
 export interface TutorObservation {
@@ -61,6 +80,9 @@ export interface TutorSession {
   reason: string;
   evidence: TutorObservation[];
   parentSessionId?: string;
+  skill?: TutorSkill;
+  exposures?: TutorExposure[];
+  sourceCardId?: string;
   draft: string;
   supportUsed: boolean;
   attempts: TutorAttempt[];
@@ -81,6 +103,8 @@ export interface TutorContext {
   focus: string;
   evidence: TutorObservation[];
   previousTask?: TutorTask;
+  targetSkill?: string;
+  targetConceptId?: string;
 }
 
 export type TutorRequest = {

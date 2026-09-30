@@ -23,10 +23,10 @@ export function InsideSection({ language }: { language: LandingLanguage }) {
         <div className="mx-auto max-w-3xl text-center">
           <SectionLabel>{t("Por dentro do app")}</SectionLabel>
           <h2 className="brand-wordmark text-4xl font-normal leading-[0.95] text-ink sm:text-5xl">
-            {t("Um espaço no Mac para transformar conteúdo em prática.")}
+            {t("Sua dificuldade acompanha você até a próxima tentativa.")}
           </h2>
           <p className="mt-4 text-lg leading-8 text-ink-soft">
-            {t("As áreas do app são etapas do mesmo ciclo. Assim, cada frase mantém sua origem e encontra o próximo passo de revisão.")}
+            {t("O tutor organiza a próxima situação. Quando precisar, use conteúdo próprio, revisões de frases e ferramentas de correção como apoio.")}
           </p>
         </div>
         <div className="mt-10">
@@ -34,10 +34,10 @@ export function InsideSection({ language }: { language: LandingLanguage }) {
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-ink">{t("Um caminho real de estudo")}</p>
-                <p className="mt-1 text-sm leading-6 text-ink-muted">{t("Acompanhe uma frase enquanto ela passa pelo app.")}</p>
+                <p className="mt-1 text-sm leading-6 text-ink-muted">{t("Acompanhe uma habilidade entre diferentes situações.")}</p>
               </div>
               <span className="rounded border border-line bg-card px-3 py-1.5 text-xs font-semibold text-accent">
-                {t("uma frase, o ciclo inteiro")}
+                {t("uma habilidade, novas oportunidades")}
               </span>
             </div>
             <YourSection language={language} />

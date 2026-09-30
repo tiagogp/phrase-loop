@@ -1,9 +1,8 @@
 "use client";
 
 import { useId, useState, type ReactNode } from "react";
-import { motion } from "motion/react";
 import { cn } from "@/lib/cn";
-import { easeOut } from "@/lib/motion";
+import styles from "./Disclosure.module.css";
 
 export interface DisclosureProps {
   title: string;
@@ -11,7 +10,10 @@ export interface DisclosureProps {
   badge?: ReactNode;
   children: ReactNode;
   defaultOpen?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   className?: string;
+  contentClassName?: string;
   nested?: boolean;
 }
 
@@ -21,29 +23,35 @@ export default function Disclosure({
   badge,
   children,
   defaultOpen = false,
+  open: controlledOpen,
+  onOpenChange,
   className = "",
+  contentClassName,
   nested = false,
 }: DisclosureProps) {
-  const [open, setOpen] = useState(defaultOpen);
+  const [internalOpen, setInternalOpen] = useState(defaultOpen);
+  const open = controlledOpen ?? internalOpen;
   const contentId = useId();
 
   return (
     <section
       className={cn(
-        "overflow-hidden border border-line/75 bg-card transition-[border-color,box-shadow] duration-200",
-        nested ? "rounded-[0.55rem]" : "rounded-panel",
-        open && "border-line",
-        open && !nested && "shadow-(--shadow-soft)",
+        styles.root,
+        "rounded-panel border bg-card",
+        nested && styles.nested,
         className,
       )}
       data-open={open}
     >
       <button
         type="button"
-        className="flex w-full cursor-pointer items-center gap-4 px-4 py-3.5 text-left text-ink hover:bg-accent/3"
+        className={cn(styles.trigger, "flex min-h-14 w-full cursor-pointer items-center gap-4 px-4 py-3 text-left text-ink")}
         aria-expanded={open}
         aria-controls={contentId}
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          if (controlledOpen === undefined) setInternalOpen(!open);
+          onOpenChange?.(!open);
+        }}
       >
         <span className="min-w-0">
           <span className="block text-sm font-semibold tracking-[-0.01em]">{title}</span>
@@ -51,31 +59,21 @@ export default function Disclosure({
         </span>
         <span className="ml-auto flex shrink-0 items-center gap-2">
           {badge}
-          <motion.svg
-            width="14"
-            height="14"
-            viewBox="0 0 14 14"
-            fill="none"
-            aria-hidden="true"
-            className="text-ink-muted"
-            animate={{ rotate: open ? 180 : 0 }}
-            transition={{ duration: 0.25, ease: easeOut }}
-          >
-            <path d="m3 5 4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </motion.svg>
+          <span className={styles.indicator} aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={styles.chevron}>
+              <path d="m4 6 4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
         </span>
       </button>
-      {/* Children stay mounted (height animates) so their state survives collapse. */}
-      <motion.div
-        initial={false}
-        animate={{ height: open ? "auto" : 0, opacity: open ? 1 : 0 }}
-        transition={{ duration: 0.22, ease: easeOut }}
-        className="overflow-hidden"
-      >
-        <div id={contentId} className="border-t border-line/65 px-4 pb-4 pt-4" aria-hidden={!open} inert={!open}>
-          {children}
+      {/* Keep form state while collapsed, but remove hidden controls from navigation. */}
+      <div id={contentId} className={styles.reveal} aria-hidden={!open} inert={!open}>
+        <div className={styles.clip}>
+          <div className={cn("mx-4 border-t border-line/70 pb-4 pt-4", contentClassName)}>
+            {children}
+          </div>
         </div>
-      </motion.div>
+      </div>
     </section>
   );
 }

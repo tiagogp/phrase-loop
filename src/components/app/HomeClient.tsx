@@ -9,6 +9,8 @@ import { type HomeTab } from "@/components/app/homeTabs";
 import AppProviders from "@/components/app/AppProviders";
 import { useUnlockedTabs } from "@/components/app/useUnlockedTabs";
 import { useDockDueBadge } from "@/components/app/useDockDueBadge";
+import { useAiSettings } from "@/features/settings/context/AiSettingsContext";
+import { useExperiencePreferences, setFullNavigation } from "@/features/activation/experiencePreferences";
 import { startFirstRunActivation } from "@/features/activation/firstRun";
 import { TabErrorBoundary } from "@/components/app/TabErrorBoundary";
 import { LEVEL_RANK } from "@/features/discover/levels";
@@ -83,6 +85,8 @@ function TabContent({
   onProgress,
   onTools,
   onTutor,
+  onNewTutor,
+  onContentPractice,
   studyView,
   reviewRequest,
   onStudyViewChange,
@@ -106,6 +110,8 @@ function TabContent({
   onProgress: () => void;
   onTools: () => void;
   onTutor: () => void;
+  onNewTutor: () => void;
+  onContentPractice: (cardId: string) => void;
   studyView: ReviewView;
   reviewRequest: number;
   onStudyViewChange: (view: ReviewView) => void;
@@ -125,6 +131,7 @@ function TabContent({
       <HojeHome
         onTutorSettings={onTutorSettings}
         onTutor={onTutor}
+        onNewTutor={onNewTutor}
         onStudy={onOpenPractice}
         onTransfer={onTransfer}
         onProgress={onProgress}
@@ -149,10 +156,11 @@ function TabContent({
         onStudyNow={onOpenPractice}
         onCorrect={onOpenCorrect}
         prefill={discoverPrefill}
+        onPracticeSource={onContentPractice}
       />
     );
   }
-  if (tab === "progress") return <ProgressPage onPractice={onOpenPractice} onTutor={onTutor} />;
+  if (tab === "progress") return <ProgressPage active={active} onPractice={onOpenPractice} onTutor={onTutor} />;
   if (tab === "study") return <StudyTab reviewRequest={reviewRequest} onOpenSettings={onOpenSettings} view={studyView} onViewChange={onStudyViewChange} onProgress={onProgress} onDiscover={onOpenDiscover} onConversation={onSpeak} onLesson={() => onOpenLesson()} onCorrect={onOpenCorrect} />;
   if (tab === "conversa") return <ConversationTab active={active} onOpenSettings={onOpenSettings} />;
   if (tab === "correct") return <CorrectTab onOpenSettings={onOpenSettings} onStudyNow={onOpenPractice} kokoroModel={kokoro} />;
@@ -191,7 +199,12 @@ function HomeContent() {
   const [reviewRequest, setReviewRequest] = useState(0);
   const [visitedTabs, setVisitedTabs] = useState<Set<HomeTab>>(() => new Set(["hoje"]));
   const [overlay, setOverlay] = useState<Overlay>(null);
+  const [tutorRequest, setTutorRequest] = useState<{ intent: "recommended" | "new"; sourceCardId?: string; nonce: number }>({ intent: "recommended", nonce: 0 });
   const [lessonId, setLessonId] = useState<string | null>(null);
+  function openTutor(intent: "recommended" | "new", sourceCardId?: string) {
+    setTutorRequest(previous => ({ intent, sourceCardId, nonce: previous.nonce + 1 }));
+    setLessonId(null); setOverlay("tutor");
+  }
   const [planDialogOpen, setPlanDialogOpen] = useState(false);
   const [discoverPrefill] = useState<{ url: string; nonce: number } | null>(null);
   const lessonRequestRef = useRef(0);
@@ -209,9 +222,10 @@ function HomeContent() {
     setLessonId(settingsReturn.current.lessonId);
   }, []);
   const kokoro = useKokoroModel();
-  const { tabs, tier, dueCount, announcement, clearAnnouncement } = useUnlockedTabs();
+  const { tabs, dueCount, announcement, clearAnnouncement } = useUnlockedTabs();
   const activeTab = tabs.some((item) => item.id === tab) ? tab : "hoje";
-  const advancedSurfacesUnlocked = tier >= 3;
+  const { fullNavigation } = useExperiencePreferences();
+  const { settings } = useAiSettings();
   useDockDueBadge();
 
   // Attempt records are the source of truth for support level. Refresh their
@@ -306,13 +320,15 @@ function HomeContent() {
 
   return (
         <div className="h-dvh overflow-hidden flex flex-col bg-surface">
+          <a href="#main-content" className="sr-only z-[120] rounded-md bg-card px-4 py-3 text-ink shadow-lg focus:not-sr-only focus:fixed focus:left-4 focus:top-4">{t("Skip to content")}</a>
           <AppHeader
             activeTab={activeTab}
             onTabChange={changeTab}
             settingsOpen={overlay === "settings"}
             onSettingsOpen={() => openSettings()}
-            onToolsOpen={() => { setLessonId(null); setOverlay("tools"); }}
             tabs={tabs}
+            focusedNavigation={!fullNavigation}
+            onShowAll={() => setFullNavigation(true)}
             badges={{ study: dueCount }}
           />
 
@@ -323,7 +339,7 @@ function HomeContent() {
               from where they already are. */}
           <ModelDownloadBar />
 
-          <main className="flex-1 min-h-0" id="main-content">
+          <main className="flex-1 min-h-0" id="main-content" tabIndex={-1}>
             {lessonId !== null ? (
               <section className="h-full overflow-y-auto app-scroll-region">
                 <m.div
@@ -344,15 +360,15 @@ function HomeContent() {
                 <SettingsScreen
                   onBack={closeSettings}
                   onOpenTools={() => setOverlay("tools")}
-                  onOpenC1={advancedSurfacesUnlocked ? () => setOverlay("c1") : undefined}
+                  onOpenC1={() => setOverlay("c1")}
                   showAdvancedAi={true}
                 />
               </div>
             ) : overlay === "tutor" ? (
               <div className="h-full overflow-y-auto app-scroll-region">
                 <div className="mx-auto max-w-3xl px-4 py-6 pb-20">
-                  <TabErrorBoundary><TutorWorkspace
-                    onBack={() => setOverlay(null)}
+                  <TabErrorBoundary><TutorWorkspace key={tutorRequest.nonce} intent={tutorRequest.intent} sourceCardId={tutorRequest.sourceCardId}
+                    onBack={() => changeTab("hoje")}
                     onSettings={() => openSettings()}
                     onPractice={openPractice}
                     onConversation={openSpeaking}
@@ -417,7 +433,6 @@ function HomeContent() {
                       transition={springSoft}
                     >
                       <TabErrorBoundary>
-                        {item.id !== "hoje" && <div className="mb-4 flex justify-end"><Button variant="ghost" size="sm" onClick={() => setOverlay("tutor")}>Praticar com meu tutor →</Button></div>}
                         <TabContent
                           tab={item.id}
                           active={active && overlay === null && lessonId === null}
@@ -428,7 +443,9 @@ function HomeContent() {
                           onTransfer={openTransfer}
                           onProgress={() => changeTab("progress")}
                           onTools={() => setOverlay("tools")}
-                          onTutor={() => setOverlay("tutor")}
+                          onTutor={() => openTutor("recommended")}
+                          onNewTutor={() => openTutor("new")}
+                          onContentPractice={cardId => openTutor("new", cardId)}
                           studyView={studyView}
                           reviewRequest={reviewRequest}
                           onStudyViewChange={setStudyView}
@@ -467,16 +484,16 @@ function HomeContent() {
             <PlanGenerationToast onViewPlan={() => changeTab("hoje")} />
           </div>
           <OnboardingDialog
-            onOpenSettings={() => openSettings()}
+            onStart={() => settings.providers.some(provider => provider.available) ? openTutor("recommended") : startFirstLesson()}
           />
-          <PlanOnboarding
+          {planDialogOpen && <PlanOnboarding
             open={planDialogOpen}
             onClose={() => setPlanDialogOpen(false)}
             onOpenSettings={() => {
               setPlanDialogOpen(false);
               openSettings();
             }}
-          />
+          />}
         </div>
   );
 }

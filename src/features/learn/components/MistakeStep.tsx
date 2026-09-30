@@ -465,7 +465,7 @@ export function MistakeStep({
           />
           <Button
             variant={voiceFirst ? "secondary" : "primary"}
-            onClick={() => void check()}
+            loading={checking} onClick={() => void check()}
             disabled={!sentence.trim() || saving || checking}
           >
             {checking
@@ -526,7 +526,7 @@ export function MistakeStep({
               />
               <Button
                 variant="secondary"
-                onClick={() => void checkRetry()}
+                loading={checkingRetry} onClick={() => void checkRetry()}
                 disabled={!retrySentence.trim() || saving || checkingRetry}
               >
                 {checkingRetry

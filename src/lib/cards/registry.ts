@@ -17,6 +17,7 @@ import {
   getOllamaBaseUrl,
   getOllamaModel,
   getProviderApiKey,
+  ensureProviderApiKey,
 } from "@/server/aiSettings";
 import { isOllamaReachable } from "@/server/integrations/ollama";
 
@@ -41,9 +42,9 @@ export const providerRegistry: ProviderRegistry = {
 
 /** True when the provider is usable here: a cloud key set, or Ollama actually reachable. */
 export async function isProviderAvailable(kind: ProviderKind): Promise<boolean> {
-  if (kind === "claude") return Boolean(getProviderApiKey("claude"));
-  if (kind === "openai") return Boolean(getProviderApiKey("openai"));
-  if (kind === "openrouter") return Boolean(getProviderApiKey("openrouter"));
+  if (kind === "claude") return Boolean(await ensureProviderApiKey("claude"));
+  if (kind === "openai") return Boolean(await ensureProviderApiKey("openai"));
+  if (kind === "openrouter") return Boolean(await ensureProviderApiKey("openrouter"));
   if (kind === "ollama") return isOllamaReachable();
   return false;
 }

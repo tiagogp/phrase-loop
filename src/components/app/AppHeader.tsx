@@ -1,6 +1,6 @@
 "use client";
 
-import { type KeyboardEvent, type MouseEvent, useRef, useSyncExternalStore } from "react";
+import { type KeyboardEvent, type MouseEvent, useEffect, useRef, useSyncExternalStore } from "react";
 import { m } from "motion/react";
 import { springSnappy } from "@/lib/motion";
 import { useTheme } from "@/components/app/ThemeProvider";
@@ -30,6 +30,8 @@ interface AppHeaderProps {
    *  a subset (it has no "Hoje" home surface). */
   tabs?: readonly { id: HomeTab; label: string }[];
   badges?: Partial<Record<HomeTab, number>>;
+  focusedNavigation?: boolean;
+  onShowAll?: () => void;
 }
 
 export default function AppHeader({
@@ -38,14 +40,30 @@ export default function AppHeader({
   settingsOpen,
   onSettingsOpen,
   onToolsOpen,
-  tabs = HOME_TABS,
+  tabs: allTabs = HOME_TABS,
   badges,
+  focusedNavigation = false,
+  onShowAll,
 }: AppHeaderProps) {
   const { resolvedTheme, setTheme } = useTheme();
   const { t } = useT();
   const isClient = useIsClient();
   const isDark = isClient && resolvedTheme === "dark";
+  const exploreRef = useRef<HTMLDetailsElement>(null);
+  const tabs = focusedNavigation ? allTabs.filter(tab => tab.id === "hoje" || tab.id === "study" || tab.id === activeTab) : allTabs;
+  const moreTabs = allTabs.filter(tab => !tabs.includes(tab));
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  useEffect(() => {
+    const dismissExplore = (event: PointerEvent) => {
+      const menu = exploreRef.current;
+      if (menu?.open && event.target instanceof Node && !menu.contains(event.target)) {
+        menu.open = false;
+      }
+    };
+    document.addEventListener("pointerdown", dismissExplore);
+    return () => document.removeEventListener("pointerdown", dismissExplore);
+  }, []);
 
   const toggleDark = () => setTheme(isDark ? "light" : "dark");
 
@@ -82,10 +100,10 @@ export default function AppHeader({
 
   return (
     <header
-      className="sticky top-0 z-20 border-b border-line bg-card shadow-lg"
+      className="app-header sticky top-0 z-30 shrink-0 border-b border-line bg-card"
       onDoubleClick={toggleWindowFullscreen}
     >
-      <div className="app-header-inner max-w-5xl mx-auto px-4">
+      <div className="app-header-inner max-w-5xl mx-auto px-4 max-[360px]:px-2">
         <div className="min-w-0" data-no-window-drag="true">
           <div className="flex items-center min-w-0">
             <span className="brand-wordmark text-[1.35rem] font-normal leading-none text-ink">
@@ -97,9 +115,10 @@ export default function AppHeader({
           </div>
         </div>
 
+        <div className="app-header-nav flex min-w-0 items-center gap-2" data-no-window-drag="true">
         <div
-          className="app-header-nav relative grid"
-          style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
+          className="relative grid min-w-0 flex-1 overflow-x-auto"
+          style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(max-content, 1fr))` }}
           role="tablist"
           aria-label={t("PhraseLoop sections")}
           data-no-window-drag="true"
@@ -117,7 +136,7 @@ export default function AppHeader({
                 id={`tab-${tab.id}`}
                 onClick={() => onTabChange(tab.id)}
                 onKeyDown={(event) => onTabKeyDown(event, index)}
-                className="app-tab relative flex min-h-12 min-w-0 items-center justify-center gap-1.5 px-1 py-3 text-sm font-medium transition-colors duration-200"
+                className="app-tab relative flex min-h-12 min-w-0 items-center justify-center gap-1 px-1.5 py-3 text-xs font-medium transition-colors duration-200 sm:text-sm"
                 data-active={active}
                 role="tab"
                 aria-selected={active && !settingsOpen}
@@ -126,9 +145,9 @@ export default function AppHeader({
                 tabIndex={active ? 0 : -1}
                 type="button"
               >
-                <span className="truncate">{t(tab.label)}</span>
+                <span className="whitespace-nowrap">{t(tab.label)}</span>
                 {badge > 0 && (
-                  <span className="min-w-5 rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white tabular-nums" aria-hidden="true">
+                  <span className="absolute right-0 top-0 min-w-5 rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-semibold leading-none text-accent-contrast tabular-nums sm:static" aria-hidden="true">
                     {badge > 99 ? "99+" : badge}
                   </span>
                 )}
@@ -143,6 +162,25 @@ export default function AppHeader({
               </button>
             );
           })}
+        </div>
+
+        {moreTabs.length > 0 && <details ref={exploreRef} className="app-explore relative shrink-0" onBlur={event => {
+          if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false;
+        }} onKeyDown={event => {
+          if (event.key === "Escape" && exploreRef.current) { exploreRef.current.open = false; exploreRef.current.querySelector("summary")?.focus(); }
+        }}>
+          <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 rounded-lg px-3 text-sm font-medium text-ink-soft transition-colors hover:bg-accent/5">{t("Explore")}
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="m4 6 4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </summary>
+          <nav aria-label={t("More sections")} className="app-explore-menu absolute right-0 top-full z-30 mt-2 max-h-[calc(100dvh-8rem)] w-60 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl border border-line-strong bg-card p-2 shadow-lg">
+            {moreTabs.map(item => <button key={item.id} id={`tab-${item.id}`} type="button" className="block min-h-11 w-full rounded-md px-3 py-2 text-left text-sm text-ink hover:bg-accent/5" onClick={() => {
+              if (exploreRef.current) exploreRef.current.open = false;
+              onTabChange(item.id);
+              requestAnimationFrame(() => document.getElementById(`tab-${item.id}`)?.focus());
+            }}>{t(item.label)}</button>)}
+            {onShowAll && <Button variant="ghost" size="sm" className="mt-2 w-full border-t border-line" onClick={() => { if (exploreRef.current) exploreRef.current.open = false; onShowAll(); }}>{t("Show all shortcuts")}</Button>}
+          </nav>
+        </details>}
         </div>
 
         <div className="flex items-center gap-1" data-no-window-drag="true">

@@ -1,5 +1,7 @@
 "use client";
 
+import { MotionConfig } from "motion/react";
+
 import { LandingFooter } from "@landing/components/layout/LandingFooter";
 import { LandingHeader } from "@landing/components/layout/LandingHeader";
 import { useLandingLanguage } from "@landing/hooks/useLandingLanguage";
@@ -17,6 +19,7 @@ export default function LandingPage() {
     useLandingNavigation();
 
   return (
+    <MotionConfig reducedMotion="user">
     <main className="min-h-screen bg-surface text-ink">
       <LandingHeader
         activeSection={activeSection}
@@ -34,5 +37,6 @@ export default function LandingPage() {
       <WaitlistSection language={language} />
       <LandingFooter language={language} onSectionLinkClick={handleSectionLinkClick} />
     </main>
+    </MotionConfig>
   );
 }

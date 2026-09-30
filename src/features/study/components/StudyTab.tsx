@@ -53,10 +53,10 @@ export default function StudyTab({ onDiscover, onConversation, onLesson, onCorre
 
   return (
     <div className="space-y-5">
-      <PageHeader eyebrow={t("Remember, then use")} title={t("Practice")}
+      <PageHeader eyebrow={t("Remember, then use")} title={t("Phrases")}
         description={t("A short review, one answer of your own, and a clear place to stop.")}
         aside={<span className="rounded-lg border border-line bg-card px-3 py-2 text-xs text-ink-muted">{t("{count} due in your library", { count: counts.due })}</span>} />
-      <ReviewWorkspaceNav value={activeView} due={counts.due} onChange={setActiveView} />
+      <ReviewWorkspaceNav value={activeView} due={counts.due} hasPractice={session.reviews.length > 0} onChange={setActiveView} />
       {(session.sessionError || actionError) && <Notice tone="error">
         {session.sessionError ?? t("Could not load your practice history.")}
         {!current && <Button variant="ghost" onClick={() => run(session.retryLoad)}>{t("Try again")}</Button>}
@@ -75,7 +75,7 @@ export default function StudyTab({ onDiscover, onConversation, onLesson, onCorre
           <p className="max-w-lg text-sm text-ink-soft">{t("This is getting effortful. Keep what you practiced and take a break, or continue when you feel ready.")}</p>
           <Button variant="secondary" onClick={session.stopSession} disabled={session.grading}>{t("Pause here")}</Button>
         </Card>}
-        {(current || sessionResults.length > 0 || counts.cards === 0 || counts.due === 0) && <StudyCard totalCards={counts.cards} current={current} queueLength={queue.length}
+        {(current || sessionResults.length > 0 || (counts.cards > 0 && counts.due === 0)) && <StudyCard totalCards={counts.cards} current={current} queueLength={queue.length}
           flipped={session.flipped} grading={session.grading} sessionResults={sessionResults}
           tomorrow={session.tomorrow} reviews={session.reviews} transferRequired={false} transferComplete={false}
           onFlip={session.flip} onGrade={(grade, scaffold) => void session.grade(grade, scaffold)}
@@ -86,6 +86,7 @@ export default function StudyTab({ onDiscover, onConversation, onLesson, onCorre
           <div className="flex flex-wrap gap-2">
             {counts.cards > 0 ? <Button variant="primary" onClick={() => { setTransferComplete(false); setActiveView("use"); }}>{t("Use what I learned")}</Button>
               : onLesson && <Button variant="primary" onClick={onLesson}>{t("Start first lesson")}</Button>}
+            {counts.cards === 0 && onDiscover && <Button variant="ghost" onClick={onDiscover}>{t("Add content")}</Button>}
             {onProgress && ended && <Button variant="secondary" onClick={onProgress}>{t("See my progress")}</Button>}
             {counts.due > 0 && <Button variant="ghost" onClick={() => { setTransferComplete(false); run(session.startReview); }}>{t("Another short review")}</Button>}
           </div>
@@ -120,14 +121,13 @@ export default function StudyTab({ onDiscover, onConversation, onLesson, onCorre
         <WeaknessList weaknesses={session.weaknesses} genError={session.genError} generatingKey={session.generatingKey}
           onPractice={(weakness) => { setActiveView("review"); run(() => session.startReinforcement(weakness)); }}
           onGenerate={(weakness) => run(async () => { if (await session.generateReinforcement(weakness)) setActiveView("review"); })} />
-        <RetentionProofCard />
-        <ColdListeningProbe />
+        <Disclosure title={t("Check what stayed")} description={t("Recall after a delay and listening checks, when you need them.")}><RetentionProofCard /><ColdListeningProbe /></Disclosure>
         <Disclosure title={t("Readiness for the next level")}>
           <ReadinessCoach weaknesses={session.weaknesses} generatingKey={session.generatingKey}
             onPractice={(weakness) => { setActiveView("review"); run(() => session.startReinforcement(weakness)); }}
             onGenerate={(weakness) => run(async () => { if (await session.generateReinforcement(weakness)) setActiveView("review"); })} />
         </Disclosure>
-        <PerformanceStats cardsCount={counts.cards} stats={session.stats} retention={session.retention} rhythm={session.reviewRhythm} />
+        <Disclosure title={t("Show detailed stats")}><PerformanceStats cardsCount={counts.cards} stats={session.stats} retention={session.retention} rhythm={session.reviewRhythm} /></Disclosure>
       </section>}
 
       {activeView === "library" && <section id="review-view-panel-library" role="tabpanel" aria-labelledby="review-view-tab-library" className="space-y-5">
