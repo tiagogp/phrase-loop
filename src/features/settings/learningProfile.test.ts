@@ -54,13 +54,13 @@ describe("learning profile", () => {
     });
   });
 
-  it("switches to English at B1 without losing the preference for lower levels", () => {
+  it("preserves an explicit language when the learner changes level", () => {
     installStorage();
     saveLearningProfile({ level: "A2", interfaceLang: "pt" });
     expect(resolveInterfaceLang(getLearningProfile())).toBe("pt");
     saveLearningProfile({ level: "B1" });
     expect(getLearningProfile().interfaceLang).toBe("pt");
-    expect(resolveInterfaceLang(getLearningProfile())).toBe("en");
+    expect(resolveInterfaceLang(getLearningProfile())).toBe("pt");
     saveLearningProfile({ level: "A2" });
     expect(resolveInterfaceLang(getLearningProfile())).toBe("pt");
     saveLearningProfile({ interfaceLang: "en" });
@@ -69,12 +69,13 @@ describe("learning profile", () => {
     expect(resolveInterfaceLang(getLearningProfile())).toBe("en");
   });
 
-  it.each([undefined, "pt"])("opens saved B1 profiles in English with preference %s", (interfaceLang) => {
+  it.each([undefined, "pt"])("resolves saved B1 profiles with preference %s", (interfaceLang) => {
     const store = installStorage();
     store.setItem("phraseloop.learningProfile.v1", JSON.stringify({
       level: "B1", nativeLang: "pt", interfaceLang,
     }));
-    expect(resolveInterfaceLang(getLearningProfile())).toBe("en");
+    expect(getLearningProfile().interfaceLang).toBe(interfaceLang);
+    expect(resolveInterfaceLang(getLearningProfile())).toBe(interfaceLang ?? "en");
   });
 
   it("clamps the weekly goal and persists it through the existing goal key", () => {

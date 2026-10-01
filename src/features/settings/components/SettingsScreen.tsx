@@ -6,7 +6,6 @@ import Disclosure from "@/components/ui/Disclosure";
 import { AI_SETUP_STEPS, aiSetupStep, connectionNextStep } from "../aiSetup";
 import Select from "@/components/ui/Select";
 import { ENGLISH_LEVELS } from "@/features/discover/constants";
-import { isLevelAtLeast } from "@/features/discover/levels";
 import type { EnglishLevel } from "@/features/discover/types";
 import {
   DEFAULT_LEARNING_PROFILE,
@@ -667,14 +666,13 @@ export default function SettingsScreen({
         <Field label={t("Interface language")} className="mt-3 max-w-52">
           <Select
             value={lang}
-            disabled={isLevelAtLeast(learnerLevel, "B1")}
             aria-describedby="interface-language-hint"
             options={[{ value: "pt", label: "Português" }, { value: "en", label: "English" }]}
             onChange={value => saveLearningProfile({ interfaceLang: value as "pt" | "en" })}
           />
         </Field>
         <p id="interface-language-hint" className="mt-2 text-xs text-ink-muted">
-          {t("From B1 the interface switches to English.")}
+          {t("Your language choice is kept at every level. Without a choice, B1 and above use English.")}
         </p>
         <Field label={t("English level")} className="mt-3 max-w-52">
           <Select value={learnerLevel} onChange={changeLearnerLevel} options={ENGLISH_LEVELS} />

@@ -752,4 +752,5 @@ export const tutorMessages: Record<string, { pt: string }> = {
   "Open Ollama and download a model, then choose Detect Ollama.": { pt: "Abra o Ollama e baixe um modelo, depois escolha Detectar Ollama." },
   "We couldn’t connect yet. Open Ollama, download a model and detect it again. You can continue without AI.": { pt: "Ainda não conseguimos conectar. Abra o Ollama, baixe um modelo e detecte de novo. Você pode continuar sem IA." },
   "We couldn’t connect yet. Check that you pasted an API key from the selected provider and that your account has access. Try again, or continue without AI.": { pt: "Ainda não conseguimos conectar. Confira se colou uma chave de API do provedor escolhido e se sua conta tem acesso. Tente de novo ou continue sem IA." },
+  "Your language choice is kept at every level. Without a choice, B1 and above use English.": { pt: "Sua escolha de idioma vale em todos os níveis. Sem uma escolha, B1 ou acima usa inglês." },
 };

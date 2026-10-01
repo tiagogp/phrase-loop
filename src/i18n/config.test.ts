@@ -7,9 +7,9 @@ describe("resolveInterfaceLang", () => {
     expect(resolveInterfaceLang({ level: "A2", nativeLang: "pt" })).toBe("pt");
   });
 
-  it.each(["B1", "B2", "C1", "C2"] as const)("uses English at %s, including profiles with saved Portuguese", (level) => {
+  it.each(["B1", "B2", "C1", "C2"] as const)("defaults to English at %s and preserves saved preferences", (level) => {
     expect(resolveInterfaceLang({ level, nativeLang: "pt" })).toBe("en");
-    expect(resolveInterfaceLang({ level, nativeLang: "pt", interfaceLang: "pt" })).toBe("en");
+    expect(resolveInterfaceLang({ level, nativeLang: "pt", interfaceLang: "pt" })).toBe("pt");
     expect(resolveInterfaceLang({ level, nativeLang: "pt", interfaceLang: "en" })).toBe("en");
   });
 

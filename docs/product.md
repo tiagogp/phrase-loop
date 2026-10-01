@@ -108,9 +108,9 @@ Configurações mantém perfil,
 conexão, ferramentas, C1 experimental, backup e exclusão acessíveis. Familiaridade nunca
 bloqueia uma ferramenta nem equivale a proficiência em inglês.
 
-Em A1 e A2, o idioma da interface pode ser escolhido em Configurações; perfis sem preferência
-usam o idioma nativo como padrão. A partir do B1, a interface muda automaticamente para inglês,
-inclusive em perfis com uma preferência anterior por português.
+O idioma da interface pode ser escolhido em Configurações em qualquer nível. A preferência
+explícita sempre vence. Sem preferência, A1/A2 usa o idioma nativo suportado e B1+ usa inglês
+por padrão. O nível informado não impede o aluno de continuar usando português.
 
 ### Estados de experiência
 

@@ -39,7 +39,7 @@ export const OBJECTIVE_OPTIONS: readonly { objective: MethodObjective; label: st
 export interface LearningProfile {
   /** CEFR level of the language being learned (`targetLang`). */
   level: EnglishLevel;
-  /** Interface preference below B1; B1 and above always use English. */
+  /** Explicit interface preference, preserved at every level. */
   interfaceLang?: "pt" | "en";
   /** Learner's first language (L1) — Portuguese-only in the reduced scope. */
   nativeLang: string;
@@ -145,7 +145,7 @@ function normalizeProfile(value: unknown): LearningProfile {
   const createdAt = typeof raw.createdAt === "number" && Number.isFinite(raw.createdAt) ? raw.createdAt : 0;
   return {
     level: levelOrDefault(raw.level),
-    interfaceLang: raw.interfaceLang === "en" || raw.interfaceLang === "pt" ? raw.interfaceLang : (raw.nativeLang === "pt" || !raw.nativeLang ? "pt" : "en"),
+    interfaceLang: raw.interfaceLang === "en" || raw.interfaceLang === "pt" ? raw.interfaceLang : undefined,
     nativeLang: nativeLangOrDefault(raw.nativeLang),
     targetLang: targetLangOrDefault(raw.targetLang),
     track: trackOrDefault(raw.track),
