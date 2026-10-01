@@ -148,3 +148,25 @@ Comparison condition: active recognition-card workflow with matched source mater
 ### Decision Rules
 
 Keep when the learner completes the loop and improves on at least one predeclared primary metric. Change when the learner likes the app but cannot explain the gain, needs too much help, or improves only on practiced items. Remove or defer surfaces that create engagement without production, feedback, retry, delayed retention, or transfer.
+
+## Ferramenta local de calibração do feedback
+
+Os 48 casos em `scripts/content/tutor-feedback-cases.json` cobrem as oito habilidades:
+resposta correta, incorreta, paráfrase válida, evasão, português e vazio. São casos sintéticos
+para teste de software, não respostas de alunos. Status e resultado esperados estão pendentes
+de revisão humana de inglês, PT-BR e rubrica; não são uma referência validada nem comprovam
+calibração.
+
+- Verificar o conjunto sem chamadas: `node scripts/eval-tutor-feedback.mjs --dry-run --output /tmp/tutor-cases.json`.
+- Com Ollama já configurado: `node scripts/eval-tutor-feedback.mjs --provider ollama --output /tmp/tutor-feedback.json`.
+- Para um provedor em nuvem já configurado em ambiente/`.env.local`, usar `--provider openai`,
+  `claude` ou `openrouter`. A execução faz 48 chamadas e pode ter custo. Sem credencial
+  existente, o script para antes de chamar. Chaves exclusivas do cofre do desktop precisam
+  estar disponíveis ao processo; o script não exporta credenciais do cofre.
+
+O script reutiliza `buildTutorPrompt`, o catálogo, os validadores e os provedores do app,
+inclusive seus modelos configurados. O JSON local informa versão do prompt, modelo,
+concordância conjunta de status/resultado por status esperado e habilidade, falhas de contrato
+e casos individuais. Falha de contrato ou de chamada conta como discordância. Os relatórios
+não contêm chaves nem são enviados por telemetria. A execução real e a revisão dos casos
+permanecem pendentes; um dry-run não mede concordância.

@@ -1,0 +1,530 @@
+[
+  {
+    "id": "present-perfect-duration-correct",
+    "conceptId": "present-perfect-duration",
+    "scenarioId": "duration-interview-v1",
+    "kind": "correct",
+    "text": "I have worked with React for five years.",
+    "expected": {
+      "status": "met",
+      "result": "demonstrated"
+    }
+  },
+  {
+    "id": "present-perfect-duration-incorrect",
+    "conceptId": "present-perfect-duration",
+    "scenarioId": "duration-interview-v1",
+    "kind": "incorrect",
+    "text": "I have five years working with React.",
+    "expected": {
+      "status": "partial",
+      "result": "needs_work"
+    }
+  },
+  {
+    "id": "present-perfect-duration-valid_paraphrase",
+    "conceptId": "present-perfect-duration",
+    "scenarioId": "duration-interview-v1",
+    "kind": "valid_paraphrase",
+    "text": "I've been using React since 2021.",
+    "expected": {
+      "status": "met",
+      "result": "demonstrated"
+    }
+  },
+  {
+    "id": "present-perfect-duration-avoidance",
+    "conceptId": "present-perfect-duration",
+    "scenarioId": "duration-interview-v1",
+    "kind": "avoidance",
+    "text": "I use React.",
+    "expected": {
+      "status": "partial",
+      "result": "uncertain"
+    }
+  },
+  {
+    "id": "present-perfect-duration-portuguese",
+    "conceptId": "present-perfect-duration",
+    "scenarioId": "duration-interview-v1",
+    "kind": "portuguese",
+    "text": "Eu gostaria de responder em português.",
+    "expected": {
+      "status": "not_met",
+      "result": "uncertain"
+    }
+  },
+  {
+    "id": "present-perfect-duration-empty",
+    "conceptId": "present-perfect-duration",
+    "scenarioId": "duration-interview-v1",
+    "kind": "empty",
+    "text": "",
+    "expected": {
+      "status": "not_met",
+      "result": "uncertain"
+    }
+  },
+  {
+    "id": "polite-requests-correct",
+    "conceptId": "polite-requests",
+    "scenarioId": "request-meeting-v1",
+    "kind": "correct",
+    "text": "Could we move Tuesday's meeting to Friday, please?",
+    "expected": {
+      "status": "met",
+      "result": "demonstrated"
+    }
+  },
+  {
+    "id": "polite-requests-incorrect",
+    "conceptId": "polite-requests",
+    "scenarioId": "request-meeting-v1",
+    "kind": "incorrect",
+    "text": "You move Tuesday meeting Friday.",
+    "expected": {
+      "status": "partial",
+      "result": "needs_work"
+    }
+  },
+  {
+    "id": "polite-requests-valid_paraphrase",
+    "conceptId": "polite-requests",
+    "scenarioId": "request-meeting-v1",
+    "kind": "valid_paraphrase",
+    "text": "Would Friday work instead of Tuesday for our meeting?",
+    "expected": {
+      "status": "met",
+      "result": "demonstrated"
+    }
+  },
+  {
+    "id": "polite-requests-avoidance",
+    "conceptId": "polite-requests",
+    "scenarioId": "request-meeting-v1",
+    "kind": "avoidance",
+    "text": "Friday is good.",
+    "expected": {
+      "status": "partial",
+      "result": "uncertain"
+    }
+  },
+  {
+    "id": "polite-requests-portuguese",
+    "conceptId": "polite-requests",
+    "scenarioId": "request-meeting-v1",
+    "kind": "portuguese",
+    "text": "Eu gostaria de responder em português.",
+    "expected": {
+      "status": "not_met",
+      "result": "uncertain"
+    }
+  },
+  {
+    "id": "polite-requests-empty",
+    "conceptId": "polite-requests",
+    "scenarioId": "request-meeting-v1",
+    "kind": "empty",
+    "text": "",
+    "expected": {
+      "status": "not_met",
+      "result": "uncertain"
+    }
+  },
+  {
+    "id": "work-status-correct",
+    "conceptId": "work-status",
+    "scenarioId": "status-meeting-v1",
+    "kind": "correct",
+    "text": "I finished the login screen. I am testing it today. The password reset still needs work.",
+    "expected": {
+      "status": "met",
+      "result": "demonstrated"
+    }
+  },
+  {
+    "id": "work-status-incorrect",
+    "conceptId": "work-status",
+    "scenarioId": "status-meeting-v1",
+    "kind": "incorrect",
+    "text": "I finished the login tomorrow. I test yesterday. Reset done later.",
+    "expected": {
+      "status": "partial",
+      "result": "needs_work"
+    }
+  },
+  {
+    "id": "work-status-valid_paraphrase",
+    "conceptId": "work-status",
+    "scenarioId": "status-meeting-v1",
+    "kind": "valid_paraphrase",
+    "text": "The login screen is ready. Testing is in progress today; the password reset is still pending.",
+    "expected": {
+      "status": "met",
+      "result": "demonstrated"
+    }
+  },
+  {
+    "id": "work-status-avoidance",
+    "conceptId": "work-status",
+    "scenarioId": "status-meeting-v1",
+    "kind": "avoidance",
+    "text": "Everything is fine.",
+    "expected": {
+      "status": "not_met",
+      "result": "uncertain"
+    }
+  },
+  {
+    "id": "work-status-portuguese",
+    "conceptId": "work-status",
+    "scenarioId": "status-meeting-v1",
+    "kind": "portuguese",
+    "text": "Eu gostaria de responder em português.",
+    "expected": {
+      "status": "not_met",
+      "result": "uncertain"
+    }
+  },
+  {
+    "id": "work-status-empty",
+    "conceptId": "work-status",
+    "scenarioId": "status-meeting-v1",
+    "kind": "empty",
+    "text": "",
+    "expected": {
+      "status": "not_met",
+      "result": "uncertain"
+    }
+  },
+  {
+    "id": "problem-cause-correct",
+    "conceptId": "problem-cause",
+    "scenarioId": "cause-service-v1",
+    "kind": "correct",
+    "text": "Customers cannot sign in because the authentication server is offline.",
+    "expected": {
+      "status": "met",
+      "result": "demonstrated"
+    }
+  },
+  {
+    "id": "problem-cause-incorrect",
+    "conceptId": "problem-cause",
+    "scenarioId": "cause-service-v1",
+    "kind": "incorrect",
+    "text": "Customers cannot sign in because the server online.",
+    "expected": {
+      "status": "partial",
+      "result": "needs_work"
+    }
+  },
+  {
+    "id": "problem-cause-valid_paraphrase",
+    "conceptId": "problem-cause",
+    "scenarioId": "cause-service-v1",
+    "kind": "valid_paraphrase",
+    "text": "The authentication server is down, so customers are unable to log in.",
+    "expected": {
+      "status": "met",
+      "result": "demonstrated"
+    }
+  },
+  {
+    "id": "problem-cause-avoidance",
+    "conceptId": "problem-cause",
+    "scenarioId": "cause-service-v1",
+    "kind": "avoidance",
+    "text": "Customers cannot sign in.",
+    "expected": {
+      "status": "partial",
+      "result": "uncertain"
+    }
+  },
+  {
+    "id": "problem-cause-portuguese",
+    "conceptId": "problem-cause",
+    "scenarioId": "cause-service-v1",
+    "kind": "portuguese",
+    "text": "Eu gostaria de responder em português.",
+    "expected": {
+      "status": "not_met",
+      "result": "uncertain"
+    }
+  },
+  {
+    "id": "problem-cause-empty",
+    "conceptId": "problem-cause",
+    "scenarioId": "cause-service-v1",
+    "kind": "empty",
+    "text": "",
+    "expected": {
+      "status": "not_met",
+      "result": "uncertain"
+    }
+  },
+  {
+    "id": "polite-disagreement-correct",
+    "conceptId": "polite-disagreement",
+    "scenarioId": "disagree-release-v1",
+    "kind": "correct",
+    "text": "I see your point, but I would prefer to wait until tomorrow because the tests are not finished.",
+    "expected": {
+      "status": "met",
+      "result": "demonstrated"
+    }
+  },
+  {
+    "id": "polite-disagreement-incorrect",
+    "conceptId": "polite-disagreement",
+    "scenarioId": "disagree-release-v1",
+    "kind": "incorrect",
+    "text": "You are wrong. Release tomorrow.",
+    "expected": {
+      "status": "partial",
+      "result": "needs_work"
+    }
+  },
+  {
+    "id": "polite-disagreement-valid_paraphrase",
+    "conceptId": "polite-disagreement",
+    "scenarioId": "disagree-release-v1",
+    "kind": "valid_paraphrase",
+    "text": "Could we wait one more day? I am concerned about the unfinished tests.",
+    "expected": {
+      "status": "met",
+      "result": "demonstrated"
+    }
+  },
+  {
+    "id": "polite-disagreement-avoidance",
+    "conceptId": "polite-disagreement",
+    "scenarioId": "disagree-release-v1",
+    "kind": "avoidance",
+    "text": "Let us discuss it later.",
+    "expected": {
+      "status": "not_met",
+      "result": "uncertain"
+    }
+  },
+  {
+    "id": "polite-disagreement-portuguese",
+    "conceptId": "polite-disagreement",
+    "scenarioId": "disagree-release-v1",
+    "kind": "portuguese",
+    "text": "Eu gostaria de responder em português.",
+    "expected": {
+      "status": "not_met",
+      "result": "uncertain"
+    }
+  },
+  {
+    "id": "polite-disagreement-empty",
+    "conceptId": "polite-disagreement",
+    "scenarioId": "disagree-release-v1",
+    "kind": "empty",
+    "text": "",
+    "expected": {
+      "status": "not_met",
+      "result": "uncertain"
+    }
+  },
+  {
+    "id": "clarification-correct",
+    "conceptId": "clarification",
+    "scenarioId": "clarify-deadline-v1",
+    "kind": "correct",
+    "text": "What exact day, time and time zone do you mean by the end of the week?",
+    "expected": {
+      "status": "met",
+      "result": "demonstrated"
+    }
+  },
+  {
+    "id": "clarification-incorrect",
+    "conceptId": "clarification",
+    "scenarioId": "clarify-deadline-v1",
+    "kind": "incorrect",
+    "text": "What day and time the deadline is? Which time zone?",
+    "expected": {
+      "status": "partial",
+      "result": "needs_work"
+    }
+  },
+  {
+    "id": "clarification-valid_paraphrase",
+    "conceptId": "clarification",
+    "scenarioId": "clarify-deadline-v1",
+    "kind": "valid_paraphrase",
+    "text": "Could you specify the deadline, including the time zone?",
+    "expected": {
+      "status": "met",
+      "result": "demonstrated"
+    }
+  },
+  {
+    "id": "clarification-avoidance",
+    "conceptId": "clarification",
+    "scenarioId": "clarify-deadline-v1",
+    "kind": "avoidance",
+    "text": "The deadline is unclear.",
+    "expected": {
+      "status": "partial",
+      "result": "uncertain"
+    }
+  },
+  {
+    "id": "clarification-portuguese",
+    "conceptId": "clarification",
+    "scenarioId": "clarify-deadline-v1",
+    "kind": "portuguese",
+    "text": "Eu gostaria de responder em português.",
+    "expected": {
+      "status": "not_met",
+      "result": "uncertain"
+    }
+  },
+  {
+    "id": "clarification-empty",
+    "conceptId": "clarification",
+    "scenarioId": "clarify-deadline-v1",
+    "kind": "empty",
+    "text": "",
+    "expected": {
+      "status": "not_met",
+      "result": "uncertain"
+    }
+  },
+  {
+    "id": "next-steps-correct",
+    "conceptId": "next-steps",
+    "scenarioId": "steps-bug-v1",
+    "kind": "correct",
+    "text": "I can investigate today, and you can test tomorrow. Does that work for you?",
+    "expected": {
+      "status": "met",
+      "result": "demonstrated"
+    }
+  },
+  {
+    "id": "next-steps-incorrect",
+    "conceptId": "next-steps",
+    "scenarioId": "steps-bug-v1",
+    "kind": "incorrect",
+    "text": "I investigate today. You test tomorrow. Are you agree?",
+    "expected": {
+      "status": "partial",
+      "result": "needs_work"
+    }
+  },
+  {
+    "id": "next-steps-valid_paraphrase",
+    "conceptId": "next-steps",
+    "scenarioId": "steps-bug-v1",
+    "kind": "valid_paraphrase",
+    "text": "How about I look into it today and you check the fix tomorrow? Is that OK?",
+    "expected": {
+      "status": "met",
+      "result": "demonstrated"
+    }
+  },
+  {
+    "id": "next-steps-avoidance",
+    "conceptId": "next-steps",
+    "scenarioId": "steps-bug-v1",
+    "kind": "avoidance",
+    "text": "We found a bug.",
+    "expected": {
+      "status": "not_met",
+      "result": "uncertain"
+    }
+  },
+  {
+    "id": "next-steps-portuguese",
+    "conceptId": "next-steps",
+    "scenarioId": "steps-bug-v1",
+    "kind": "portuguese",
+    "text": "Eu gostaria de responder em português.",
+    "expected": {
+      "status": "not_met",
+      "result": "uncertain"
+    }
+  },
+  {
+    "id": "next-steps-empty",
+    "conceptId": "next-steps",
+    "scenarioId": "steps-bug-v1",
+    "kind": "empty",
+    "text": "",
+    "expected": {
+      "status": "not_met",
+      "result": "uncertain"
+    }
+  },
+  {
+    "id": "past-experience-correct",
+    "conceptId": "past-experience",
+    "scenarioId": "past-project-v1",
+    "kind": "correct",
+    "text": "Last year I finished a website project. I built the login screen and tested it.",
+    "expected": {
+      "status": "met",
+      "result": "demonstrated"
+    }
+  },
+  {
+    "id": "past-experience-incorrect",
+    "conceptId": "past-experience",
+    "scenarioId": "past-project-v1",
+    "kind": "incorrect",
+    "text": "Last year I lead a project and build the login screen.",
+    "expected": {
+      "status": "partial",
+      "result": "needs_work"
+    }
+  },
+  {
+    "id": "past-experience-valid_paraphrase",
+    "conceptId": "past-experience",
+    "scenarioId": "past-project-v1",
+    "kind": "valid_paraphrase",
+    "text": "I completed an app last year, where I designed the dashboard and wrote tests.",
+    "expected": {
+      "status": "met",
+      "result": "demonstrated"
+    }
+  },
+  {
+    "id": "past-experience-avoidance",
+    "conceptId": "past-experience",
+    "scenarioId": "past-project-v1",
+    "kind": "avoidance",
+    "text": "I work on projects.",
+    "expected": {
+      "status": "not_met",
+      "result": "uncertain"
+    }
+  },
+  {
+    "id": "past-experience-portuguese",
+    "conceptId": "past-experience",
+    "scenarioId": "past-project-v1",
+    "kind": "portuguese",
+    "text": "Eu gostaria de responder em português.",
+    "expected": {
+      "status": "not_met",
+      "result": "uncertain"
+    }
+  },
+  {
+    "id": "past-experience-empty",
+    "conceptId": "past-experience",
+    "scenarioId": "past-project-v1",
+    "kind": "empty",
+    "text": "",
+    "expected": {
+      "status": "not_met",
+      "result": "uncertain"
+    }
+  }
+]
