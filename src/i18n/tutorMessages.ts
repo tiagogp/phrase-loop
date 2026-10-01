@@ -713,4 +713,8 @@ export const tutorMessages: Record<string, { pt: string }> = {
   "Answer not accepted by the evaluator": { pt: "Resposta não aceita pelo avaliador" },
   "No objective assessment": { pt: "Sem avaliação objetiva" },
   "Saved phrase": { pt: "Frase salva" },
+  "Now you can, in this situation: {goal}": { pt: "Agora você consegue, nesta situação: {goal}" },
+  "See your answers together": { pt: "Veja suas respostas juntas" },
+  "Today’s answer": { pt: "Resposta de hoje" },
+  "{days} full days between answers. The situations differ: this is a way to notice changes, not a measure of mastery.": { pt: "{days} dias completos entre as respostas. As situações mudam: a comparação ajuda a perceber diferenças, sem medir domínio." },
 };

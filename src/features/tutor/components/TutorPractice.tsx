@@ -1,5 +1,6 @@
 "use client";
 
+import { tutorCompletion } from "../completion";
 import Disclosure from "@/components/ui/Disclosure";
 
 import { useTutorTranslation } from "../useTutorTranslation";
@@ -55,7 +56,7 @@ export function TutorPractice({ initial, memory, onNew, ...props }: TutorWorkspa
   const audio = useCorrectionAudio({ onNote: setAudioNote, onText: updater => updateDraft(updater(current.current?.draft ?? "")), maxDurationMs: 90_000 });
   const blocked = !exposureReady || busy || fatal || audio.recording || audio.transcribing || savingPhrase;
   const last = session.attempts.at(-1);
-  const parent = memory.sessions.find(s => s.id === session.parentSessionId);
+  const { achievement, comparison } = tutorCompletion(session, memory.sessions, memory.preferences);
   const context: TutorContext = {
     level: session.level, minutes: session.minutes, explanationLanguage: session.explanationLanguage, focus: session.task.goal,
     // Reapply exclusions on every call, including sessions opened before the preference changed.
@@ -182,11 +183,20 @@ export function TutorPractice({ initial, memory, onNew, ...props }: TutorWorkspa
     {session.phase === "complete" && <Card className="space-y-5 p-5 sm:p-7">
       <h2 ref={phaseHeading} tabIndex={-1} className="text-xl font-semibold text-ink">{t("What happened in this session")}</h2>
       <p className="text-sm leading-relaxed text-ink-soft">{tutorSummary(session, memory.preferences, lang)}</p>
+      {achievement && <Notice tone="success">{t("Now you can, in this situation: {goal}", { goal: localize(achievement) })}</Notice>}
+      {comparison && <section className="space-y-3 rounded-lg border border-accent/30 bg-accent/5 p-4">
+        <h3 className="font-semibold text-ink">{t("See your answers together")}</h3>
+        <div className="grid gap-4 sm:grid-cols-2">{[comparison.previous, comparison.current].map((item, i) => <div key={item.id} className="space-y-2">
+          <p className="font-medium text-ink">{i === 0 ? t("Previous session ·") : t("Today’s answer")}</p>
+          <p className="text-xs text-ink-soft">{localize(item.task.situation)}</p>
+          <blockquote className="whitespace-pre-wrap text-sm text-ink" lang="en">{item.attempts.at(-1)!.text}</blockquote>
+          <p className="text-xs text-ink-muted">{(i === 0 ? comparison.previousSupported : comparison.currentSupported) ? t("With support") : t("No support recorded")} · {new Date(item.attempts.at(-1)!.createdAt).toLocaleDateString(lang === "pt" ? "pt-BR" : "en-US")}</p>
+        </div>)}</div>
+        <p className="text-xs text-ink-soft">{t("{days} full days between answers. The situations differ: this is a way to notice changes, not a measure of mastery.", { days: comparison.days })}</p>
+      </section>}
       <Disclosure title={t("My attempts and evidence")} contentClassName="space-y-4" nested>
       {session.skill && <div className="rounded-lg border border-accent/25 bg-accent/5 p-4"><p className="text-xs font-semibold uppercase tracking-wider text-accent">{t("Tracked skill")}</p><p className="mt-1 font-medium text-ink">{localize(session.skill.label)}</p><p className="mt-2 text-sm text-ink-soft">{(() => { const evidence = tutorSkillEvidence([...memory.sessions.filter(s => s.id !== session.id), session], session.skill!, memory.preferences); return t("{state}. Successful answers with support: {assisted}. Sessions improved after feedback: {improvements}. Verified uses in a new context: {transfers}. {next}", { state: localize(tutorSkillStates[evidence.state]), assisted: evidence.assisted, improvements: evidence.improvements, transfers: evidence.transfers, next: evidence.transfers ? t("Tracking new uses helps confirm the result.") : t("Evidence of transfer on another day and in another situation is still needed.") }); })()}</p></div>}
       {session.draft.trim() && <div className="rounded border border-line p-4"><p className="text-xs text-ink-muted">{t("Unsent draft · not assessed")}</p><p className="mt-2 whitespace-pre-wrap text-sm text-ink" lang="en">{session.draft}</p></div>}
-      {parent && session.attempts.length > 0 && <Notice>{t("You returned to this goal after")} {Math.max(0, Math.floor((session.attempts[0].createdAt - (parent.completedAt ?? parent.updatedAt)) / 86_400_000))} {t("full days. Compare the answers and situations below; different tasks are not the same test.")}</Notice>}
-      {parent?.attempts.at(-1) && allowedTutorAttempt(parent.attempts.at(-1)!, memory.preferences) && <div className="rounded border border-line p-4"><p className="text-xs text-ink-muted">{t("Previous session ·")} {localize(parent.task.situation)}</p><p className="mt-2 text-sm text-ink" lang="en">{parent.attempts.at(-1)!.text}</p><p className="mt-2 text-xs text-ink-muted">{parent.attempts.at(-1)!.supportUsed ? t("With support") : t("No support recorded")} · {new Date(parent.updatedAt).toLocaleDateString(lang === "pt" ? "pt-BR" : "en-US")}</p></div>}
       {session.attempts.map((attempt, i) => <div key={attempt.id} className="rounded border border-line p-4"><p className="text-xs text-ink-muted">{t("Attempt")} {i + 1} · {attempt.supportUsed ? t("with support or feedback") : t("without asking for support")}</p><p className="mt-2 whitespace-pre-wrap text-sm text-ink" lang="en">{attempt.text}</p><p className="mt-2 text-xs text-ink-muted">{attempt.disputed ? t("Assessment disputed") : localize(feedbackLabels[attempt.feedback.status])} {t("· AI:")} {attempt.judge.provider}{attempt.judge.model ? ` / ${attempt.judge.model}` : ""}</p></div>)}
       </Disclosure>
       {reviewAt && !session.revisitedAt && <Notice>{t("Revisit from")} <strong>{new Date(reviewAt).toLocaleDateString(lang === "pt" ? "pt-BR" : "en-US")}</strong>{t(". It will appear in Today so you can try another situation before seeing the example.")}</Notice>}
