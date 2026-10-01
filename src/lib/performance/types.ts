@@ -43,6 +43,9 @@ export interface ListeningAttempt {
 
 /** Evidence from an original written or spoken production. */
 export interface ProductionAttempt {
+  /** Learner self-rating, never an evaluated verdict. */
+  selfAssessment?: "needs_practice" | "partly" | "communicated";
+  completedAt?: number;
   id: string;
   lessonId?: string;
   source: "lesson" | "correct" | "conversation" | "study";

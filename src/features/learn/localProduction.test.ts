@@ -1,0 +1,26 @@
+import "fake-indexeddb/auto";
+import { afterEach, expect, it } from "vitest";
+import { clearAll } from "@/lib/store/db";
+import { getProductionAttempts, getReviews, getSrs, saveGeneratedDeck } from "@/lib/store/repository";
+import { Rating } from "@/lib/srs/fsrs";
+import { buildDeckFromPhrases, firstLesson } from "./lessonDeck";
+import { finishLocalProduction, localProduction } from "./localProduction";
+afterEach(() => clearAll());
+it("records self-assessment without evaluated success or transfer and preserves future reviews", async () => {
+  const lesson = firstLesson();
+  const deck = buildDeckFromPhrases(`lesson-${lesson.id}`, lesson.phrases, [0]);
+  await saveGeneratedDeck(deck.cards, deck.candidates);
+  const card = deck.cards[0];
+  const srs = (await getSrs(card.id))!;
+  const now = srs.due;
+  const attempt = localProduction(lesson, "My own answer", now - 1000, now, "local");
+  const next = await finishLocalProduction(attempt, "communicated", card, srs, Rating.Good, now);
+  expect((await getProductionAttempts())[0]).toMatchObject({ evaluated: false, selfAssessment: "communicated", finished: true });
+  expect((await getProductionAttempts())[0].judge).toBeUndefined();
+  expect((await getProductionAttempts())[0].transferVerified).toBeUndefined();
+  expect((await getReviews())[0].responseCorrect).toBeUndefined();
+  expect((await getReviews())[0].hintUsed).toBe(true);
+  expect(await finishLocalProduction({ ...attempt, id: "extra" }, "partly", card, next, Rating.Again, now)).toEqual(next);
+  expect((await getSrs(card.id))?.due).toBe(next.due);
+  expect(await getReviews()).toHaveLength(1);
+});

@@ -64,10 +64,11 @@ export function HojeHome(props: HojeHomeProps) {
   const firstLocalLoop = learning.data.cards.length <= 2 && learning.data.reviews.length > 0
     && learning.data.reviews.every(review => today(review.reviewedAt));
   const planTask = plan.error ? undefined : plan.today?.tasks.find(task => !task.completedAt);
-  const completedAt = Math.max(finished?.completedAt ?? 0,
+  const localCompletedAt = Math.max(0, ...learning.data.production.filter(p => p.selfAssessment && p.finished && p.completedAt && today(p.completedAt)).map(p => p.completedAt!));
+  const completedAt = Math.max(finished?.completedAt ?? 0, localCompletedAt,
     ...(loop.complete || firstLocalLoop ? learning.data.reviews.map(review => review.reviewedAt) : [0]),
     ...(!plan.error ? plan.today?.tasks.map(task => task.completedAt ?? 0) ?? [0] : [0]));
-  const completedToday = !!finished || loop.complete || firstLocalLoop || (completedAt > 0 && today(completedAt));
+  const completedToday = localCompletedAt > 0 || !!finished || loop.complete || firstLocalLoop || (completedAt > 0 && today(completedAt));
   const active = recommendation?.active;
   // Completing the local fallback is a place to stop; it does not delete an older tutor draft.
   const resumeNow = !!active && (!completedToday || active.updatedAt > completedAt);
@@ -79,12 +80,12 @@ export function HojeHome(props: HojeHomeProps) {
   const reviewAt = finished && memory ? nextTutorReview(finished, finished.completedAt!, memory.sessions, memory.preferences) : undefined;
   const title = tutorAction ? localize(recommendation?.focus ?? "Your next practice") : t(action === "review" ? "Remember a few useful phrases"
     : action === "use" ? "Now use one idea in a new situation" : action === "plan" ? "Your next step in the plan"
-      : complete ? "Your practice is saved. You can stop here." : "One useful phrase. One small practice.");
+      : complete ? "Your practice is saved. You can stop here." : "Your own answer first");
   const detail = tutorAction ? localize(recommendation?.reason ?? "") : action === "plan" ? planTask?.instruction
     : t(action === "review" ? "Start with up to {count} phrases. Then try one answer of your own."
       : action === "use" ? "You already reviewed. Try using a saved idea, with help if you need it."
         : complete ? "Your answer is saved. Come back another day to try with less help."
-          : "See the meaning, try remembering it, and keep it for a later review. No setup needed.", { count: loop.remaining });
+          : "Try before looking at an example. A short answer is enough to start.", { count: loop.remaining });
   const label = t(action === "resume" ? "Continue practice" : complete ? "See my progress" : action === "review" ? "Start my review"
     : action === "use" ? "Use what I learned" : action === "lesson" ? "Start a short practice" : "Start practice");
   const start = () => {
@@ -113,7 +114,7 @@ export function HojeHome(props: HojeHomeProps) {
         <div className="flex flex-wrap items-center gap-3"><Button variant={complete ? "secondary" : "primary"} size="lg" onClick={start}>{label}<span aria-hidden="true">→</span></Button>
           {complete && memory && settings.providers.some(p => p.available) && extraPractice(memory.sessions, now) && <Button variant="secondary" onClick={props.onExtra}>{t("Practice one more situation")}</Button>}
           {!complete && <Button variant="ghost" onClick={props.onExplore}>{t("Choose another activity")}</Button>}</div>
-        {!complete && !experience.firstLoopComplete && <p className="border-t border-line pt-4 text-xs leading-relaxed text-ink-muted">{t(action === "lesson" ? "See one phrase → try remembering → save your practice" : "Try → understand the feedback → try again when needed")}</p>}
+        {!complete && !experience.firstLoopComplete && <p className="border-t border-line pt-4 text-xs leading-relaxed text-ink-muted">{t(action === "lesson" ? "Try in your own words → compare → save your own assessment" : "Try → understand the feedback → try again when needed")}</p>}
       </Card>}
     {discovery && <aside className="rounded-lg border border-line p-4">
       <p className="text-sm text-ink-soft">{t(discovery === "review" ? "You saved a phrase. Try remembering it before looking." : discovery === "content" ? "Want to use something from your own day next time?" : "Take an idea you practiced into a conversation.")}</p>
