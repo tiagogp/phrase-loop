@@ -17,6 +17,7 @@ export function createStageTimerController(autoStart: boolean) {
     touch(now: number) {
       if (requested && available && state) state = touchTimer(state, now);
     },
+    discard() { state = null; requested = false; },
     commit(now: number): number | null {
       const elapsed = state ? creditedMs(state, now) : null;
       state = null;

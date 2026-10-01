@@ -2,6 +2,19 @@ import { describe, expect, it } from "vitest";
 import { createStageTimerController } from "./stageTimerController";
 
 describe("stage attention", () => {
+  it("discards abandoned retry time and only credits the next retry", () => {
+    const timer = createStageTimerController(false);
+    timer.setAvailable(true, 0);
+    timer.start(1000);
+    timer.touch(20_000);
+    timer.discard();
+    timer.setAvailable(false, 30_000);
+    timer.setAvailable(true, 40_000);
+    expect(timer.commit(50_000)).toBeNull();
+    timer.start(60_000);
+    expect(timer.commit(70_000)).toBe(10_000);
+  });
+
   it("excludes interactions in a retained, hidden workspace and resumes on return", () => {
     const timer = createStageTimerController(true);
     timer.setAvailable(true, 0);

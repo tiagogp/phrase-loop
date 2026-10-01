@@ -377,6 +377,7 @@ export default function CorrectTab({
     setAiNote(null);
     setAdvancedReview(null);
     setGenDone(null);
+    retryTimer.discard();
     setRetryOf(null);
     setRetryText("");
     setRetryClear(false);

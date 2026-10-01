@@ -13,6 +13,8 @@ export interface StageTimer {
   touch: () => void;
   /** Stop without discarding what is banked — e.g. the learner paused the audio. */
   pause: () => void;
+  /** Discard an abandoned window without credit. */
+  discard: () => void;
   /**
    * Stop, reset, and return the clamped minutes for exactly one `method_stage` emit.
    * Pass `stage` when the window's stage is only known on submit — lesson production is
@@ -53,6 +55,8 @@ export function useStageTimer(
     controller.pause(Date.now());
   }, [controller]);
 
+  const discard = useCallback(() => controller.discard(), [controller]);
+
   const commit = useCallback(
     (stageOverride?: MethodStage) => {
       const elapsed = controller.commit(Date.now());
@@ -84,5 +88,5 @@ export function useStageTimer(
     };
   }, [active, controller, touch]);
 
-  return useMemo(() => ({ start, touch, pause, commit }), [start, touch, pause, commit]);
+  return useMemo(() => ({ start, touch, pause, discard, commit }), [start, touch, pause, discard, commit]);
 }
