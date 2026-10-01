@@ -21,3 +21,13 @@ describe("completion presentation", () => {
     expect(tutorCompletion(tutorSession({ attempts: [{ ...attempt, feedback: { ...attempt.feedback, status: "partial", skill: { ...attempt.feedback.skill!, result: "demonstrated" } } }] }), [], preferences).achievement).toBeTruthy();
   });
 });
+
+import { tutorSkillStates } from "./learning";
+import { localizeTutorText } from "./localization";
+it("explains skill states in ordinary language in both interfaces", () => {
+  for (const label of Object.values(tutorSkillStates)) {
+    expect(label).not.toMatch(/independente|transferência|evidência consistente/i);
+    expect(localizeTutorText(label, "en")).not.toBe(label);
+    expect(localizeTutorText(label, "en")).not.toMatch(/independent|transfer|consistent evidence/i);
+  }
+});

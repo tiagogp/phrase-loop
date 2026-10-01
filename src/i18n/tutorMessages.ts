@@ -258,8 +258,8 @@ export const tutorMessages: Record<string, { pt: string }> = {
   "Tracking new uses helps confirm the result.": {
     "pt": "Acompanhar novos usos ajuda a confirmar o resultado."
   },
-  "Evidence of transfer on another day and in another situation is still needed.": {
-    "pt": "Ainda falta evidência de transferência em outro dia e situação."
+  "Next time, try a different situation before looking at an example.": {
+    "pt": "Na próxima vez, tente uma situação diferente antes de olhar um exemplo."
   },
   "Unsent draft · not assessed": {
     "pt": "Rascunho não enviado · sem avaliação"
@@ -378,14 +378,14 @@ export const tutorMessages: Record<string, { pt: string }> = {
   "Successful answers with support": {
     "pt": "Acertos com apoio"
   },
-  "Independent successful answers": {
-    "pt": "Acertos independentes"
+  "Successful answers without recent help": {
+    "pt": "Acertos sem ajuda recente"
   },
   "Uses in a new context": {
     "pt": "Usos em contexto novo"
   },
-  "Uses in a new context are part of independent successful answers. They require a verified situation, a valid earlier difficulty, and at least 24 hours without consulting recorded help. Disputed or ignored assessments are excluded.": {
-    "pt": "Usos em contexto novo fazem parte dos acertos independentes. Exigem uma situação verificada, dificuldade anterior válida e pelo menos 24 horas sem consultar ajuda registrada. Avaliações contestadas ou ignoradas ficam fora destes resultados."
+  "These answers used the skill in a different authored situation after an earlier difficulty, with at least 24 hours since recorded help. Assessments you disputed or excluded do not count.": {
+    "pt": "Nessas respostas, você usou a habilidade em outra situação do catálogo depois de uma dificuldade, com pelo menos 24 horas desde a ajuda registrada. Avaliações que você contestou ou excluiu não contam."
   },
   "Opening…": {
     "pt": "Abrindo…"
@@ -411,8 +411,8 @@ export const tutorMessages: Record<string, { pt: string }> = {
   "Observed difficulty": {
     "pt": "Dificuldade observada"
   },
-  "Independent use in another context": {
-    "pt": "Uso independente em outro contexto"
+  "Use in a new situation without recent help": {
+    "pt": "Uso em situação nova sem ajuda recente"
   },
   "With recorded support": {
     "pt": "Com apoio registrado"
@@ -546,29 +546,29 @@ export const tutorMessages: Record<string, { pt: string }> = {
   "Preparing audio… You can already read and reply.": {
     "pt": "Preparando áudio… Você já pode ler e responder."
   },
-  "Goal met": {
-    "pt": "Objetivo atendido"
+  "You communicated what the situation needed": {
+    "pt": "Você comunicou o que a situação precisava"
   },
-  "Goal partially met": {
-    "pt": "Objetivo parcialmente atendido"
+  "You’re on your way; one part needs an adjustment": {
+    "pt": "Você está no caminho; uma parte precisa de ajuste"
   },
-  "Goal not met yet": {
-    "pt": "Ainda não atendeu ao objetivo"
+  "Let’s adjust one part of your answer": {
+    "pt": "Vamos ajustar uma parte da sua resposta"
   },
-  "Inconclusive assessment": {
-    "pt": "Avaliação inconclusiva"
+  "The tutor isn’t sure yet": {
+    "pt": "O tutor ainda não tem certeza"
   },
-  "Developing": {
-    "pt": "Em desenvolvimento"
+  "Let’s practice this a little more": {
+    "pt": "Vamos praticar um pouco mais"
   },
-  "Awaiting independent confirmation": {
-    "pt": "Aguardando confirmação independente"
+  "Ready to try without help": {
+    "pt": "Pronto para tentar sem ajuda"
   },
-  "Transfer observed": {
-    "pt": "Transferência observada"
+  "Used in a new situation": {
+    "pt": "Usou em uma situação nova"
   },
-  "Consistent evidence": {
-    "pt": "Evidência consistente"
+  "Used in different situations on separate days": {
+    "pt": "Usou em situações diferentes em dias separados"
   },
   "Talk about duration using the present perfect": {
     "pt": "Falar sobre duração com present perfect"
@@ -582,14 +582,14 @@ export const tutorMessages: Record<string, { pt: string }> = {
   "You have practiced this goal before. Let's see what you can recall on another occasion.": {
     "pt": "Você já praticou este objetivo. Vamos observar o que consegue recuperar em outra ocasião."
   },
-  "The last difficulty still needs practice. Let's work on a short situation.": {
-    "pt": "A última dificuldade ainda precisa de prática. Vamos trabalhar uma situação curta."
+  "Let’s work on the part that was tricky last time, in a short situation.": {
+    "pt": "Vamos trabalhar a parte que foi difícil da última vez, em uma situação curta."
   },
   "You succeeded with support. Now try before seeing an example.": {
     "pt": "Você conseguiu com apoio. Agora é hora de tentar antes de ver um exemplo."
   },
-  "You have used it independently. We still need to observe this skill in a verified new context.": {
-    "pt": "Você já conseguiu usar sozinho. Falta observar essa habilidade em um contexto novo verificado."
+  "You did it without recent help. Next, try using it in a different situation.": {
+    "pt": "Você conseguiu sem ajuda recente. Agora vamos tentar usar isso em uma situação diferente."
   },
   "You have used this skill in another situation. Let's check what stayed after a break.": {
     "pt": "Você já usou esta habilidade em outra situação. Vamos verificar o que ficou depois de um intervalo."
@@ -720,4 +720,8 @@ export const tutorMessages: Record<string, { pt: string }> = {
   "Practice one more situation": { pt: "Praticar mais uma situação" },
   "You can stop here.": { pt: "Pode parar aqui." },
   "You can stop here. More situations will be available tomorrow.": { pt: "Pode parar aqui. Outras situações estarão disponíveis amanhã." },
+  "Answers before looking at help": { pt: "Respostas antes de consultar ajuda" },
+  "Use in another situation": { pt: "Uso em outra situação" },
+  "attempts · {count} uses in another situation": { pt: "tentativas · {count} usos em outra situação" },
+  "My answers and next steps": { pt: "Minhas respostas e próximos passos" },
 };

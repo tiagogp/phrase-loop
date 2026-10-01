@@ -83,7 +83,7 @@ export function HojeHome(props: HojeHomeProps) {
   const detail = tutorAction ? localize(recommendation?.reason ?? "") : action === "plan" ? planTask?.instruction
     : t(action === "review" ? "Start with up to {count} phrases. Then try one answer of your own."
       : action === "use" ? "You already reviewed. Try using a saved idea, with help if you need it."
-        : complete ? "You made time for English. A later practice will show what stayed."
+        : complete ? "Your answer is saved. Come back another day to try with less help."
           : "See the meaning, try remembering it, and keep it for a later review. No setup needed.", { count: loop.remaining });
   const label = t(action === "resume" ? "Continue practice" : complete ? "See my progress" : action === "review" ? "Start my review"
     : action === "use" ? "Use what I learned" : action === "lesson" ? "Start a short practice" : "Start practice");

@@ -119,8 +119,8 @@ export const journeyMessages: Record<string, { pt: string }> = {
   "You already reviewed. Try using a saved idea, with help if you need it.": {
     "pt": "Você já revisou. Tente usar uma ideia que guardou, com ajuda se precisar."
   },
-  "You made time for English. A later practice will show what stayed.": {
-    "pt": "Você dedicou um tempo ao inglês. Uma próxima prática vai mostrar o que ficou."
+  "Your answer is saved. Come back another day to try with less help.": {
+    "pt": "Sua resposta está salva. Volte em outro dia para tentar com menos ajuda."
   },
   "See the meaning, try remembering it, and keep it for a later review. No setup needed.": {
     "pt": "Veja o significado, tente lembrar e guarde para revisar depois. Sem precisar configurar nada."

@@ -8,7 +8,7 @@ import type { LearningProfile } from "@/features/settings/learningProfile";
 import type { TutorAttempt, TutorObservation, TutorPreferences, TutorSession } from "./types";
 
 export const DEFAULT_TUTOR_PREFERENCES: TutorPreferences = { id: "preferences", goal: "", explanationLanguage: "pt", ignoredEvidenceIds: [] };
-export const feedbackLabels = { met: "Objetivo atendido", partial: "Objetivo parcialmente atendido", not_met: "Ainda não atendeu ao objetivo", uncertain: "Avaliação inconclusiva" };
+export const feedbackLabels = { met: "Você comunicou o que a situação precisava", partial: "Você está no caminho; uma parte precisa de ajuste", not_met: "Vamos ajustar uma parte da sua resposta", uncertain: "O tutor ainda não tem certeza" };
 const DAY = 86_400_000;
 import { allowedTutorAttempt, tutorSkillEvidence, tutorSkillKey } from "./learning";
 export { skillFromFirstAttempt, tutorSkillEvidence } from "./learning";
@@ -90,9 +90,9 @@ export function tutorRecommendation(sessions: TutorSession[], preferences: Tutor
   if (due) {
     const evidence = due.skill ? tutorSkillEvidence(sessions, due.skill, preferences) : null;
     const reason = !evidence?.initialDifficulty ? "Você já praticou este objetivo. Vamos observar o que consegue recuperar em outra ocasião."
-      : evidence.state === "developing" ? "A última dificuldade ainda precisa de prática. Vamos trabalhar uma situação curta."
+      : evidence.state === "developing" ? "Vamos trabalhar a parte que foi difícil da última vez, em uma situação curta."
         : !evidence.independent ? "Você conseguiu com apoio. Agora é hora de tentar antes de ver um exemplo."
-          : !evidence.transfers ? "Você já conseguiu usar sozinho. Falta observar essa habilidade em um contexto novo verificado."
+          : !evidence.transfers ? "Você conseguiu sem ajuda recente. Agora vamos tentar usar isso em uma situação diferente."
             : "Você já usou esta habilidade em outra situação. Vamos verificar o que ficou depois de um intervalo.";
     return { active: undefined, due, focus: due.task.goal, reason };
   }

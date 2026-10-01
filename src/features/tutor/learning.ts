@@ -5,7 +5,7 @@ import type { TutorAttempt, TutorPreferences, TutorSession, TutorSkill } from ".
 export const TUTOR_RECALL_DELAY = 86_400_000;
 export const tutorSkillKey = (skill: TutorSkill) => isTutorConceptId(skill.conceptId) ? skill.conceptId : skill.id;
 export const tutorSkillLabel = (skill: TutorSkill) => isTutorConceptId(skill.conceptId) ? TUTOR_CONCEPTS[skill.conceptId].label : skill.label;
-export const tutorSkillStates = { developing: "Em desenvolvimento", awaiting_independent: "Aguardando confirmação independente", transfer_observed: "Transferência observada", consistent: "Evidência consistente" };
+export const tutorSkillStates = { developing: "Vamos praticar um pouco mais", awaiting_independent: "Pronto para tentar sem ajuda", transfer_observed: "Usou em uma situação nova", consistent: "Usou em situações diferentes em dias separados" };
 
 export function skillFromFirstAttempt(session: TutorSession, attempt: TutorAttempt): TutorSkill | undefined {
   if (session.skill) return session.skill;

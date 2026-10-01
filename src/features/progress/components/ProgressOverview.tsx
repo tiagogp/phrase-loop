@@ -356,7 +356,7 @@ function ProgressSnapshotCard({
           <Indicator
             label={t("Reading/writing")}
             value={signals.readingWritingAttempts}
-            note={t("attempts · {count} transfers", { count: signals.transferAttempts })}
+            note={t("attempts · {count} uses in another situation", { count: signals.transferAttempts })}
           />
           <Indicator
             label={t("Listening")}
@@ -374,12 +374,12 @@ function ProgressSnapshotCard({
             note={t("scaffolded · {count} skipped", { count: signals.skippedAttempts ?? 0 })}
           />
           <Indicator
-            label={t("Independence")}
+            label={t("Answers before looking at help")}
             value={signals.independentAttempts ?? 0}
             note={t("attempts · {percent}% supported", { percent: signals.scaffoldRate ?? 0 })}
           />
           <Indicator
-            label={t("Transfer")}
+            label={t("Use in another situation")}
             value={t("{percent}%", { percent: signals.transferSuccessRate ?? 0 })}
             note={t("clear · {count} old errors avoided", { count: signals.avoidedErrorCount ?? 0 })}
           />
