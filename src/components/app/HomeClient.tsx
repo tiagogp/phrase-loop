@@ -354,6 +354,7 @@ function HomeContent() {
             ) : overlay === "settings" ? (
               <div className="h-full overflow-y-auto pb-16 app-scroll-region sm:pb-20">
                 <SettingsScreen
+                  onLocalPractice={startFirstLesson}
                   onBack={closeSettings}
                   onOpenTools={() => setOverlay("tools")}
                   onOpenC1={() => setOverlay("c1")}

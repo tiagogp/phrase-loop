@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { setFullNavigation, useExperiencePreferences } from "@/features/activation/experiencePreferences";
+import Disclosure from "@/components/ui/Disclosure";
+import { AI_SETUP_STEPS, aiSetupStep, connectionNextStep } from "../aiSetup";
 import Select from "@/components/ui/Select";
 import { ENGLISH_LEVELS } from "@/features/discover/constants";
 import { isLevelAtLeast } from "@/features/discover/levels";
@@ -84,11 +86,13 @@ export default function SettingsScreen({
   onBack,
   onOpenTools,
   onOpenC1,
+  onLocalPractice,
   showAdvancedAi = true,
 }: {
   onBack: () => void;
   onOpenTools?: () => void;
   onOpenC1?: () => void;
+  onLocalPractice?: () => void;
   showAdvancedAi?: boolean;
 }) {
   const { t, lang } = useT();
@@ -161,14 +165,14 @@ export default function SettingsScreen({
   const connect = (kind: ProviderKind, draft: AiSettingsPatch, clear?: () => void) =>
     run(`connect-${kind}`, async () => {
       setConnected(null);
-      const result = await connectProvider(kind, draft, test, save);
+      const result = await connectProvider(kind, draft, test, save).catch(() => ({ ok: false }));
       setTestResults(current => ({ ...current, [kind]: result.ok }));
       if (result.ok) {
         clear?.();
         setConnected(kind);
         return { ok: true, detail: t("Connected! This AI is ready for your tutor, conversations, and content.") };
       }
-      return result;
+      return { ok: false, detail: t(connectionNextStep(kind)) };
     });
 
   const downloadBackup = async () => {
@@ -299,6 +303,7 @@ export default function SettingsScreen({
         </div>
         <p className="text-sm text-ink-soft">{t(PROVIDER_COPY[kind])}</p>
         <p className="text-sm text-ink-muted">{t("Create an API key in your provider account, then paste it below. It is not your account password.")}</p>
+        <h4 className="text-sm font-medium text-ink">2. {t("Paste a key or detect Ollama")}</h4>
         <Field label={t("API key")} htmlFor={`${kind}-key`}>
           <Input
             id={`${kind}-key`}
@@ -320,6 +325,7 @@ export default function SettingsScreen({
             disabled={!settings.writable || busy !== null}
           />
         </Field>
+        <h4 className="text-sm font-medium text-ink">3. {t("Test and start")}</h4>
         <div className="mt-3 flex flex-wrap gap-2">
           <Button
             variant="primary"
@@ -344,7 +350,7 @@ export default function SettingsScreen({
               void connect(kind, key.trim() ? { [keyField]: key.trim() } : {}, () => setKey(""));
             }}
           >
-            {busy === `connect-${kind}` ? t("Connecting…") : t("Connect and use this AI")}
+            {busy === `connect-${kind}` ? t("Connecting…") : t("Test and start")}
           </Button>
           {provider?.configured && (
             <Button
@@ -428,7 +434,10 @@ export default function SettingsScreen({
         <section id="settings-ai" aria-labelledby="connect-ai-title" className="mb-8 scroll-mt-4 space-y-4">
           <div>
             <h2 id="connect-ai-title" className="text-xl font-semibold text-ink">{t("Connect an AI")}</h2>
-            <p className="mt-2 text-sm text-ink-soft">{t("Choose a provider, connect it, and return to your activity.")}</p>
+            <p className="mt-2 text-sm text-ink-soft">{t("Three steps, then your first answer. You can also practice without AI.")}</p>
+            <Button className="mt-3" variant="secondary" onClick={onLocalPractice}>{t("Continue without AI")}</Button>
+            <ol className="mt-4 grid grid-cols-3 gap-2 text-xs text-ink-soft" aria-label={t("AI setup steps")}>{AI_SETUP_STEPS.map((label, i) => <li key={label} className="rounded border border-line p-2" aria-current={aiSetupStep({ selected: !!selectedProvider || settings.providers.some(p => p.kind === selected && p.configured), ready: selected === "ollama" ? !!ollamaModel.trim() : !!({ openai: openaiKey, claude: anthropicKey, openrouter: openrouterKey }[selected]?.trim()) || settings.providers.some(p => p.kind === selected && p.configured), connected: connected === selected }) === i + 1 ? "step" : undefined}>{i + 1}. {t(label)}</li>)}</ol>
+            <h3 className="mt-4 text-sm font-medium text-ink">1. {t("Choose your AI")}</h3>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="group" aria-label={t("Choose an AI provider")}>
             {settings.providers.map(provider => <Button key={provider.kind} variant={selected === provider.kind ? "primary" : "secondary"} aria-pressed={selected === provider.kind} disabled={loading || busy !== null} onClick={() => { setSelectedProvider(provider.kind); setNotice(null); setConnected(null); }}>{provider.label}</Button>)}
@@ -440,7 +449,11 @@ export default function SettingsScreen({
               {ollamaStatus && <StatusPill tone={ollamaStatus.tone}>{t(ollamaStatus.label)}</StatusPill>}
             </div>
             <p className="text-sm text-ink-soft">{t("Open Ollama and download a model first. Keep it running, choose the model below, and connect. No API key is needed.")}</p>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <h4 className="text-sm font-medium text-ink">2. {t("Paste a key or detect Ollama")}</h4>
+            <Button variant="secondary" disabled={busy !== null} onClick={() => void refresh()}>{t("Detect Ollama")}</Button>
+            {ollamaModel && <p className="text-sm text-ink-soft">{t("Ready to test: {model}", { model: ollamaModel })}</p>}
+            {!ollamaModel && <p className="text-sm text-ink-soft">{t("Open Ollama and download a model, then choose Detect Ollama.")}</p>}
+            <Disclosure title={t("Ollama connection options")} contentClassName="grid gap-3 sm:grid-cols-2">
               <Field label={t("Server address")} htmlFor="ollama-url">
                 <Input
                   id="ollama-url"
@@ -470,21 +483,22 @@ export default function SettingsScreen({
                   />
                 )}
               </Field>
-            </div>
+            </Disclosure>
+            <h4 className="text-sm font-medium text-ink">3. {t("Test and start")}</h4>
             <div className="mt-3 flex flex-wrap gap-2">
               <Button
                 variant="primary"
                 disabled={!settings.writable || busy !== null || !ollamaModel.trim()}
                 onClick={() => void connect("ollama", { ollamaBaseUrl: ollamaUrl.trim(), ollamaModel: ollamaModel.trim() })}
               >
-                {busy === "connect-ollama" ? t("Connecting…") : t("Connect and use this AI")}
+                {busy === "connect-ollama" ? t("Connecting…") : t("Test and start")}
               </Button>
               <Button
                 variant="secondary"
                 disabled={busy !== null}
                 onClick={() => void refresh()}
               >
-                {t("Refresh models")}
+                {t("Detect Ollama")}
               </Button>
             </div>
           </Card>}

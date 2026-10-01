@@ -21,7 +21,7 @@ import { saveGeneratedDeck } from "@/lib/store/repository";
 import { allowedTutorEvidence, feedbackLabels, nextTutorReview, skillFromFirstAttempt, tutorSkillEvidence, tutorSummary } from "../model";
 import { buildTutorPhrase } from "../phrase";
 import { recordTutorExposure, saveTutorPreferences, type TutorMemory } from "../store";
-import { allowedTutorAttempt, tutorSkillStates } from "../learning";
+import { tutorSkillStates } from "../learning";
 import { MAX_TUTOR_ATTEMPTS, type TutorContext, type TutorSession } from "../types";
 import { useTutorSession } from "../useTutorSession";
 import { TutorMemoryPanel, tutorInputClass } from "./TutorMemoryPanel";
