@@ -16,7 +16,7 @@ import { getLearningProfile } from "@/features/settings/learningProfile";
 import { ENGLISH_LEVELS } from "@/features/discover/constants";
 import type { EnglishLevel } from "@/features/discover/types";
 import { createTutorSession, selectTutorEvidence, tutorRecommendation } from "../model";
-import { chooseTutorScenario, TUTOR_CONCEPTS, isTutorConceptId } from "../catalog";
+import { chooseTutorScenario, TUTOR_CONCEPTS, isTutorConceptId, tutorConceptForTask } from "../catalog";
 import { getTutorSessions, loadTutorMemory, recordTutorExposure, type TutorMemory } from "../store";
 import type { TutorSession } from "../types";
 import { useTutorMemory } from "../useTutorMemory";
@@ -93,6 +93,7 @@ function TutorSetup({ memory, autoStart, onOpen, onSettings, onPractice, onConte
   const profile = getLearningProfile();
   const recommendation = tutorRecommendation(memory.sessions, memory.preferences, profile, memory.loadedAt, lang);
   const defaultFocus = useMemo(() => localize(intent === "new" ? tutorRecommendation([], memory.preferences, profile, memory.loadedAt, lang).focus : recommendation.focus), [intent, memory.preferences, memory.loadedAt, profile, lang, localize, recommendation.focus]);
+  const [chosenConcept, setChosenConcept] = useState("present-perfect-duration");
   const [focus, setFocus] = useState(defaultFocus);
   const [level, setLevel] = useState<EnglishLevel>(profile.onboardingCompleted ? profile.level : "A2");
   const [minutes, setMinutes] = useState<5 | 10 | 20>(profile.dailyMinutes === 5 || profile.dailyMinutes === 20 ? profile.dailyMinutes : 10);
@@ -118,8 +119,8 @@ function TutorSetup({ memory, autoStart, onOpen, onSettings, onPractice, onConte
       const parent = intent !== "new" && !source && focus.trim() === defaultFocus ? rec.due : undefined;
       const evidence = selectTutorEvidence({ ...fresh, focus, source, parent });
       const conceptId = parent?.skill?.conceptId;
-      let task = !source && (conceptId || (!parent && focus.trim() === t("Talk about your professional experience")))
-        ? chooseTutorScenario(conceptId ?? "present-perfect-duration", fresh.sessions) : undefined;
+      let task = !source && (conceptId || (!parent && (focus.trim() === t("Talk about your professional experience") || focus.trim() === localize(TUTOR_CONCEPTS[chosenConcept as keyof typeof TUTOR_CONCEPTS].label))))
+        ? chooseTutorScenario(conceptId ?? chosenConcept, fresh.sessions) : undefined;
       if (!task) {
         const result = await call({ action: "plan", provider: selection.provider, ollamaModel: selection.selectedModel || undefined,
           context: { level, minutes, explanationLanguage: fresh.preferences.explanationLanguage, focus: focus.trim(), evidence, previousTask: parent?.task, targetSkill: parent?.skill?.label, targetConceptId: conceptId } });
@@ -130,7 +131,7 @@ function TutorSetup({ memory, autoStart, onOpen, onSettings, onPractice, onConte
         model: selection.provider === "ollama" ? selection.selectedModel || undefined : undefined,
         reason: source ? t("Your source is the starting point. Now try to produce your own answer.") : parent ? rec.reason : t("A new situation to see what you can do."),
         evidence, parentSessionId: parent?.id, supportUsed: !!source });
-      const taskConcept = task.scenarioId?.startsWith("duration-") ? "present-perfect-duration" : task.scenarioId?.startsWith("request-") ? "polite-requests" : undefined;
+      const taskConcept = tutorConceptForTask(task);
       session.skill = parent?.skill ?? (isTutorConceptId(taskConcept) ? { id: taskConcept, conceptId: taskConcept, label: TUTOR_CONCEPTS[taskConcept].label, originContext: task.situation, originSessionId: session.id } : undefined);
       session.sourceCardId = source?.id;
       session.exposures = source ? [{ id: crypto.randomUUID(), kind: "source", at: Date.now() }] : [];
@@ -138,7 +139,7 @@ function TutorSetup({ memory, autoStart, onOpen, onSettings, onPractice, onConte
       onOpen(session);
     } catch (e) { setError(e instanceof Error ? e.message : t("Could not start.")); }
     finally { launching.current = false; setStarting(false); }
-  }, [focus, defaultFocus, sourceId, intent, level, minutes, selection.provider, selection.selectedModel, call, commit, setError, onOpen, lang, t]);
+  }, [chosenConcept, localize, focus, defaultFocus, sourceId, intent, level, minutes, selection.provider, selection.selectedModel, call, commit, setError, onOpen, lang, t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -154,6 +155,7 @@ function TutorSetup({ memory, autoStart, onOpen, onSettings, onPractice, onConte
   return <Card className="space-y-5 p-5 sm:p-7">
     <p className="text-sm text-ink-soft">{intent === "new" ? t("You can choose another goal without losing your previous session.") : localize(recommendation.reason)}</p>
     {(!autoStart || error) && <label className="block space-y-2 text-sm font-medium text-ink"><span>{t("What do you want to be able to do?")}</span><input value={focus} maxLength={500} disabled={blocked} onChange={e => setFocus(e.target.value)} className={tutorInputClass} /></label>}
+    {!autoStart && <label className="block space-y-2 text-sm text-ink-soft"><span>{t("Skill practiced:")}</span><select className={tutorInputClass} value={chosenConcept} disabled={blocked} onChange={e => { setChosenConcept(e.target.value); setFocus(localize(TUTOR_CONCEPTS[e.target.value as keyof typeof TUTOR_CONCEPTS].label)); }}>{Object.entries(TUTOR_CONCEPTS).map(([id, concept]) => <option key={id} value={id}>{localize(concept.label)}</option>)}</select></label>}
     <Disclosure title={`${t("Adjust session ·")} ${minutes} min · ${level}`} contentClassName="space-y-4" nested>
       <label className="block space-y-2 text-sm text-ink-soft"><span>{t("Level")}</span><select className={tutorInputClass} value={level} disabled={blocked} onChange={e => setLevel(e.target.value as EnglishLevel)}>{ENGLISH_LEVELS.map(l => <option key={l.value} value={l.value}>{l.value}</option>)}</select></label>
       <label className="block space-y-2 text-sm text-ink-soft"><span>{t("Approximate time")}</span><select className={tutorInputClass} value={minutes} disabled={blocked} onChange={e => setMinutes(Number(e.target.value) as 5 | 10 | 20)}>{[5, 10, 20].map(m => <option key={m} value={m}>{t("{count} min", { count: m })}</option>)}</select></label>

@@ -41,8 +41,10 @@ primeira ação útil. Nuvem depende da escolha explícita do aluno.
 manual pode abrir uma situação com origem registrada; essa primeira prática conta como
 assistida. Conversas e correções isoladas ainda não viram dificuldades canônicas automaticamente.
 
-O catálogo verificado inicial tem duas habilidades (`present-perfect-duration` e
-`polite-requests`) e sete situações. Tarefas livres podem ser úteis sem receber crédito de
+O catálogo verificado tem oito habilidades e 25 situações profissionais: duração, pedidos,
+status de trabalho, problema e causa, discordância educada, esclarecimento, próximos passos
+e experiência passada. Os IDs anteriores continuam válidos. O conteúdo novo está pendente
+de revisão editorial humana de inglês e PT-BR. Tarefas livres podem ser úteis sem receber crédito de
 novidade. Uma fonte sem contexto verificado precisa de uma referência verificada posterior
 antes de demonstrar transferência para outro contexto.
 

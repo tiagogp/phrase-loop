@@ -150,7 +150,7 @@ export function TutorPractice({ initial, memory, onNew, ...props }: TutorWorkspa
 
     {session.phase === "practice" && <Card className="space-y-5 p-5 sm:p-7">
       <div><h2 ref={phaseHeading} tabIndex={-1} className="text-xs font-semibold uppercase tracking-wider text-accent">{session.attempts.length ? t("Rebuild your answer") : session.parentSessionId ? t("First, try to recall") : t("Your situation")}</h2><p className="mt-3 whitespace-pre-wrap text-base leading-relaxed text-ink">{localize(session.task.situation)}</p></div>
-      <p className="text-sm leading-relaxed text-ink-soft">{session.task.instruction}</p>
+      <p className="text-sm leading-relaxed text-ink-soft">{localize(session.task.instruction)}</p>
       {last && <Notice>{last.feedback.retryInstruction}</Notice>}
       <label className="flex flex-col gap-2 text-sm font-medium text-ink"><span>{t("Your answer in English")}</span><textarea value={session.draft} onChange={e => updateDraft(e.target.value)} maxLength={3000} rows={5} className={tutorInputClass} readOnly={blocked} placeholder={t("Write in your own way, even if you are still missing some words.")} lang="en" /></label>
       <div className="flex flex-wrap items-center gap-2">

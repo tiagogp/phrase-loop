@@ -1,5 +1,8 @@
+import { catalogMessages } from "./catalogMessages";
+
 /** Tutor UI and authored scenario translations. English keys follow the shared i18n convention. */
 export const tutorMessages: Record<string, { pt: string }> = {
+  ...catalogMessages,
   "Pick up where you left off": {
     "pt": "Continue de onde parou"
   },
