@@ -120,7 +120,10 @@ export default function CorrectTab({
     onPickFile,
   } = useCorrectionAudio({
     onNote: setAiNote,
-    onText: setAiText,
+    onText: (text) => {
+      feedbackTimer.start();
+      setAiText(text);
+    },
     onBlob: (blob) => {
       aiRecordingRef.current = blob;
     },
@@ -134,6 +137,8 @@ export default function CorrectTab({
     setManualRetryClear(false);
     setManualRetryNote(null);
     setManualRetryResolution("pending");
+    // The retry window opens with the retry panel, not on mount.
+    retryTimer.start();
     manualFeedbackAttemptIdRef.current = crypto.randomUUID();
     void emitActivity("mistake_submitted", { source: "correct" });
     void emitActivity("method_stage", {
@@ -648,6 +653,7 @@ export default function CorrectTab({
                 value={aiText}
                 onChange={(value) => {
                   aiRecordingRef.current = null;
+                  feedbackTimer.start();
                   setAiText(value);
                 }}
                 evaluating={evaluating}
@@ -664,11 +670,14 @@ export default function CorrectTab({
                 onOpenSettings={onOpenSettings}
               />
             ) : mode === "json" ? (
-              <JsonImportForm value={json} onChange={setJson} importNote={importNote} onImport={importJson} />
+              <JsonImportForm value={json} onChange={(value) => { feedbackTimer.start(); setJson(value); }} importNote={importNote} onImport={importJson} />
             ) : (
               <ManualEntryForm
                 draft={draft}
-                onChange={(patch) => setDraft((current) => ({ ...current, ...patch }))}
+                onChange={(patch) => {
+                  feedbackTimer.start();
+                  setDraft((current) => ({ ...current, ...patch }));
+                }}
                 onToggleType={toggleType}
                 onAdd={addDraft}
               />

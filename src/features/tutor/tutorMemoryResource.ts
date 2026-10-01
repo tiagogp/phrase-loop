@@ -1,7 +1,6 @@
 import { createSharedResource, type ResourceSnapshot } from "@/lib/store/sharedResource";
 import { learningHistoryResource as history } from "@/features/progress/learningHistoryResource";
-import { getTutorPreferences, getTutorSessions, type TutorMemory } from "./store";
-import { tutorObservations } from "./model";
+import { buildTutorMemory, getTutorPreferences, getTutorSessions, type TutorMemory } from "./store";
 
 const metadata = createSharedResource<Pick<TutorMemory, "sessions" | "preferences"> | null>(null, async () => {
   const [sessions, preferences] = await Promise.all([getTutorSessions(), getTutorPreferences()]);
@@ -20,9 +19,7 @@ function createSnapshotReader(readHistory: typeof history.getSnapshot, readMetad
     let memory = snapshot?.data ?? null;
     if (tutor.data && !learning.loading) {
       if (!memory || learning.data !== previousHistory?.data || tutor.data !== previousMetadata?.data) {
-        const { sessions, preferences } = tutor.data;
-        const { cards, production, reviews } = learning.data;
-        memory = { sessions, preferences, cards, observations: tutorObservations({ sessions, cards, production, reviews }), loadedAt: now };
+        memory = buildTutorMemory({ ...tutor.data, ...learning.data }, now);
       } else if (memory.loadedAt !== now) memory = { ...memory, loadedAt: now };
     }
     snapshot = { data: memory, now, loading: learning.loading || tutor.loading, error: tutor.error ?? learning.error };

@@ -2455,8 +2455,8 @@
     "semantic_hash": ""
   },
   "src/features/tutor/store.ts": {
-    "mtime": 1790830888.6109195,
-    "ast_hash": "9f4218d19be42791c3b396e01fb155ea",
+    "mtime": 1790830862.75687,
+    "ast_hash": "d15c2b5c58f942d124c986d83282fc33",
     "semantic_hash": ""
   },
   "src/features/tutor/testFixtures.ts": {
@@ -2610,8 +2610,8 @@
     "semantic_hash": ""
   },
   "docs/history.md": {
-    "mtime": 1790830993.5224352,
-    "ast_hash": "faf61764b0240ef2af761889aafd36e8",
+    "mtime": 1790773387.6263692,
+    "ast_hash": "18b20af337767922cacca073bca73345",
     "semantic_hash": ""
   },
   "docs/validation.md": {

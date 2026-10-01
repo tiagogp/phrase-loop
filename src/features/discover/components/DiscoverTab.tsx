@@ -372,6 +372,8 @@ export default function DiscoverTab({
     setDeckPreview(null);
     setProductionPrompt(null);
     setTranscribeProgress(null);
+    // A new source opens a new noticing pass; the previous one was banked on save.
+    noticeTimer.start();
 
     try {
       const counts = await getCounts();
@@ -458,7 +460,7 @@ export default function DiscoverTab({
       setCurating(false);
       setTranscribeProgress(null);
     }
-  }, [sourceKind, url, file, provider, providerReady, selectedModel, focus, targetLevel, setGenError, setGenDone, whisper, t]);
+  }, [sourceKind, url, file, provider, providerReady, selectedModel, focus, targetLevel, setGenError, setGenDone, whisper, t, noticeTimer]);
 
   const toggleKeep = (index: number) => {
     setKept((prev) => {

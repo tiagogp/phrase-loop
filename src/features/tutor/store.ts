@@ -98,9 +98,23 @@ export async function recordTutorExposure(sessionIds: string[], kind: TutorExpos
   notify();
 }
 
+/** Shared by the imperative loader and the reactive tutor resource. */
+export function buildTutorMemory(
+  { sessions, preferences, cards, production, reviews }: {
+    sessions: Awaited<ReturnType<typeof getTutorSessions>>;
+    preferences: TutorPreferences;
+    cards: Awaited<ReturnType<typeof getCards>>;
+    production: Awaited<ReturnType<typeof getProductionAttempts>>;
+    reviews: Awaited<ReturnType<typeof getReviews>>;
+  },
+  loadedAt: number,
+) {
+  return { sessions, preferences, cards, observations: tutorObservations({ sessions, cards, production, reviews }), loadedAt };
+}
+
 export async function loadTutorMemory() {
   const [sessions, preferences, cards, production, reviews] = await Promise.all([getTutorSessions(), getTutorPreferences(), getCards(), getProductionAttempts(), getReviews()]);
-  return { sessions, preferences, cards, observations: tutorObservations({ sessions, cards, production, reviews }), loadedAt: Date.now() };
+  return buildTutorMemory({ sessions, preferences, cards, production, reviews }, Date.now());
 }
 
 export type TutorMemory = Awaited<ReturnType<typeof loadTutorMemory>>;
