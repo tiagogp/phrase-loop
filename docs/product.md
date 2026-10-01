@@ -33,7 +33,10 @@ primeira ação útil. Nuvem depende da escolha explícita do aluno.
 3. O feedback verifica a tarefa e a habilidade, mostra até dois ajustes e permite contestação.
 4. O aluno reconstrói a resposta com apoio, até três tentativas na sessão. Um acerto inicial
    pode encerrar o ciclo sem inventar um erro. Pausar mantém tarefa e rascunho.
-5. O resumo mostra a evidência observada e a data de retorno; salvar uma frase é opcional.
+5. O resumo destaca respostas anterior e atual com situação, apoio e intervalo. Uma frase
+   “agora você consegue, nesta situação” só aparece com avaliação válida. Com tarefa atendida,
+   usa o critério da situação; quando apenas a habilidade foi demonstrada, descreve apenas
+   essa habilidade, sem afirmar que a tarefa inteira foi atendida ou alegar domínio. A data de retorno aparece; salvar uma frase é opcional.
 6. Em outro dia, a mesma habilidade reaparece em outra situação verificada, quando disponível.
 7. Progresso compara respostas com contexto, data, avaliador e condições de apoio.
 
@@ -66,7 +69,10 @@ certificação de domínio ou uma medida validada de proficiência.
 
 **Evidência consistente:** ao menos dois contextos novos com transferência, em ocasiões separadas por 24h ou mais, após a dificuldade válida mais recente. Uma nova dificuldade faz o estado voltar a desenvolvimento. Contagens históricas não são apagadas.
 
-Estados apresentados: em desenvolvimento; aguardando confirmação independente; transferência observada; evidência consistente. São políticas iniciais de produto, não uma medida científica de domínio.
+Os estados internos permanecem `developing`, `awaiting_independent`, `transfer_observed` e
+`consistent`. O aluno lê: “Vamos praticar um pouco mais”, “Pronto para tentar sem ajuda”,
+“Usou em uma situação nova” e “Usou em situações diferentes em dias separados”. Os critérios
+acima continuam iguais; esses rótulos não representam domínio.
 
 ### Agenda explicável
 
@@ -92,10 +98,12 @@ os resultados específicos do tutor ficam em seu próprio contrato.
 ## Primeira experiência e descoberta
 
 Uma tela curta de boas-vindas oferece começar, personalizar ou explorar. Com IA, começar abre
-a situação recomendada; sem IA, abre uma prática local curta: ver uma frase, tentar lembrar,
-salvar a tentativa e encerrar. A lição completa continua acessível em Explorar e ao final dessa
-prática. A tentativa após ver o exemplo é registrada com apoio, sem alegação de recuperação
-independente. Nível, objetivo, tempo, CEFR, provedores
+a situação recomendada; sem IA, abre uma prática local de produção a partir da lição: ler
+a situação, escrever antes de ver exemplos, comparar com o diálogo/frases e registrar uma
+autoavaliação. A produção fica com `evaluated: false`, sem avaliador e sem crédito de acerto
+independente ou transferência. A lição completa continua acessível em Explorar e ao final
+da prática. Uma revisão de card devida pode ser agendada pelo FSRS; uma revisão futura
+existente mantém sua data, mesmo se o aluno praticar a lição novamente. Nível, objetivo, tempo, CEFR, provedores
 e Anki não devem competir com a primeira resposta. Tempo de 5/10/20 minutos orienta o tamanho
 da prática, sem prometer duração exata.
 
@@ -105,7 +113,11 @@ praticar, trazer conteúdo, acompanhar aprendizado e ferramentas. Conteúdo, Con
 Progresso, lições completas, correção, temas, plano, C1, áudio e Anki continuam acessíveis;
 “Mostrar todos os atalhos” funciona desde o início e só expande a navegação, não a tela Hoje.
 Configurações mantém perfil,
-conexão, ferramentas, C1 experimental, backup e exclusão acessíveis. Familiaridade nunca
+conexão, ferramentas, C1 experimental, backup, exportação do piloto e exclusão acessíveis.
+Conectar IA tem três etapas: escolher, colar a chave/detectar Ollama, testar. O botão
+“continuar sem IA” abre a produção local; falhas oferecem um próximo passo em linguagem simples.
+Falar e escrever têm o mesmo destaque no tutor. Transcrições são editáveis e a tentativa
+registra a origem falada; nenhuma avaliação de pronúncia é derivada do texto. Familiaridade nunca
 bloqueia uma ferramenta nem equivale a proficiência em inglês.
 
 O idioma da interface pode ser escolhido em Configurações em qualquer nível. A preferência
@@ -133,7 +145,10 @@ Uma resposta incerta, contestada ou excluída não estabelece primeiro resultado
   habilidade devida, revisar um lote limitado, usar uma ideia, seguir o plano ou iniciar uma
   situação/prática local. A agenda fica em “Meu objetivo e plano”, sem outra recomendação
   concorrente. Há no máximo uma descoberta contextual após concluir.
-- Após a prática há um lugar claro para parar, mesmo com outras revisões pendentes. Mostrar
+- Após a prática há um lugar claro para parar, mesmo com outras revisões pendentes. A ação
+  secundária “Praticar mais uma situação” oferece até duas extras por dia local, contando
+  sessões iniciadas ainda abertas. Seleciona outra habilidade sem exposição conhecida nas
+  últimas 24h e não consome um retorno agendado. Se nenhuma for elegível, a ação não aparece. Mostrar
   uma data quando existir agendamento; a conclusão introdutória não altera a agenda FSRS.
   Falha do tutor oferece prática local mantendo a sessão e a resposta existentes.
 - Dica permanece acessível; pergunta livre, histórico, estatísticas e parâmetros ficam sob demanda.
@@ -159,13 +174,20 @@ Uma resposta incerta, contestada ou excluída não estabelece primeiro resultado
 | Conteúdo, cards/FSRS, correção, conversa, lições e escuta | Apoio ao ciclo; não usar suas contagens como prova de transferência. |
 | Pronúncia, transcrição, Kokoro e Anki | Ferramentas disponíveis; texto transcrito não mede pronúncia. |
 | Plano, configurações e idiomas de interface | Apoio por intenção do aluno. |
-| Expansão C1, catálogo, idiomas, provedores, analytics e currículo adaptativo longo | Adiada enquanto o ciclo A2–B1 profissional é validado. |
+| Expansão C1, novas ampliações de catálogo, provedores e currículo adaptativo longo | Adiada enquanto o ciclo A2–B1 profissional é validado. |
 
 Próximos passos:
 
-1. Calibrar o feedback com provedor real e revisão humana de respostas corretas, incorretas,
-   paráfrases válidas e evasão da habilidade. Trecho literal não garante diagnóstico correto.
-2. Observar primeiro uso, retry e retorno elegível em outros dias com alunos A2–B1.
+1. Revisar editorialmente o catálogo, os textos novos e os 48 casos sintéticos esperados;
+   depois executar a ferramenta de calibração com provedor real e revisão humana. Trecho
+   literal não garante diagnóstico correto e nenhum feedback é declarado calibrado.
+2. Rodar o piloto com cinco pessoas, observando primeiro uso, retry e retorno elegível.
+   “Exportar dados do piloto” baixa JSON local com tempos conhecidos, primeira conclusão,
+   retries, retorno D+1/D+7, apoio e situações por habilidade. Por padrão não leva respostas,
+   tarefas livres, feedback ou gravações. Incluir textos de respostas exige marcar a opção.
+   Tempo sem início conhecido fica nulo; retorno usa intervalo desde a primeira conclusão
+   (D1: 24–48h; D7: dias 5–10), com janela incompleta identificada. São medidas de processo.
+   Decidir um provedor gerenciado continua com o responsável pelo produto.
 3. Validar retenção e transferência com intervalos, apoio e contextos registrados.
 4. Verificar restauração com dados reais, confiabilidade de importação e distribuição desktop
    assinada/notarizada antes de ampliar o lançamento.

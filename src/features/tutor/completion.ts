@@ -5,8 +5,9 @@ import type { TutorPreferences, TutorSession } from "./types";
 export function tutorCompletion(session: TutorSession, sessions: TutorSession[], preferences: TutorPreferences) {
   const last = session.attempts.at(-1);
   const valid = last && allowedTutorAttempt(last, preferences) && last.feedback.status !== "uncertain";
-  const achievement = valid && (last.feedback.status === "met" || last.feedback.skill?.result === "demonstrated")
-    ? session.task.successCriteria || session.task.goal : undefined;
+  const achievement = !valid ? undefined : last.feedback.status === "met"
+    ? session.task.successCriteria || session.task.goal
+    : last.feedback.skill?.result === "demonstrated" ? last.feedback.skill.label : undefined;
   const history = [...sessions.filter(s => s.id !== session.id), session];
   const support = (s: TutorSession) => {
     const attempt = s.attempts.at(-1)!;

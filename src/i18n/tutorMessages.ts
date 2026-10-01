@@ -753,4 +753,9 @@ export const tutorMessages: Record<string, { pt: string }> = {
   "We couldn’t connect yet. Open Ollama, download a model and detect it again. You can continue without AI.": { pt: "Ainda não conseguimos conectar. Abra o Ollama, baixe um modelo e detecte de novo. Você pode continuar sem IA." },
   "We couldn’t connect yet. Check that you pasted an API key from the selected provider and that your account has access. Try again, or continue without AI.": { pt: "Ainda não conseguimos conectar. Confira se colou uma chave de API do provedor escolhido e se sua conta tem acesso. Tente de novo ou continue sem IA." },
   "Your language choice is kept at every level. Without a choice, B1 and above use English.": { pt: "Sua escolha de idioma vale em todos os níveis. Sem uma escolha, B1 ou acima usa inglês." },
+  "Pilot data downloaded. Nothing was sent to a server.": { pt: "Dados do piloto baixados. Nada foi enviado a um servidor." },
+  "Export practice timing, retries, returns and use of help for the pilot. Answers and recordings are left out by default.": { pt: "Exporte tempos de prática, novas tentativas, retornos e uso de ajuda para o piloto. Respostas e gravações ficam fora por padrão." },
+  "Include the text of my answers in this file": { pt: "Incluir o texto das minhas respostas neste arquivo" },
+  "Export pilot data": { pt: "Exportar dados do piloto" },
+  "Today’s two extra situations have already been started. You can stop here and come back tomorrow.": { pt: "As duas situações extras de hoje já foram iniciadas. Pode parar aqui e voltar amanhã." },
 };

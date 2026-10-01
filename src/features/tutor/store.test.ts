@@ -74,3 +74,12 @@ describe("tutor persistence", () => {
     expect(await getAll(STORES.tutorPreferences)).toEqual(backup.stores.tutorPreferences);
   });
 });
+
+it("atomically limits optional starts to two even in concurrent windows", async () => {
+  const results = await Promise.allSettled([1, 2, 3].map(i => saveTutorSession(tutorSession({ id: `extra-${i}`, extraPractice: true, createdAt: 10_000 }), 0)));
+  expect(results.filter(r => r.status === "fulfilled")).toHaveLength(2);
+  expect(await getTutorSessions()).toHaveLength(2);
+  const saved = (await getTutorSessions())[0];
+  await expect(saveTutorSession({ ...saved, revision: 2, draft: "I can still continue" }, 1)).resolves.toBeUndefined();
+  await expect(saveTutorSession(tutorSession({ id: "tomorrow", extraPractice: true, createdAt: 86_410_000 }), 0)).resolves.toBeUndefined();
+});

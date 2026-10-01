@@ -4,6 +4,9 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { setFullNavigation, useExperiencePreferences } from "@/features/activation/experiencePreferences";
 import Disclosure from "@/components/ui/Disclosure";
 import { AI_SETUP_STEPS, aiSetupStep, connectionNextStep } from "../aiSetup";
+import { buildPilotExport } from "../pilotExport";
+import { getTutorSessions, getTutorPreferences } from "@/features/tutor/store";
+import { getActivityLog } from "@/lib/store/activityLog";
 import Select from "@/components/ui/Select";
 import { ENGLISH_LEVELS } from "@/features/discover/constants";
 import type { EnglishLevel } from "@/features/discover/types";
@@ -26,6 +29,7 @@ import { Notice } from "@/components/ui/Notice";
 import { StatusPill, type StatusPillProps } from "@/components/ui/StatusPill";
 import {
   exportLocalBackup,
+  getProductionAttempts, getReviews, getRetryOutcomes,
   restoreLocalBackup,
   validateLocalBackup,
   wipeLocalData,
@@ -122,6 +126,7 @@ export default function SettingsScreen({
     raw: unknown;
     validation: BackupValidationResult;
   } | null>(null);
+  const [includePilotAnswers, setIncludePilotAnswers] = useState(false);
   const [dataPath, setDataPath] = useState<string | null>(null);
   const learnerLevel = useSyncExternalStore(
     subscribeToProfile,
@@ -194,6 +199,20 @@ export default function SettingsScreen({
     } finally {
       setBusy(null);
     }
+  };
+
+  const downloadPilot = async () => {
+    setBusy("pilot"); setNotice(null);
+    try {
+      const [sessions, preferences, production, reviews, retries, activities] = await Promise.all([getTutorSessions(), getTutorPreferences(), getProductionAttempts(), getReviews(), getRetryOutcomes(), getActivityLog()]);
+      const report = buildPilotExport({ sessions, preferences, production, reviews, retries, activities, profileCreatedAt: getLearningProfile().createdAt }, Date.now(), includePilotAnswers);
+      const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2) + "\n"], { type: "application/json" }));
+      const link = document.createElement("a"); link.href = url;
+      link.download = `phraseloop-pilot-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click(); URL.revokeObjectURL(url);
+      setNotice({ ok: true, text: t("Pilot data downloaded. Nothing was sent to a server.") });
+    } catch { setNotice({ ok: false, text: t("Could not export local data.") }); }
+    finally { setBusy(null); }
   };
 
   const readBackupFile = async (file: File) => {
@@ -535,6 +554,11 @@ export default function SettingsScreen({
               {t("Validate restore")}
             </Button>
           </div>
+        </div>
+        <div className="mt-4 space-y-3 border-t border-line pt-4">
+          <p className="text-sm text-ink-soft">{t("Export practice timing, retries, returns and use of help for the pilot. Answers and recordings are left out by default.")}</p>
+          <label className="flex items-start gap-2 text-sm text-ink"><input type="checkbox" checked={includePilotAnswers} disabled={busy !== null} onChange={e => setIncludePilotAnswers(e.target.checked)} /><span>{t("Include the text of my answers in this file")}</span></label>
+          <Button variant="secondary" disabled={busy !== null} onClick={() => void downloadPilot()}>{t(busy === "pilot" ? "Exporting..." : "Export pilot data")}</Button>
         </div>
         <input
           ref={restoreInputRef}

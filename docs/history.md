@@ -5,6 +5,40 @@ contagens de testes e diagnósticos antigos não são um retrato automaticamente
 Direção vigente: [produto](product.md). Contratos: [arquitetura](README.md).
 Estudos com alunos: [validação](validation.md).
 
+## 01/10/2026 — Experiência de aprendizagem e ferramentas do piloto
+
+As onze frentes do plano foram implementadas em commits locais, sem push: descarte do timer
+de retry abandonado; oito habilidades/25 situações com enum de prompt derivado do catálogo;
+comparação de respostas com condições; até duas situações extras diárias; textos mais
+calorosos; origem falada registrada; produção local antes de exemplos; conexão de IA em
+três etapas; preferência explícita de idioma em todos os níveis; ferramenta de calibração
+com 48 casos sintéticos; exportação local do piloto sem respostas por padrão.
+
+A revisão final restringiu a frase de conclusão à habilidade demonstrada quando a tarefa
+inteira não foi atendida e protegeu o limite diário de extras em uma transação, inclusive
+com janelas concorrentes. As políticas de evidência e os intervalos do tutor não foram
+reduzidos. Prática local e autoavaliação continuam com `evaluated: false`; revisões futuras
+existentes não são antecipadas. Não há conta, backend, telemetria ou gamificação novos.
+
+Verificação desta rodada: `yarn test` passou com 894 testes em 113 arquivos; `yarn lint`
+passou sem erros e com três avisos preexistentes de variáveis não usadas em testes;
+`npx tsc --noEmit -p .` passou. `graphify update .` manteve o grafo atualizado.
+O dry-run da calibração verificou 48 casos/oito habilidades, sem chamadas a provedores
+e sem medir concordância. Casos sintéticos são fixtures de software, não dados de alunos.
+
+`yarn build` com Turbopack falhou duas vezes por restrição do ambiente ao abrir uma porta
+interna no processamento de CSS, inclusive na tentativa com permissão ampliada.
+`yarn build --webpack`, opção documentada nesta instalação do Next.js, concluiu o build
+de produção e o prebuild de áudio/conteúdo sem alterar a configuração do projeto.
+A compilação padrão com Turbopack precisa ser verificada em ambiente que permita a porta.
+Não houve revisão visual em navegador nem conexão real com IA nesta rodada.
+
+Pendências humanas: revisar inglês e PT-BR do catálogo/textos e status/resultados esperados
+dos casos; executar calibração com provedor configurado; conduzir o piloto de cinco pessoas
+e decidir se haverá provedor gerenciado. Nenhum resultado educacional ou de piloto foi
+criado. Alterações anteriores sem commit foram preservadas; saídas geradas do Graphify
+continuam fora dos commits de implementação desta rodada.
+
 ## Auditorias anteriores: conclusões preservadas
 
 As auditorias pedagógicas, de produto e OSS convergiram em uma hipótese plausível, ainda sem

@@ -8,8 +8,8 @@ Critérios de evidência do app estão em [product.md](product.md#evidência-e-a
 
 Observar alunos A2–B1 com necessidades profissionais no percurso atual: boas-vindas →
 resposta própria → feedback → retry → encerramento → retorno elegível em outro dia.
-O caminho sem IA começa com uma prática curta: uma frase, tentativa com apoio, agendamento
-e encerramento. As lições completas continuam disponíveis em Explorar.
+O caminho sem IA começa com produção local a partir da lição, antes dos exemplos,
+comparação e autoavaliação explícita. A autoavaliação não comprova acerto nem transferência. As lições completas continuam disponíveis em Explorar.
 
 Perguntas: a pessoa começa sem orientação externa, entende o ajuste, reconhece a razão da
 retomada e aponta uma resposta concreta com menos apoio? Registrar abandono por excesso de
@@ -170,3 +170,19 @@ concordância conjunta de status/resultado por status esperado e habilidade, fal
 e casos individuais. Falha de contrato ou de chamada conta como discordância. Os relatórios
 não contêm chaves nem são enviados por telemetria. A execução real e a revisão dos casos
 permanecem pendentes; um dry-run não mede concordância.
+
+## Exportação do piloto
+
+Em Configurações → Dados e privacidade, “Exportar dados do piloto” baixa um JSON no
+computador. Por padrão, leva apenas campos derivados: início conhecido/tempo até a primeira
+tentativa, primeira conclusão válida do tutor ou conclusão local com autoavaliação, retries,
+retornos D+1 (24–48h) e D+7 (dias 5–10), apoio e situações por habilidade. Inclui intervalos
+exatos e indica se a janela terminou. Tempo sem início conhecido fica nulo; registros antigos
+sem data explícita de conclusão não recebem uma data inventada. Projeções das tentativas do
+tutor são deduplicadas. Retries e registros de resolução são apresentados separadamente.
+
+A caixa “Incluir o texto das minhas respostas neste arquivo” começa desmarcada. Apenas
+marcá-la inclui respostas digitadas/transcritas e respostas de revisão; gravações, conversas
+inteiras, perguntas ao tutor, tarefas livres, feedback e credenciais continuam fora. O arquivo
+não é enviado a um servidor. Compartilhar arquivos, obter consentimento e conduzir o piloto
+continuam sendo trabalho humano. Não há participantes nem resultados novos registrados.

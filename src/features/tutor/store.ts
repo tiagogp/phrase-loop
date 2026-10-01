@@ -40,24 +40,37 @@ export async function saveTutorSession(next: TutorSession, expectedRevision: num
     const tx = db.transaction([STORES.tutorSessions, STORES.productionAttempts], "readwrite");
     const sessions = tx.objectStore(STORES.tutorSessions);
     let conflict = false;
+    let extraLimit = false;
     const request = sessions.get(next.id);
     request.onsuccess = () => {
       const previous = request.result as TutorSession | undefined;
       if ((previous?.revision ?? 0) !== expectedRevision) { conflict = true; tx.abort(); return; }
-      changedEvidence = JSON.stringify(previous?.attempts ?? []) !== JSON.stringify(next.attempts);
-      changedSession = !previous || previous.phase !== next.phase || previous.savedPhraseId !== next.savedPhraseId || JSON.stringify(previous.exposures) !== JSON.stringify(next.exposures);
-      sessions.put(next);
-      if (changedEvidence) for (const attempt of next.attempts) tx.objectStore(STORES.productionAttempts).put(tutorProduction(next, attempt));
-      if (next.parentSessionId && next.attempts.length && !previous?.attempts.length) {
-        const parent = sessions.get(next.parentSessionId);
-        parent.onsuccess = () => {
-          if (isTutorSession(parent.result)) sessions.put({ ...parent.result, revisitedAt: next.attempts[0].createdAt, revision: parent.result.revision + 1 });
+      const write = () => {
+        changedEvidence = JSON.stringify(previous?.attempts ?? []) !== JSON.stringify(next.attempts);
+        changedSession = !previous || previous.phase !== next.phase || previous.savedPhraseId !== next.savedPhraseId || JSON.stringify(previous.exposures) !== JSON.stringify(next.exposures);
+        sessions.put(next);
+        if (changedEvidence) for (const attempt of next.attempts) tx.objectStore(STORES.productionAttempts).put(tutorProduction(next, attempt));
+        if (next.parentSessionId && next.attempts.length && !previous?.attempts.length) {
+          const parent = sessions.get(next.parentSessionId);
+          parent.onsuccess = () => {
+            if (isTutorSession(parent.result)) sessions.put({ ...parent.result, revisitedAt: next.attempts[0].createdAt, revision: parent.result.revision + 1 });
+          };
+        }
+      };
+      if (!previous && next.extraPractice) {
+        // Serialized with session writes: two windows cannot race past the daily cap.
+        const all = sessions.getAll();
+        all.onsuccess = () => {
+          const today = new Date(next.createdAt).toDateString();
+          const used = (all.result as TutorSession[]).filter(s => s.extraPractice && new Date(s.createdAt).toDateString() === today).length;
+          if (used >= 2) { extraLimit = true; tx.abort(); return; }
+          write();
         };
-      }
+      } else write();
     };
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error ?? new Error("Não foi possível salvar a sessão."));
-    tx.onabort = () => reject(conflict ? new Error("Esta sessão mudou em outra janela. Reabra o tutor para carregar a versão salva; copie seu texto antes de sair.") : tx.error ?? new Error("Não foi possível salvar a sessão."));
+    tx.onabort = () => reject(extraLimit ? new Error("As duas situações extras de hoje já foram iniciadas. Pode parar aqui e voltar amanhã.") : conflict ? new Error("Esta sessão mudou em outra janela. Reabra o tutor para carregar a versão salva; copie seu texto antes de sair.") : tx.error ?? new Error("Não foi possível salvar a sessão."));
   });
   // Autosaving each keystroke must not reload the entire learning history in every tab.
   if (changedSession || changedEvidence) notify();

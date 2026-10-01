@@ -31,3 +31,10 @@ it("explains skill states in ordinary language in both interfaces", () => {
     expect(localizeTutorText(label, "en")).not.toMatch(/independent|transfer|consistent evidence/i);
   }
 });
+
+it("describes only the demonstrated skill when the whole task was not met", () => {
+  const attempt = tutorAttempt();
+  const session = tutorSession({ attempts: [{ ...attempt, feedback: { ...attempt.feedback, status: "not_met" } }] });
+  expect(tutorCompletion(session, [], preferences).achievement).toBe(attempt.feedback.skill!.label);
+  expect(tutorCompletion(session, [], preferences).achievement).not.toBe(session.task.successCriteria);
+});
