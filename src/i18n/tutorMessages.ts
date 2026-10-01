@@ -724,4 +724,7 @@ export const tutorMessages: Record<string, { pt: string }> = {
   "Use in another situation": { pt: "Uso em outra situação" },
   "attempts · {count} uses in another situation": { pt: "tentativas · {count} usos em outra situação" },
   "My answers and next steps": { pt: "Minhas respostas e próximos passos" },
+  "How would you like to answer?": { pt: "Como você prefere responder?" },
+  "Write my answer": { pt: "Escrever minha resposta" },
+  "Speak or write. You can edit the transcript. Feedback checks the text, not pronunciation.": { pt: "Fale ou escreva. Você pode editar a transcrição. O feedback avalia o texto, sem avaliar a pronúncia." },
 };

@@ -123,7 +123,7 @@ export function tutorProduction(session: TutorSession, attempt: TutorAttempt): P
     id: attempt.id, source: "study", stage: index > 0 ? "retry" : "production",
     retryOf: index > 0 ? session.attempts[0].id : undefined,
     context: `Tutor: ${session.task.goal}`, prompt: session.task.instruction,
-    text: attempt.text, spoken: false, wordCount: attempt.text.trim().split(/\s+/).length,
+    text: attempt.text, spoken: attempt.spoken ?? false, wordCount: attempt.text.trim().split(/\s+/).length,
     finished: true, scaffoldUsed: attempt.supportUsed,
     // Teaching points are not an exhaustive count of linguistic errors. Do not feed
     // them into the app's general accuracy/error rates. Tutor has its own task rubric.

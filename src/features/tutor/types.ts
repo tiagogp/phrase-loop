@@ -58,6 +58,7 @@ export interface TutorPreferences {
 }
 
 export interface TutorAttempt {
+  spoken?: boolean;
   id: string;
   text: string;
   supportUsed: boolean;
@@ -86,6 +87,7 @@ export interface TutorSession {
   exposures?: TutorExposure[];
   sourceCardId?: string;
   draft: string;
+  draftSpoken?: boolean;
   supportUsed: boolean;
   attempts: TutorAttempt[];
   help: { question: string; answer: string; createdAt: number }[];

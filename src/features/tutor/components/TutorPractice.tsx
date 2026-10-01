@@ -2,6 +2,7 @@
 
 import { tutorCompletion } from "../completion";
 import { extraPractice } from "@/features/home/nextPractice";
+import { tutorAnswer } from "../answer";
 import Disclosure from "@/components/ui/Disclosure";
 
 import { useTutorTranslation } from "../useTutorTranslation";
@@ -53,8 +54,8 @@ export function TutorPractice({ initial, memory, onNew, ...props }: TutorWorkspa
   const ttsRequest = useRef<AbortController | null>(null);
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; ttsRequest.current?.abort(); audioRef.current?.pause(); if (audioUrl.current) URL.revokeObjectURL(audioUrl.current); }; }, []);
-  function updateDraft(text: string) { if (mounted.current) void commit(s => ({ ...s!, draft: text.slice(0, 3000) })).catch(() => undefined); }
-  const audio = useCorrectionAudio({ onNote: setAudioNote, onText: updater => updateDraft(updater(current.current?.draft ?? "")), maxDurationMs: 90_000 });
+  function updateDraft(text: string, spoken?: boolean) { if (mounted.current) void commit(s => ({ ...s!, draft: text.slice(0, 3000), draftSpoken: spoken ?? s!.draftSpoken })).catch(() => undefined); }
+  const audio = useCorrectionAudio({ onNote: setAudioNote, onText: updater => updateDraft(updater(current.current?.draft ?? ""), true), maxDurationMs: 90_000 });
   const blocked = !exposureReady || busy || fatal || audio.recording || audio.transcribing || savingPhrase;
   const last = session.attempts.at(-1);
   const { achievement, comparison } = tutorCompletion(session, memory.sessions, memory.preferences);
@@ -73,12 +74,9 @@ export function TutorPractice({ initial, memory, onNew, ...props }: TutorWorkspa
     const result = await call({ action: "evaluate", ...provider, context, task: session.task, text: session.draft.trim() });
     if (result?.action !== "evaluate") return;
     await commit(s => {
-      const attempt = {
-      id: crypto.randomUUID(), text: session.draft.trim(), supportUsed: session.supportUsed || session.attempts.length > 0,
-      createdAt: submittedAt, feedback: result.feedback, judge: result.judge,
-      };
+      const attempt = tutorAnswer(session, crypto.randomUUID(), submittedAt, result.feedback, result.judge);
       return { ...s!, provider: selection.provider, model: selection.provider === "ollama" ? selection.selectedModel || undefined : undefined,
-        phase: "feedback", draft: "", exposures: [...(s!.exposures ?? []), { id: crypto.randomUUID(), kind: "feedback", at: Math.max(Date.now(), submittedAt + 1) }], skill: skillFromFirstAttempt(s!, attempt), attempts: [...s!.attempts, attempt] };
+        phase: "feedback", draft: "", draftSpoken: false, exposures: [...(s!.exposures ?? []), { id: crypto.randomUUID(), kind: "feedback", at: Math.max(Date.now(), submittedAt + 1) }], skill: skillFromFirstAttempt(s!, attempt), attempts: [...s!.attempts, attempt] };
     }).catch(() => undefined);
   }
 
@@ -154,14 +152,18 @@ export function TutorPractice({ initial, memory, onNew, ...props }: TutorWorkspa
       <div><h2 ref={phaseHeading} tabIndex={-1} className="text-xs font-semibold uppercase tracking-wider text-accent">{session.attempts.length ? t("Rebuild your answer") : session.parentSessionId ? t("First, try to recall") : t("Your situation")}</h2><p className="mt-3 whitespace-pre-wrap text-base leading-relaxed text-ink">{localize(session.task.situation)}</p></div>
       <p className="text-sm leading-relaxed text-ink-soft">{localize(session.task.instruction)}</p>
       {last && <Notice>{last.feedback.retryInstruction}</Notice>}
+      <div className="grid grid-cols-2 gap-3" role="group" aria-label={t("How would you like to answer?")}>
+        <Button variant="secondary" disabled={blocked} onClick={() => updateDraft(session.draft, false)}>{t("Write my answer")}</Button>
+        <Button variant="secondary" disabled={busy || fatal || audio.transcribing} onClick={() => audio.recording ? audio.stopRecording() : void audio.startRecording()}>{audio.recording ? t("Stop recording") : audio.transcribing ? t("Transcribing…") : t("Speak my answer")}</Button>
+      </div>
+      <p className="text-xs text-ink-soft">{t("Speak or write. You can edit the transcript. Feedback checks the text, not pronunciation.")}</p>
       <label className="flex flex-col gap-2 text-sm font-medium text-ink"><span>{t("Your answer in English")}</span><textarea value={session.draft} onChange={e => updateDraft(e.target.value)} maxLength={3000} rows={5} className={tutorInputClass} readOnly={blocked} placeholder={t("Write in your own way, even if you are still missing some words.")} lang="en" /></label>
       <div className="flex flex-wrap items-center gap-2">
         <Button loading={pendingAction === "evaluate"} disabled={blocked || !selection.providerReady || !session.draft.trim()} onClick={() => void evaluate()}>{pendingAction === "evaluate" ? t("Analyzing your answer…") : t("Get feedback")}</Button>
         <Button variant="secondary" loading={pendingAction === "help" && helpSource === "hint"} disabled={blocked || !selection.providerReady || session.help.length >= 20} onClick={() => void ask(t("Give me a small hint to get started, without showing the full answer."), "hint")}>{pendingAction === "help" && helpSource === "hint" ? t("Preparing a hint…") : t("I need a hint")}</Button>
-        <Button variant="ghost" disabled={busy || fatal || audio.transcribing} onClick={() => audio.recording ? audio.stopRecording() : void audio.startRecording()}>{audio.recording ? t("Stop recording") : audio.transcribing ? t("Transcribing…") : t("Speak my answer")}</Button>
       </div>
       {busy && (pendingAction === "evaluate" || helpSource === "hint") && <LoadingStatus action={<Button variant="ghost" size="sm" onClick={cancel}>{t("Cancel request")}</Button>}>{pendingAction === "evaluate" ? t("The tutor is analyzing your answer…") : t("The tutor is preparing a hint…")}</LoadingStatus>}
-      <p className="text-xs text-ink-muted">{session.supportUsed ? t("This attempt will be recorded as supported.") : t("Try before asking for a hint. Any support used is recorded.")} {t("When speaking, check the transcript before sending. The assessment uses the text.")}</p>
+      <p className="text-xs text-ink-muted">{session.supportUsed ? t("This attempt will be recorded as supported.") : t("Try before asking for a hint. Any support used is recorded.")} {t("Speak or write. You can edit the transcript. Feedback checks the text, not pronunciation.")}</p>
       {audioNote && <p role="status" className="text-sm text-ink-soft">{audioNote}</p>}
     </Card>}
 
@@ -173,7 +175,7 @@ export function TutorPractice({ initial, memory, onNew, ...props }: TutorWorkspa
       {last.feedback.points.map((point, i) => <div key={i} className="space-y-2 rounded-md border border-line p-4"><p className="text-sm text-ink" lang="en">{point.original} → <strong>{point.revised}</strong></p><p className="text-sm leading-relaxed text-ink-soft">{point.explanation}</p></div>)}
       <div className="rounded-md bg-accent/5 p-4"><p className="text-xs font-medium text-accent">{t("One possible answer · AI-generated example")}</p><p className="mt-2 text-ink" lang="en">{last.feedback.example.english}</p><p className="mt-2 text-sm text-ink-soft">{last.feedback.example.meaning}</p><Button className="mt-2" variant="ghost" size="sm" disabled={audioLoading} onClick={() => void listen()}>{audioLoading ? t("Generating audio…") : t("Listen to the example")}</Button>{audioNote && <p role="status" className="text-xs text-ink-muted">{audioNote}</p>}</div>
       <div className="flex flex-wrap gap-3">
-        {session.attempts.length < MAX_TUTOR_ATTEMPTS && <Button disabled={blocked} onClick={() => void commit(s => ({ ...s!, phase: "practice", supportUsed: true, draft: "" })).catch(() => undefined)}>{t("Try again in my own words")}</Button>}
+        {session.attempts.length < MAX_TUTOR_ATTEMPTS && <Button disabled={blocked} onClick={() => void commit(s => ({ ...s!, phase: "practice", supportUsed: true, draft: "", draftSpoken: false })).catch(() => undefined)}>{t("Try again in my own words")}</Button>}
         <Button variant="secondary" disabled={blocked} onClick={() => void finish()}>{t("Finish and see my summary")}</Button>
       </div>
       {session.attempts.length >= MAX_TUTOR_ATTEMPTS && <p className="text-sm text-ink-soft">{t("You have practiced this situation three times. Let's finish this focus and revisit it later.")}</p>}

@@ -58,6 +58,7 @@ export function isTutorSession(v: unknown): v is TutorSession {
     || typeof v.supportUsed !== "boolean" || !timestamp(v.createdAt) || !timestamp(v.updatedAt)
     || !Array.isArray(v.attempts) || v.attempts.length > 3 || !Array.isArray(v.help) || v.help.length > 20) return false;
   if (!v.attempts.every(a => object(a) && str(a.id, 100) && str(a.text, 3000) && typeof a.supportUsed === "boolean"
+    && (a.spoken === undefined || typeof a.spoken === "boolean")
     && timestamp(a.createdAt) && isTutorFeedback(a.feedback) && object(a.judge) && a.judge.by === "model"
     && str(a.judge.provider, 30) && str(a.judge.promptVersion, 100)
     && (a.judge.model === undefined || str(a.judge.model, 200))
@@ -68,6 +69,7 @@ export function isTutorSession(v: unknown): v is TutorSession {
   if (v.skill !== undefined && (!object(v.skill) || !str(v.skill.id, 100) || !str(v.skill.label, 120) || !str(v.skill.originContext, 800))) return false;
   if (object(v.skill) && ((v.skill.conceptId !== undefined && !isTutorConceptId(v.skill.conceptId)) || (v.skill.originSessionId !== undefined && !str(v.skill.originSessionId, 100)))) return false;
   if (v.exposures !== undefined && (!Array.isArray(v.exposures) || !v.exposures.every(e => object(e) && str(e.id, 100) && ["feedback", "hint", "history", "source"].includes(String(e.kind)) && timestamp(e.at)))) return false;
+  if (v.draftSpoken !== undefined && typeof v.draftSpoken !== "boolean") return false;
   if (v.extraPractice !== undefined && typeof v.extraPractice !== "boolean") return false;
   if (v.provider !== undefined && !["openai", "claude", "openrouter", "ollama"].includes(String(v.provider))) return false;
   if (v.model !== undefined && !str(v.model, 100)) return false;
