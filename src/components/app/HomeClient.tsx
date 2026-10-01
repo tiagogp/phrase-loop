@@ -89,6 +89,7 @@ function TabContent({
   onTransfer,
   onProgress,
   onTutor,
+  onExtra,
   onContentPractice,
   studyView,
   reviewRequest,
@@ -116,6 +117,7 @@ function TabContent({
   onTransfer: () => void;
   onProgress: () => void;
   onTutor: () => void;
+  onExtra: () => void;
   onContentPractice: (cardId: string) => void;
   studyView: ReviewView;
   reviewRequest: number;
@@ -130,7 +132,7 @@ function TabContent({
 }) {
   if (tab === "hoje") {
     return (
-      <HojeHome onTutor={onTutor} onStudy={onOpenPractice} onTransfer={onTransfer}
+      <HojeHome onTutor={onTutor} onExtra={onExtra} onStudy={onOpenPractice} onTransfer={onTransfer}
         onProgress={onProgress} onDiscover={onOpenDiscover} onFirstLesson={onFirstLesson}
         onSpeak={onSpeak} onOpenPlanTask={onOpenPlanTask} onExplore={onExplore} onPlan={onPlan}
       />
@@ -189,12 +191,12 @@ function HomeContent() {
   const [reviewRequest, setReviewRequest] = useState(0);
   const [visitedTabs, setVisitedTabs] = useState<Set<HomeTab>>(() => new Set(["hoje"]));
   const [overlay, setOverlay] = useState<Overlay>(null);
-  const [tutorRequest, setTutorRequest] = useState<{ intent: "recommended" | "new"; sourceCardId?: string; nonce: number }>({ intent: "recommended", nonce: 0 });
+  const [tutorRequest, setTutorRequest] = useState<{ intent: "recommended" | "new" | "extra"; sourceCardId?: string; nonce: number }>({ intent: "recommended", nonce: 0 });
   const [quickLesson, setQuickLesson] = useState(false);
   const [quickPhraseIndex, setQuickPhraseIndex] = useState(0);
   const [tool, setTool] = useState("anki");
   const [lessonId, setLessonId] = useState<string | null>(null);
-  function openTutor(intent: "recommended" | "new", sourceCardId?: string) {
+  function openTutor(intent: "recommended" | "new" | "extra", sourceCardId?: string) {
     setTutorRequest(previous => ({ intent, sourceCardId, nonce: previous.nonce + 1 }));
     setLessonId(null); setOverlay("tutor");
   }
@@ -438,6 +440,7 @@ function HomeContent() {
                             onTransfer={openTransfer}
                             onProgress={() => changeTab("progress")}
                             onTutor={() => openTutor("recommended")}
+                            onExtra={() => openTutor("extra")}
                             onContentPractice={cardId => openTutor("new", cardId)}
                             studyView={studyView}
                             reviewRequest={reviewRequest}

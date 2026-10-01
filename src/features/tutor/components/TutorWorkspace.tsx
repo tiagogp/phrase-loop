@@ -1,5 +1,6 @@
 "use client";
 
+import { extraPractice } from "@/features/home/nextPractice";
 import Disclosure from "@/components/ui/Disclosure";
 
 import { useTutorTranslation } from "../useTutorTranslation";
@@ -25,7 +26,7 @@ import { TutorMemoryPanel, tutorInputClass } from "./TutorMemoryPanel";
 import { TutorPractice } from "./TutorPractice";
 
 export interface TutorWorkspaceProps {
-  intent?: "recommended" | "new";
+  intent?: "recommended" | "new" | "extra";
   sourceCardId?: string;
   onBack: () => void;
   onSettings: () => void;
@@ -46,7 +47,7 @@ export default function TutorWorkspace(props: TutorWorkspaceProps) {
 
 function TutorBody({ memory, ...props }: TutorWorkspaceProps & { memory: TutorMemory }) {
   const { t, lang, localize } = useTutorTranslation();
-  const [selected, setSelected] = useState<TutorSession | null>(() => props.intent !== "new" && !props.sourceCardId
+  const [selected, setSelected] = useState<TutorSession | null>(() => props.intent !== "new" && props.intent !== "extra" && !props.sourceCardId
     ? tutorRecommendation(memory.sessions, memory.preferences, getLearningProfile(), Date.now(), lang).active ?? null : null);
   const [launchSource, setLaunchSource] = useState(props.sourceCardId);
   const [launchMode, setLaunchMode] = useState(props.intent ?? "recommended");
@@ -71,7 +72,7 @@ function TutorBody({ memory, ...props }: TutorWorkspaceProps & { memory: TutorMe
     finally { setOpening(false); }
   }
   return <div className="space-y-6">
-    {selected ? <TutorPractice key={selected.id} initial={selected} memory={memory} {...props} onNew={() => { setSelected(null); setShowMemory(false); setLaunchSource(undefined); setLaunchMode("new"); setAutoStart(false); }} /> : <>
+    {selected ? <TutorPractice key={selected.id} initial={selected} memory={memory} {...props} onNew={() => { setSelected(null); setShowMemory(false); setLaunchSource(undefined); setLaunchMode("extra"); setAutoStart(true); }} /> : <>
       <Button variant="ghost" onClick={props.onBack}>{t("← Back")}</Button>
       <PageHeader eyebrow={t("English for a real situation")} title={launchMode === "new" ? t("Practice something new") : t("Your next practice")} description={t("Try in your own words. Understand the adjustment. Come back later to see what stayed.")} />
       <TutorSetup memory={memory} {...props} intent={launchMode} sourceCardId={launchSource} autoStart={autoStart} onOpen={setSelected} />
@@ -116,11 +117,13 @@ function TutorSetup({ memory, autoStart, onOpen, onSettings, onPractice, onConte
       if (existingSource) { onOpen(existingSource); return; }
       const source = fresh.cards.find(c => c.id === sourceId);
       if (sourceId && !source) throw new Error(t("This content is no longer available. Choose another source."));
-      const parent = intent !== "new" && !source && focus.trim() === defaultFocus ? rec.due : undefined;
+      const extra = intent === "extra" ? extraPractice(fresh.sessions, Date.now()) : undefined;
+      if (intent === "extra" && !extra) throw new Error(t("You can stop here. More situations will be available tomorrow."));
+      const parent = intent !== "extra" && intent !== "new" && !source && focus.trim() === defaultFocus ? rec.due : undefined;
       const evidence = selectTutorEvidence({ ...fresh, focus, source, parent });
       const conceptId = parent?.skill?.conceptId;
-      let task = !source && (conceptId || (!parent && (focus.trim() === t("Talk about your professional experience") || focus.trim() === localize(TUTOR_CONCEPTS[chosenConcept as keyof typeof TUTOR_CONCEPTS].label))))
-        ? chooseTutorScenario(conceptId ?? chosenConcept, fresh.sessions) : undefined;
+      let task = extra?.task ?? (!source && (conceptId || (!parent && (focus.trim() === t("Talk about your professional experience") || focus.trim() === localize(TUTOR_CONCEPTS[chosenConcept as keyof typeof TUTOR_CONCEPTS].label))))
+        ? chooseTutorScenario(conceptId ?? chosenConcept, fresh.sessions) : undefined);
       if (!task) {
         const result = await call({ action: "plan", provider: selection.provider, ollamaModel: selection.selectedModel || undefined,
           context: { level, minutes, explanationLanguage: fresh.preferences.explanationLanguage, focus: focus.trim(), evidence, previousTask: parent?.task, targetSkill: parent?.skill?.label, targetConceptId: conceptId } });
@@ -133,6 +136,7 @@ function TutorSetup({ memory, autoStart, onOpen, onSettings, onPractice, onConte
         evidence, parentSessionId: parent?.id, supportUsed: !!source });
       const taskConcept = tutorConceptForTask(task);
       session.skill = parent?.skill ?? (isTutorConceptId(taskConcept) ? { id: taskConcept, conceptId: taskConcept, label: TUTOR_CONCEPTS[taskConcept].label, originContext: task.situation, originSessionId: session.id } : undefined);
+      session.extraPractice = intent === "extra" || undefined;
       session.sourceCardId = source?.id;
       session.exposures = source ? [{ id: crypto.randomUUID(), kind: "source", at: Date.now() }] : [];
       await commit(() => session);

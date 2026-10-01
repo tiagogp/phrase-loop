@@ -25,3 +25,22 @@ describe("one next practice", () => {
     expect(nextPractice({ ...base, planTask })).toBe("plan");
   });
 });
+
+import { extraPractice } from "./nextPractice";
+import { DAY, durationHistory, tutorSession } from "@/features/tutor/testFixtures";
+it("caps optional launches at two per local day, including unfinished extras", () => {
+  const now = 10 * DAY;
+  const extras = [1, 2].map(i => tutorSession({ id: `extra-${i}`, extraPractice: true, createdAt: now }));
+  expect(extraPractice(extras.slice(0, 1), now)?.remaining).toBe(1);
+  expect(extraPractice(extras, now)).toBeUndefined();
+  expect(extraPractice(extras, now + DAY)?.remaining).toBe(2);
+});
+it("offers new practice without selecting a recently exposed skill or consuming a reminder", () => {
+  const history = durationHistory();
+  const snapshot = JSON.stringify(history);
+  const extra = extraPractice(history, DAY + 6000)!;
+  expect(extra.conceptId).not.toBe("present-perfect-duration");
+  expect(extra.task.scenarioId).not.toBe(history[1].task.scenarioId);
+  expect(JSON.stringify(history)).toBe(snapshot);
+  expect(nextPractice({ ...base, completedToday: true, tutorDue: true, hasAi: true })).toBe("complete");
+});

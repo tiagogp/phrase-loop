@@ -18,10 +18,11 @@ import { useTutorTranslation } from "@/features/tutor/useTutorTranslation";
 import { nextTutorReview, tutorRecommendation } from "@/features/tutor/model";
 import { allowedTutorAttempt } from "@/features/tutor/learning";
 import { deriveDailyLoop } from "../dailyLoop";
-import { nextPractice } from "../nextPractice";
+import { extraPractice, nextPractice } from "../nextPractice";
 
 interface HojeHomeProps {
   onTutor: () => void;
+  onExtra: () => void;
   onStudy: () => void;
   onDiscover: () => void;
   onFirstLesson: () => void;
@@ -110,6 +111,7 @@ export function HojeHome(props: HojeHomeProps) {
         {reviewAt && complete && <p className="text-sm text-ink-soft">{t("Revisit from")} <strong>{new Date(reviewAt).toLocaleDateString(lang === "pt" ? "pt-BR" : "en-US")}</strong>. {t("Your next situation will appear in Today.")}</p>}
         {complete && !reviewAt && <p className="text-sm text-ink-soft">{t("Come back to Today for your next short practice. Your phrases keep their review schedule.")}</p>}
         <div className="flex flex-wrap items-center gap-3"><Button variant={complete ? "secondary" : "primary"} size="lg" onClick={start}>{label}<span aria-hidden="true">→</span></Button>
+          {complete && memory && settings.providers.some(p => p.available) && extraPractice(memory.sessions, now) && <Button variant="secondary" onClick={props.onExtra}>{t("Practice one more situation")}</Button>}
           {!complete && <Button variant="ghost" onClick={props.onExplore}>{t("Choose another activity")}</Button>}</div>
         {!complete && !experience.firstLoopComplete && <p className="border-t border-line pt-4 text-xs leading-relaxed text-ink-muted">{t(action === "lesson" ? "See one phrase → try remembering → save your practice" : "Try → understand the feedback → try again when needed")}</p>}
       </Card>}

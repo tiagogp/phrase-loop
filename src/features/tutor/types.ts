@@ -79,6 +79,8 @@ export interface TutorSession {
   task: TutorTask;
   reason: string;
   evidence: TutorObservation[];
+  /** Optional new practice; does not consume a scheduled return. */
+  extraPractice?: boolean;
   parentSessionId?: string;
   skill?: TutorSkill;
   exposures?: TutorExposure[];

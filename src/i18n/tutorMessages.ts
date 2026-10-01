@@ -717,4 +717,7 @@ export const tutorMessages: Record<string, { pt: string }> = {
   "See your answers together": { pt: "Veja suas respostas juntas" },
   "Today’s answer": { pt: "Resposta de hoje" },
   "{days} full days between answers. The situations differ: this is a way to notice changes, not a measure of mastery.": { pt: "{days} dias completos entre as respostas. As situações mudam: a comparação ajuda a perceber diferenças, sem medir domínio." },
+  "Practice one more situation": { pt: "Praticar mais uma situação" },
+  "You can stop here.": { pt: "Pode parar aqui." },
+  "You can stop here. More situations will be available tomorrow.": { pt: "Pode parar aqui. Outras situações estarão disponíveis amanhã." },
 };
