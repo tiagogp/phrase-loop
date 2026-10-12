@@ -4,11 +4,13 @@ import type { Card } from "@/lib/cards/schema";
 import { STORES, getAll, openDb, type StoreName } from "./db";
 import {
   getC1Diagnoses,
+  getConversationGaps,
   getCards,
   getDueCards,
   getProgressAssessments,
   getSrs,
   saveC1Diagnosis,
+  saveConversationGaps,
   saveProgressAssessment,
 } from "./repository";
 
@@ -114,6 +116,14 @@ describe("IndexedDB schema migration", () => {
     });
     const diagnoses = await getC1Diagnoses();
     expect(diagnoses.map((d) => d.id)).toContain("c1-after-migration");
+
+    // v14: the experimental gaps store is added without touching older stores.
+    await saveConversationGaps([{
+      id: "gap-after-migration", patternLabel: "postpone-delivery", kind: "code_switch", evidence: "a gente precisa adiar", intent: "adiar",
+      natural: { casual: "push it back", neutral: "postpone it" }, why: "", originSessionId: "s", sessionIds: ["s"], occurrences: 1,
+      status: "open", firstOpenedAt: 1, openedAt: 1, reopenCount: 0, updatedAt: 1, history: [],
+    }]);
+    expect((await getConversationGaps()).map((gap) => gap.id)).toEqual(["gap-after-migration"]);
   });
 
   it("exposes every declared store as a readable object store after open", async () => {

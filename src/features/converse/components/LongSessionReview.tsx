@@ -12,11 +12,14 @@ import { transcribeAudio } from "@/features/correct/api";
 import { buildGapPhrase } from "@/features/converse/gapPhrase";
 import { codeSwitchStats, type LongSessionTopic } from "@/features/converse/longSession";
 import type { ReviewedGap } from "@/features/converse/gapReview";
+import type { ConversationGap } from "@/features/converse/gaps";
 import { useClipRecorder } from "@/features/converse/useClipRecorder";
 
 export interface LongSessionReviewProps {
   conversation: Conversation;
   topic?: LongSessionTopic;
+  /** The gap registry, to mark recurring patterns and list gaps closed in this session. */
+  registry?: ConversationGap[];
   reviewing: boolean;
   /** Where the review is sent, so the learner knows when it leaves the device. */
   reviewerNote?: string | null;
@@ -35,12 +38,17 @@ const KIND_LABEL: Record<ReviewedGap["kind"], string> = {
   error: "Changed the message",
 };
 
-export function LongSessionReview({ conversation, topic, reviewing, reviewerNote, note, onRetry, onUpdate, onDone, onPracticeSource }: LongSessionReviewProps) {
+export function LongSessionReview({ conversation, topic, registry = [], reviewing, reviewerNote, note, onRetry, onUpdate, onDone, onPracticeSource }: LongSessionReviewProps) {
   const { t } = useT();
   const long = conversation.longSession;
   const review = long?.review;
   const stats = codeSwitchStats(conversation.turns);
   const learnerTurns = conversation.turns.filter((turn) => turn.role === "user").length;
+  const closedHere = registry.filter((gap) => (long?.closedGapIds ?? []).includes(gap.id));
+  const recurring = (label: string) => {
+    const known = registry.find((gap) => gap.patternLabel === label);
+    return Boolean(known && known.sessionIds.length > 1 && known.sessionIds.includes(conversation.id));
+  };
   return (
     <div className="space-y-5">
       <Card className="space-y-4 p-5">
@@ -56,6 +64,20 @@ export function LongSessionReview({ conversation, topic, reviewing, reviewerNote
           <Button variant="secondary" className="h-9 shrink-0" onClick={onDone}>{t("Done")}</Button>
         </div>
         {reviewerNote && <p className="text-xs text-ink-muted">{reviewerNote}</p>}
+
+        {closedHere.length > 0 && (
+          <Notice tone="success" className="space-y-1">
+            <p className="font-medium text-ink">{t("You said it on your own this time")}</p>
+            <ul className="space-y-1 text-sm">
+              {closedHere.map((gap) => (
+                <li key={gap.id}>
+                  <span lang="en" className="text-ink">{gap.history.findLast((event) => event.type === "closed" && event.sessionId === conversation.id)?.evidence}</span>
+                  <span className="text-xs text-ink-muted"> · {t("first stuck on:")} {gap.history[0]?.evidence ?? gap.evidence}</span>
+                </li>
+              ))}
+            </ul>
+          </Notice>
+        )}
 
         {reviewing ? (
           <p className="flex items-center gap-2 text-sm text-ink-muted"><Spinner className="h-4 w-4" /> {t("Reading the whole conversation…")}</p>
@@ -89,7 +111,7 @@ export function LongSessionReview({ conversation, topic, reviewing, reviewerNote
               <div className="space-y-3">
                 <p className="text-sm font-medium text-ink">{t("What you could not say yet")}</p>
                 {review.gaps.map((gap, index) => (
-                  <GapCard key={`${gap.patternLabel}-${index}`} gap={gap} topic={topic} conversationId={conversation.id} onPracticeSource={onPracticeSource} />
+                  <GapCard key={`${gap.patternLabel}-${index}`} gap={gap} recurring={recurring(gap.patternLabel)} topic={topic} conversationId={conversation.id} onPracticeSource={onPracticeSource} />
                 ))}
               </div>
             )}
@@ -101,7 +123,7 @@ export function LongSessionReview({ conversation, topic, reviewing, reviewerNote
   );
 }
 
-function GapCard({ gap, topic, conversationId, onPracticeSource }: { gap: ReviewedGap; topic?: LongSessionTopic; conversationId: string; onPracticeSource?: (cardId: string) => void }) {
+function GapCard({ gap, recurring, topic, conversationId, onPracticeSource }: { gap: ReviewedGap; recurring: boolean; topic?: LongSessionTopic; conversationId: string; onPracticeSource?: (cardId: string) => void }) {
   const { t } = useT();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState<string | null>(null);
@@ -127,6 +149,7 @@ function GapCard({ gap, topic, conversationId, onPracticeSource }: { gap: Review
     <article className="space-y-2 rounded-lg border border-line p-4 [overflow-wrap:anywhere]">
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="rounded border border-accent/30 px-1.5 py-0.5 text-[0.65rem] font-medium text-accent">{t(KIND_LABEL[gap.kind])}</span>
+        {recurring && <span className="rounded border border-warning px-1.5 py-0.5 text-[0.65rem] font-medium text-ink">{t("Came up again")}</span>}
         {functionLabel && <span className="rounded border border-line px-1.5 py-0.5 text-[0.65rem] text-ink-muted">{functionLabel}</span>}
         <span className="rounded border border-line px-1.5 py-0.5 font-mono text-[0.65rem] text-ink-muted">{gap.patternLabel}</span>
       </div>

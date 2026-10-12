@@ -23,7 +23,7 @@ function gap(overrides: Record<string, unknown> = {}) {
     evidence: "I think your comment is not correct",
     askedIn: null,
     intent: "discordar sem ser grosso",
-    natural: { casual: "I'm not sure I agree here", neutral: "I see it a bit differently" },
+    natural: { casual: "I'm not sure I agree here", neutral: "I see it a bit differently", key: "see it differently" },
     why: "Suaviza a discordância.",
     functionId: "disagree-politely",
     patternLabel: "soften-disagreement",
@@ -88,6 +88,12 @@ describe("parseGapReview", () => {
       patternLabel: "soften-disagreement",
     });
     expect(found).not.toHaveProperty("functionId");
+  });
+
+  it("keeps a short core of the natural form and drops one that is a whole sentence", () => {
+    expect(parseGapReview({ gaps: [gap()] }, input).gaps[0].natural.key).toBe("see it differently");
+    const long = gap({ natural: { casual: "a", neutral: "b", key: "I think that maybe we could see it a bit differently" } });
+    expect(parseGapReview({ gaps: [long] }, input).gaps[0].natural).toEqual({ casual: "a", neutral: "b" });
   });
 
   it("drops a function the profile does not have", () => {

@@ -28,7 +28,11 @@ export interface ReviewedGap {
   /** Avoidance only: the partner's question that asked for what was avoided. */
   askedIn?: string;
   intent: string;
-  natural: { casual: string; neutral: string };
+  /**
+   * `key` is the 2–5 word core both versions share (e.g. "push back the release"): whole
+   * sentences are rarely repeated word for word, so later use is detected on this core.
+   */
+  natural: { casual: string; neutral: string; key?: string };
   why: string;
   functionId?: string;
   patternLabel: string;
@@ -83,7 +87,7 @@ export function buildGapReviewPrompt(input: GapReviewInput): string {
     `- evidence: copy the learner's exact words from the transcript (their Portuguese for code_switch). If you cannot copy real words, do not report the gap.`,
     `- askedIn: for avoidance only, copy the partner's exact question that asked for it; otherwise null.`,
     `- intent: what the learner wanted to say, in plain words.`,
-    `- natural: how a professional would naturally say it, in English only, as {"casual": ..., "neutral": ...}.`,
+    `- natural: how a professional would naturally say it, in English only, as {"casual": ..., "neutral": ..., "key": ...}. key is the 2 to 5 word core of the natural form, the part the learner would need to reuse.`,
     `- why: one short sentence in ${language} on what makes the natural version work.`,
     functions.length > 0
       ? `- functionId: the id of the function this gap belongs to, or null. Functions: ${functions.map((item) => `${item.id} (${item.label})`).join("; ")}.`
@@ -92,7 +96,7 @@ export function buildGapReviewPrompt(input: GapReviewInput): string {
     `- severity: "high" when it blocked the message, "medium" when it weakened it, "low" for polish.`,
     `- Prefer gaps the learner will meet again over one-off slips. Never invent anything that is not in the transcript. Do not correct the partner.`,
     `- strengths: up to ${MAX_STRENGTHS} short things the learner did well, in ${language}, naming what they actually did.`,
-    `Return only JSON, no prose: {"strengths": [string], "gaps": [{"kind": string, "evidence": string, "askedIn": string|null, "intent": string, "natural": {"casual": string, "neutral": string}, "why": string, "functionId": string|null, "patternLabel": string, "severity": string}]}`,
+    `Return only JSON, no prose: {"strengths": [string], "gaps": [{"kind": string, "evidence": string, "askedIn": string|null, "intent": string, "natural": {"casual": string, "neutral": string, "key": string}, "why": string, "functionId": string|null, "patternLabel": string, "severity": string}]}`,
     ``,
     `Transcript:`,
     transcript(input.turns),
@@ -140,7 +144,9 @@ function parseNatural(raw: unknown): ReviewedGap["natural"] | null {
   const casual = text(o.casual, 300);
   const neutral = text(o.neutral, 300);
   if (!casual && !neutral) return null;
-  return { casual: casual || neutral, neutral: neutral || casual };
+  const key = text(o.key, 80);
+  // A "core" longer than a short phrase is just the sentence again; detection falls back to it.
+  return { casual: casual || neutral, neutral: neutral || casual, ...(key && key.split(" ").length <= 7 ? { key } : {}) };
 }
 
 /** One raw gap → a gap with proof, or null. */

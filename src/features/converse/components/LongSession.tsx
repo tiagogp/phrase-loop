@@ -12,7 +12,24 @@ import { cn } from "@/lib/cn";
 import { useT } from "@/i18n/I18nProvider";
 import { normalizeContext } from "@/lib/cards/context";
 import type { ConversationTurn } from "@/lib/cards/provider";
-import { deleteConversation, getConversations, saveConversation, type Conversation } from "@/lib/store/repository";
+import {
+  deleteConversation,
+  getConversationGaps,
+  getConversations,
+  saveConversation,
+  saveConversationGaps,
+  type Conversation,
+} from "@/lib/store/repository";
+import {
+  closeGap,
+  gapForms,
+  gapsClosedByTurn,
+  knownPatternLabels,
+  partitionOpenGaps,
+  planNextTurn,
+  recordReviewedGaps,
+  type ConversationGap,
+} from "@/features/converse/gaps";
 import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
 import { getLearnerLangs } from "@/features/settings/learningProfile";
 import { transcribeAudio } from "@/features/correct/api";
@@ -31,7 +48,6 @@ import {
   isTimeUp,
   LONG_SESSION_DURATIONS,
   MIN_CODE_SWITCH_MS,
-  newExpressionBudget,
   pauseClock,
   pendingCodeSwitch,
   recordIntroduced,
@@ -71,6 +87,8 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
   const [reviewing, setReviewing] = useState(false);
   const [reviewNote, setReviewNote] = useState<string | null>(null);
   const [past, setPast] = useState<Conversation[]>([]);
+  const [gaps, setGaps] = useState<ConversationGap[]>([]);
+  const gapsRef = useRef<ConversationGap[]>([]);
   const [typed, setTyped] = useState("");
   const [busy, setBusy] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
@@ -99,7 +117,9 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
 
   const refreshPast = useCallback(async () => {
     try {
-      const all = await getConversations();
+      const [all, storedGaps] = await Promise.all([getConversations(), getConversationGaps()]);
+      gapsRef.current = storedGaps;
+      setGaps(storedGaps);
       setPast(all.filter((item) => item.mode === "long").sort((a, b) => b.startedAt - a.startedAt));
     } catch {
       /* store unavailable — the list stays empty */
@@ -111,6 +131,16 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
     };
     void load();
   }, [refreshPast]);
+
+  /** Merge changed gaps into the registry and store them. */
+  const storeGaps = useCallback((changed: ConversationGap[]) => {
+    if (changed.length === 0) return;
+    const byId = new Map(gapsRef.current.map((gap) => [gap.id, gap]));
+    for (const gap of changed) byId.set(gap.id, gap);
+    gapsRef.current = [...byId.values()];
+    setGaps(gapsRef.current);
+    void saveConversationGaps(changed).catch(() => undefined);
+  }, []);
 
   const persist = useCallback((next: Conversation) => {
     conversationRef.current = next;
@@ -170,15 +200,18 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
         level: target.level,
         scenario: target.scenario,
         functions: sessionTopic?.functions,
-        knownPatternLabels: [],
+        knownPatternLabels: knownPatternLabels(gapsRef.current),
       });
-      saveFinished({ ...target, longSession: { ...target.longSession, review: { ...review, reviewedAt: Date.now(), judge } } });
+      const reviewedAt = Date.now();
+      // Re-running a review never counts the same session twice (see recordReviewedGaps).
+      storeGaps(recordReviewedGaps(gapsRef.current, review.gaps, { id: target.id, startedAt: target.startedAt, scenarioId: target.longSession.scenarioId }, reviewedAt));
+      saveFinished({ ...target, longSession: { ...target.longSession, review: { ...review, reviewedAt, judge } } });
     } catch (err: unknown) {
       setReviewNote(err instanceof Error ? err.message : t("Couldn't review the conversation."));
     } finally {
       setReviewing(false);
     }
-  }, [provider, saveFinished, selectedModel, t, topics]);
+  }, [provider, saveFinished, selectedModel, storeGaps, t, topics]);
 
   const openReview = useCallback((target: Conversation) => {
     setFinished(target);
@@ -217,7 +250,10 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
     setNote(null);
     const sessionTopic = topics.find((item) => item.id === long.scenarioId);
     const nextAiTurn = aiTurnCount(base.turns);
-    const budget = newExpressionBudget({ nextAiTurn, pacing: long.pacing, gapPending: false });
+    const session = { id: base.id, startedAt: base.startedAt, scenarioId: long.scenarioId };
+    // Open gaps first; new expressions only when no gap is waiting to be pulled.
+    const plan = planNextTurn({ gaps: gapsRef.current, session, pulls: long.gapPulls, closedHere: long.closedGapIds, nextAiTurn, pacing: long.pacing, level: base.level });
+    const budget = plan.newExpressionBudget;
     const taught = [...recentTaughtExpressions(past), ...(base.repertoire ?? []).map((item) => item.expression)];
     try {
       const { reply } = await sendConversationTurn({
@@ -232,6 +268,7 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
           aiRole: sessionTopic?.aiRole,
           functions: sessionTopic?.functions?.map((item) => item.label),
           codeSwitch: pendingCodeSwitch(base.turns),
+          elicitGap: plan.gap ? { intent: plan.gap.intent, natural: gapForms(plan.gap)[0] } : undefined,
           newExpressionBudget: budget,
           suggestedExpressions: sessionTopic?.expressions?.filter((expression) => !taught.includes(expression)).slice(0, 6),
         },
@@ -240,11 +277,16 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
       const parsed = parseRepertoire(reply);
       const latest = conversationRef.current ?? base;
       const repertoire: RepertoireItem[] = mergeRepertoire(latest.repertoire ?? [], parsed.items);
+      const latestLong = latest.longSession!;
       persist({
         ...latest,
         turns: [...latest.turns, { role: "assistant", text: parsed.display, at: Date.now() }],
         repertoire,
-        longSession: { ...latest.longSession!, pacing: recordIntroduced(latest.longSession!.pacing, nextAiTurn, parsed.items.length, budget) },
+        longSession: {
+          ...latestLong,
+          pacing: recordIntroduced(latestLong.pacing, nextAiTurn, parsed.items.length, budget),
+          gapPulls: plan.gap ? { ...latestLong.gapPulls, [plan.gap.id]: (latestLong.gapPulls?.[plan.gap.id] ?? 0) + 1 } : latestLong.gapPulls,
+        },
       });
       void playReply(parsed.plain);
     } catch (err: unknown) {
@@ -325,7 +367,21 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
     const current = conversationRef.current;
     if (!trimmed || !current?.longSession || current.longSession.runningSince === undefined) return;
     const at = Date.now();
-    const withUser: Conversation = { ...current, turns: [...current.turns, { role: "user", text: trimmed, at, ...extra }] };
+    // Using a gap's natural form unaided, on a later day, closes it. Nothing is said mid-session.
+    const closed = extra.codeSwitch ? [] : gapsClosedByTurn({
+      text: trimmed,
+      gaps: gapsRef.current,
+      session: { id: current.id, startedAt: current.startedAt },
+      previousAiTurns: current.turns.filter((turn) => turn.role === "assistant").map((turn) => turn.text),
+    });
+    storeGaps(closed.map((gap) => closeGap(gap, { id: current.id, startedAt: current.startedAt }, at, trimmed)));
+    const withUser: Conversation = {
+      ...current,
+      turns: [...current.turns, { role: "user", text: trimmed, at, ...extra }],
+      longSession: closed.length > 0
+        ? { ...current.longSession, closedGapIds: [...(current.longSession.closedGapIds ?? []), ...closed.map((gap) => gap.id)] }
+        : current.longSession,
+    };
     persist(withUser);
     setTyped("");
     spokenRef.current = false;
@@ -335,7 +391,7 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
       return;
     }
     await requestReply(withUser);
-  }, [finish, persist, requestReply]);
+  }, [finish, persist, requestReply, storeGaps]);
 
   const toggleMic = useCallback(async () => {
     if (mic.recording) {
@@ -416,6 +472,7 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
     await sendTurn(turn.text, turn);
   }, [portuguese, sendTurn]);
 
+  const openGaps = partitionOpenGaps(gaps);
   const cloudNote = activeProvider && !activeProvider.isLocal
     ? t("Your turns are sent to {provider} to generate replies.", { provider: activeProvider.label })
     : null;
@@ -426,6 +483,7 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
       <LongSessionReview
         conversation={finished}
         topic={topics.find((item) => item.id === finished.longSession?.scenarioId)}
+        registry={gaps}
         reviewing={reviewing}
         reviewerNote={activeProvider && !activeProvider.isLocal
           ? t("The whole conversation is sent to {provider} for the review.", { provider: activeProvider.label })
@@ -476,6 +534,12 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
             />
           </Field>
 
+          {openGaps.active.length > 0 && (
+            <p className="text-xs text-ink-soft">
+              {t("{count} open gaps will come back in the conversation when they are at least a day old.", { count: openGaps.active.length })}
+              {openGaps.frozen.length > 0 && ` ${t("{count} older ones wait until one closes.", { count: openGaps.frozen.length })}`}
+            </p>
+          )}
           {cloudNote && <p className="text-xs text-ink-muted">{cloudNote}</p>}
           {note && <p role="status" className="text-xs text-ink-muted">{note}</p>}
           <div className="flex flex-wrap items-center gap-3">

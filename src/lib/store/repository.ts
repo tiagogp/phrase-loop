@@ -22,6 +22,7 @@ import type { StoredLevelTestAttempt } from "@/features/levelup/testModel";
 import type { ConversationTurn } from "@/lib/cards/provider";
 import type { RepertoireItem } from "@/features/converse/repertoire";
 import type { LongSessionRecord } from "@/features/converse/longSession";
+import { isConversationGap, type ConversationGap } from "@/features/converse/gaps";
 import type {
   AudioRecording,
   ListeningAttempt,
@@ -588,6 +589,14 @@ export interface Conversation {
   longSession?: LongSessionRecord;
 }
 
+export function getConversationGaps(): Promise<ConversationGap[]> {
+  return getAll<ConversationGap>(STORES.conversationGaps);
+}
+
+export function saveConversationGaps(gaps: ConversationGap[]): Promise<void> {
+  return putMany(STORES.conversationGaps, gaps);
+}
+
 export function saveConversation(conversation: Conversation): Promise<void> {
   return put(STORES.conversations, conversation);
 }
@@ -738,6 +747,7 @@ export function validateLocalBackup(raw: unknown): BackupValidationResult {
         }
         if (store === STORES.tutorSessions && !isTutorSession(row)) errors.push(`${store}[${index}] is not a valid tutor session.`);
         if (store === STORES.tutorPreferences && !isTutorPreferences(row)) errors.push(`${store}[${index}] is not valid tutor preferences.`);
+        if (store === STORES.conversationGaps && !isConversationGap(row)) errors.push(`${store}[${index}] is not a valid conversation gap.`);
         if (errors.length >= 12) {
           errors.push("More validation errors were omitted.");
           break;

@@ -253,6 +253,11 @@ export function detectRepertoireUse(text: string, items: RepertoireItem[]): Repe
   return items.filter((item) => !item.usedAt && containsSequence(spoken, tokenize(item.expression)));
 }
 
+/** Whether `text` reuses `expression`, with the same tolerant matching as repertoire uptake. */
+export function containsExpression(text: string, expression: string): boolean {
+  return containsSequence(tokenize(text), tokenize(expression));
+}
+
 /** Stamp the given expressions as used, leaving the rest (and their order) untouched. */
 export function markRepertoireUsed(
   items: RepertoireItem[],

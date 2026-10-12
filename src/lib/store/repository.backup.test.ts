@@ -55,6 +55,17 @@ describe("local backup validation", () => {
     expect(result.errors).toContain("cards[0] is missing an id.");
     expect(result.errors).toContain("srs[0] is missing a cardId.");
   });
+
+  it("rejects a conversation gap without the learner's real words", () => {
+    const result = validateLocalBackup({
+      app: "PhraseLoop",
+      schemaVersion: 1,
+      stores: { conversationGaps: [{ id: "gap-x", patternLabel: "soften-disagreement", evidence: "", intent: "x", natural: { casual: "a", neutral: "b" },
+        status: "open", openedAt: 1, firstOpenedAt: 1, sessionIds: [], history: [] }] },
+    });
+    expect(result.ok).toBe(false);
+    expect(result.errors).toContain("conversationGaps[0] is not a valid conversation gap.");
+  });
 });
 
 function makeCard(id: string, overrides: Partial<Card> = {}): Card {
@@ -169,6 +180,7 @@ describe("local backup round-trip — weeks-scale zero-loss proof (Phase 4)", ()
     [STORES.proofAttempts]: "id",
     [STORES.tutorSessions]: "id",
     [STORES.tutorPreferences]: "id",
+    [STORES.conversationGaps]: "id",
   };
 
   function buildSeed(): Record<StoreName, Record<string, unknown>[]> {
@@ -183,6 +195,12 @@ describe("local backup round-trip — weeks-scale zero-loss proof (Phase 4)", ()
     return {
       [STORES.tutorSessions]: [{ ...tutorSession({ phase: "feedback", attempts: [tutorAttempt()], draft: "rascunho preservado" }) }],
       [STORES.tutorPreferences]: [{ id: "preferences", goal: "Falar no trabalho", explanationLanguage: "pt", ignoredEvidenceIds: ["review:review-1"] }],
+      [STORES.conversationGaps]: [{
+        id: "gap-1", patternLabel: "postpone-delivery", kind: "code_switch", evidence: "a gente precisa adiar", intent: "adiar a entrega",
+        natural: { casual: "Let's push it back", neutral: "We need to postpone it", key: "push it back" }, why: "Natural.",
+        originSessionId: "conv-long", sessionIds: ["conv-long"], occurrences: 1, status: "open", firstOpenedAt: START, openedAt: START,
+        reopenCount: 0, updatedAt: START, history: [{ type: "opened", at: START, sessionId: "conv-long", evidence: "a gente precisa adiar" }],
+      }],
       [STORES.errorEvents]: Array.from({ length: 25 }, (_, i) => ({
         id: `error-${i}`,
         text: `I has a mistake ${i}`,

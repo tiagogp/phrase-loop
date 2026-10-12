@@ -8,7 +8,8 @@
 
 const DB_NAME = "tts-cards";
 // v13: additive tutor memory and resumable sessions; existing learning data stays intact.
-const DB_VERSION = 13;
+// v14: additive conversation gaps (experimental long session).
+const DB_VERSION = 14;
 
 export const STORES = {
   errorEvents: "errorEvents",
@@ -37,6 +38,11 @@ export const STORES = {
   proofAttempts: "proofAttempts",
   tutorSessions: "tutorSessions",
   tutorPreferences: "tutorPreferences",
+  /**
+   * Long-session gaps. Kept apart from tutor sessions and error events on purpose: gaps are an
+   * experiment and must never feed skill evidence, the agenda or weakness detection.
+   */
+  conversationGaps: "conversationGaps",
 } as const;
 
 export type StoreName = (typeof STORES)[keyof typeof STORES];
@@ -147,6 +153,9 @@ export function openDb(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains(STORES.tutorPreferences)) {
         db.createObjectStore(STORES.tutorPreferences, { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains(STORES.conversationGaps)) {
+        db.createObjectStore(STORES.conversationGaps, { keyPath: "id" });
       }
     };
     req.onsuccess = () => {

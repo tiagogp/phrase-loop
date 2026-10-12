@@ -51,6 +51,11 @@ export const longSessionMessages = {
   "Keep this attempt": { pt: "Guardar esta tentativa" },
   "You": { pt: "Você" },
   "Natural": { pt: "Natural" },
+  "{count} open gaps will come back in the conversation when they are at least a day old.": { pt: "{count} lacunas abertas vão voltar na conversa quando tiverem pelo menos um dia." },
+  "{count} older ones wait until one closes.": { pt: "{count} mais antigas esperam até alguma fechar." },
+  "You said it on your own this time": { pt: "Desta vez você disse sozinho" },
+  "first stuck on:": { pt: "travou antes em:" },
+  "Came up again": { pt: "Apareceu de novo" },
   "Type it in Portuguese": { pt: "Digitar em português" },
   "What you wanted to say, in Portuguese": { pt: "O que você queria dizer, em português" },
 };

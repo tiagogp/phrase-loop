@@ -152,6 +152,10 @@ export interface LongSessionRecord extends LongSessionClock {
   label?: string;
   endedBy?: "time" | "learner";
   pacing: ExpressionPacing;
+  /** How many times the partner steered toward each open gap in this session (by gap id). */
+  gapPulls?: Record<string, number>;
+  /** Gaps the learner closed in this session by using the natural form unaided. */
+  closedGapIds?: string[];
   /** Set once the review ran; reopening shows it instead of re-charging the provider. */
   review?: GapReview & { reviewedAt: number; judge?: JudgeStamp };
   /**
