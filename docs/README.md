@@ -138,6 +138,18 @@ preserva o contexto e usa `correctReview`/`correctedAt` para evitar repetir aval
 Kokoro e Whisper são reutilizados; uma alternativa digitada atende ausência de áudio nativo.
 Uso de nuvem deve ficar claro quando falas saem do dispositivo.
 
+A sessão longa (experimental) fica em `features/converse`: `longSession.ts` (relógio com
+pausa, travadas, ritmo de expressões), `gapReview.ts` (prompt `long-session-gaps-v1` e parser
+tolerante compartilhado com o script de comparação), `gaps.ts` (registro, recorrência,
+fechamento, teto de 9 e planejamento da próxima fala), `domainProfile.ts` com
+`domainProfiles/*.json`, `reviewModel.ts` (preferência local do revisor) e
+`longSessionMetrics.ts` (números da exportação). `ConverseOptions.longSession` troca o prompt
+em `buildLongSessionSystem`; turnos com `codeSwitch` chegam marcados ao modelo.
+`/api/conversation/review` usa `complete()` com a conversa inteira. `/api/transcribe` aceita
+`language` (`pt`/`en`; ausente = automático), repassado como `X-Language`. A conversa guarda
+`mode: "long"` e `longSession`; as lacunas ficam no store `conversationGaps` (IndexedDB v14),
+incluído no backup e nunca lido pelo tutor.
+
 O plano de estudo usa `learningPlan`, `activityLog` e `effortHistory`, com tarefas por fase/dia,
 geração e adaptação em `features/plan`. `emitActivity` registra ações de estudo, captura,
 conversa e correção. Adaptação semanal considera esforço; minutos e exposição não substituem

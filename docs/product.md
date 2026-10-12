@@ -165,6 +165,59 @@ Uma resposta incerta, contestada ou excluída não estabelece primeiro resultado
 - Preferências de apresentação são locais e separadas do histórico de aprendizagem; não
   integram seu backup. A navegação completa depende de preferência explícita.
 
+## Sessão longa de conversa (experimental, B1+)
+
+Decidida em 12/10/2026. O intermediário estaciona porque evita o que não sabe dizer: dá
+voltas, simplifica, troca para o português. A sessão longa existe para gerar lacunas reais e
+devolvê-las à prática: o aluno tenta, percebe que não sabe, recebe a forma natural, reconstrói
+e volta a usá-la outro dia, em outro contexto. Tiago é o primeiro usuário. Não altera o ciclo
+do tutor, o catálogo, os critérios de evidência nem a agenda; lacunas não entram no sistema
+de evidências. Remover ou esconder telas é outro trabalho.
+
+- **Sessão:** na Conversa, para B1+, “Sessão longa (experimental)”. Tema do perfil de domínio
+  ou livre; 5 ou 10 minutos, timer visível, sem limite de falas. Pausar para o tempo e mantém
+  a sessão; sair da tela pausa. Ao fim do tempo, a fala em andamento termina e a sessão vai
+  para a revisão. Sessão sem fala do aluno é descartada sem revisão.
+- **Parceiro:** fala pouco (1–2 frases), aprofunda pelas funções do cenário, não corrige e
+  nunca simplifica quando o aluno trava: espera ou pede “try saying it another way”.
+- **Travei:** segurar o botão e falar em português; o trecho é transcrito com Whisper em
+  `language: "pt"` e marcado como `codeSwitch`. A fala seguinte da IA usa a forma em inglês
+  dentro do personagem, sem corrigir. Plano B: digitar o trecho. Por sessão ficam registrados
+  o número de travadas (voz ou digitado) e os segundos de português gravado. Detecção
+  automática de português sem o botão depende do teste de transcrição (ver validação).
+- **Revisão:** recebe a conversa inteira, com as falas da IA e os trechos em português, e pode
+  usar outro provedor/modelo, escolhido em Configurações (padrão: o mesmo da conversa; a tela
+  avisa quando a conversa vai para a nuvem). Mostra até 2 pontos fortes e no máximo 3 lacunas,
+  sempre com o trecho real; evitação só com a pergunta da IA e a resposta que contornou. Cada
+  lacuna tem intenção, versões casual e neutra, porquê (PT em B1/B2), função do perfil, rótulo
+  de padrão e tipo. Ordem: recorrentes → ligadas ao perfil → gravidade. Resposta malformada
+  vira revisão vazia com nova tentativa. A revisão termina com reconstrução em voz alta ou por
+  escrito: registrada, comparada com a forma natural, não avaliada. Uma lacuna pode virar frase
+  salva e abrir uma situação do tutor pela ponte existente (primeira prática assistida).
+- **Lacunas:** registro local separado. Fecham quando o aluno usa a forma natural sem ajuda numa
+  sessão iniciada pelo menos 24h depois da abertura, com ou sem a IA ter puxado o tema. Não
+  conta se a IA disse a forma numa das suas 2 falas anteriores, nem o uso na reconstrução.
+  A detecção usa o núcleo da forma natural (2–5 palavras) informado pela revisão, ou as
+  versões inteiras. O mesmo rótulo de padrão conta como recorrência; travar de novo reabre,
+  preservando o histórico. No máximo 9 abertas puxadas; as mais antigas ficam congeladas até
+  abrir espaço. A IA puxa uma lacuna elegível por vez, até 2 vezes por sessão, sem dizê-la.
+- **Expressões:** em B1/B2 as lacunas vêm primeiro; sem lacuna pendente, até 2 expressões novas
+  a cada 4 falas da IA e no máximo 3 por sessão, preferindo as do perfil. C1/C2 seguem o modo
+  de repertório.
+- **Perfil de domínio:** JSON incluído no app; o primeiro é desenvolvimento de software, com 12
+  cenários (daily, code review, incidente, estimativa, trade-off, Slack, “não” ao PM, demo,
+  1:1, entrevista técnica, onboarding, small talk remoto), funções e expressões. A área é um
+  campo opcional do objetivo profissional, em Configurações. Funções derivadas das descrições
+  e expressões geradas por modelo e conferidas por um segundo modelo estão com
+  `reviewed: false`, pendentes de revisão do responsável.
+- **Modelos:** conversa local (por exemplo Qwen3.5-9B ou Gemma 4 12B); revisão com modelo
+  escolhível à parte, maior, local ou na nuvem.
+
+Avaliação após 2 semanas de uso, pela exportação do piloto: % de lacunas fechadas (meta:
+metade; denominador são as lacunas que tiveram uma sessão posterior 24h+ depois), tempo em
+português por sessão (deve cair; segundos gravados ao lado das travadas) e sessões longas por
+semana (meta: 3 ou mais). São medidas de processo, não de proficiência.
+
 ## Escopo e prioridades
 
 | Área | Papel atual |

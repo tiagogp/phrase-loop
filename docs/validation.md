@@ -189,6 +189,21 @@ português quando o idioma é forçado. `/api/transcribe` aceita `language` opci
 Gravações e relatórios ficam no computador e não entram no repositório. Resultado: pendente,
 a preencher pelo responsável. Se falhar, o plano B é digitar o trecho em português.
 
+## Avaliação da sessão longa (2 semanas)
+
+Depois de 2 semanas de uso, o responsável lê três números em `longSessions` na exportação do
+piloto: `gaps.closedShare` (meta inicial: metade; denominador são lacunas com ao menos uma
+sessão longa iniciada 24h+ depois da abertura, ou já fechadas; as demais aparecem em
+`notYetEligible`), `portuguesePerSession` (segundos gravados e travadas; deve cair) e
+`sessionsPerWeek` (meta: 3 ou mais, em janelas de 7 dias a partir da primeira sessão). São
+medidas de processo, não de proficiência. Nenhum resultado registrado.
+
+Para comparar modelos de revisão em conversas salvas: exportar o backup em Configurações e
+rodar `node scripts/eval-conversation-review.mjs <backup.json> --a ollama:<modelo> --b claude
+--output /tmp/revisao.md` (`--dry-run` não chama provedores; `--limit` padrão 10 sessões).
+Provedor indisponível encerra antes da primeira chamada. O relatório lado a lado contém falas
+do aluno e fica no computador; nenhum modelo é declarado calibrado.
+
 ## Exportação do piloto
 
 Em Configurações → Dados e privacidade, “Exportar dados do piloto” baixa um JSON no
@@ -201,6 +216,7 @@ tutor são deduplicadas. Retries e registros de resolução são apresentados se
 
 A caixa “Incluir o texto das minhas respostas neste arquivo” começa desmarcada. Apenas
 marcá-la inclui respostas digitadas/transcritas e respostas de revisão; gravações, conversas
-inteiras, perguntas ao tutor, tarefas livres, feedback e credenciais continuam fora. O arquivo
+inteiras, perguntas ao tutor, tarefas livres, feedback e credenciais continuam fora (com a
+opção marcada, entram também os trechos reais das lacunas da sessão longa). O arquivo
 não é enviado a um servidor. Compartilhar arquivos, obter consentimento e conduzir o piloto
 continuam sendo trabalho humano. Não há participantes nem resultados novos registrados.
