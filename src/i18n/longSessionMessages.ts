@@ -18,4 +18,13 @@ export const longSessionMessages = {
   "Session finished": { pt: "Sessão encerrada" },
   "{count} of your turns": { pt: "{count} falas suas" },
   "In Portuguese": { pt: "Em português" },
+  "I'm stuck · hold to say it in Portuguese": { pt: "Travei · segure e fale em português" },
+  "Hold to say it in Portuguese": { pt: "Segure para falar em português" },
+  "Speaking Portuguese… release to send": { pt: "Falando em português… solte para enviar" },
+  "Hold the button while you say it in Portuguese.": { pt: "Segure o botão enquanto fala em português." },
+  "Couldn't access the microphone. Type it in Portuguese instead.": { pt: "Não consegui acessar o microfone. Digite em português." },
+  "Couldn't make out that stretch. Type it in Portuguese instead.": { pt: "Não entendi esse trecho. Digite em português." },
+  "Stuck {count} times · {seconds}s in Portuguese": { pt: "Travou {count} vezes · {seconds}s em português" },
+  "Type it in Portuguese": { pt: "Digitar em português" },
+  "What you wanted to say, in Portuguese": { pt: "O que você queria dizer, em português" },
 };

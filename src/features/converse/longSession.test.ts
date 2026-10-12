@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   codeSwitchStats,
+  codeSwitchTurn,
   endDisposition,
   formatRemaining,
   isLongSessionLevel,
@@ -62,6 +63,15 @@ describe("travei stretches", () => {
 
   it("counts every stuck moment but only recorded Portuguese in the seconds", () => {
     expect(codeSwitchStats(turns)).toEqual({ count: 2, recordedSeconds: 3, typed: 1 });
+  });
+
+  it("marks a held-button stretch with its text, moment and length, and a typed one without length", () => {
+    expect(codeSwitchTurn(" a gente precisa adiar ", "voice", 50, 2_499.6)).toEqual({
+      role: "user", text: "a gente precisa adiar", codeSwitch: true, codeSwitchInput: "voice", at: 50, durationMs: 2_500, spoken: true,
+    });
+    const typed = codeSwitchTurn("prazo apertado", "typed", 60, 9_000);
+    expect(typed).not.toHaveProperty("durationMs");
+    expect(codeSwitchStats([typed])).toEqual({ count: 1, recordedSeconds: 0, typed: 1 });
   });
 
   it("hands the last Portuguese stretch to the next reply only", () => {

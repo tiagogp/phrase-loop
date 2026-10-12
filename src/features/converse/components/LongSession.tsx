@@ -24,10 +24,13 @@ import LocalModelNotice from "@/features/speech/components/LocalModelNotice";
 import { useWhisperModel } from "@/features/speech/hooks/useLocalModel";
 import {
   aiTurnCount,
+  codeSwitchStats,
+  codeSwitchTurn,
   endDisposition,
   formatRemaining,
   isTimeUp,
   LONG_SESSION_DURATIONS,
+  MIN_CODE_SWITCH_MS,
   newExpressionBudget,
   pauseClock,
   pendingCodeSwitch,
@@ -77,6 +80,12 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const spokenRef = useRef(false);
   const mic = useClipRecorder(active);
+  // "Travei": a second recorder, held down while the learner says it in Portuguese.
+  const stuck = useClipRecorder(active);
+  const holdingRef = useRef(false);
+  const [stuckTranscribing, setStuckTranscribing] = useState(false);
+  const [typingPortuguese, setTypingPortuguese] = useState(false);
+  const [portuguese, setPortuguese] = useState("");
 
   const level = getLearnerLangs().level;
   const topic = topics.find((item) => item.id === topicId);
@@ -146,6 +155,7 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
     setBusy(false);
     stopAudio();
     mic.cancel();
+    stuck.cancel();
     const endedAt = Date.now();
     conversationRef.current = null;
     setConversation(null);
@@ -158,7 +168,7 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
     const ended: Conversation = { ...current, endedAt, longSession: { ...pauseClock(current.longSession, endedAt), endedBy } };
     void saveConversation(ended).then(refreshPast);
     setFinished(ended);
-  }, [mic, refreshPast, stopAudio, t]);
+  }, [mic, refreshPast, stopAudio, stuck, t]);
 
   const requestReply = useCallback(async (base: Conversation) => {
     const long = base.longSession;
@@ -236,8 +246,9 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
     setBusy(false);
     stopAudio();
     mic.cancel();
+    stuck.cancel();
     persist({ ...current, longSession: pauseClock(current.longSession, Date.now()) });
-  }, [mic, persist, stopAudio]);
+  }, [mic, persist, stopAudio, stuck]);
 
   const resume = useCallback((target: Conversation) => {
     if (!target.longSession) return;
@@ -264,7 +275,8 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
   }, [running]);
 
   const timeUp = Boolean(conversation?.longSession && running && isTimeUp(conversation.longSession, now));
-  const turnInProgress = mic.recording || transcribing || typed.trim().length > 0;
+  const turnInProgress = mic.recording || transcribing || stuck.recording || stuckTranscribing
+    || typed.trim().length > 0 || portuguese.trim().length > 0;
   useEffect(() => {
     if (timeUpAction({ timeUp, turnInProgress }) === "review") finish("time");
   }, [finish, timeUp, turnInProgress]);
@@ -313,6 +325,58 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
     }
   }, [mic, t]);
 
+  const startStuck = useCallback(async () => {
+    if (holdingRef.current || mic.recording) return;
+    holdingRef.current = true;
+    stopAudio();
+    setNote(null);
+    try {
+      const started = await stuck.start();
+      // Released before the mic opened: that was a tap, not a stretch of speech.
+      if (started && !holdingRef.current) await stuck.stop();
+    } catch {
+      holdingRef.current = false;
+      setNote(t("Couldn't access the microphone. Type it in Portuguese instead."));
+      setTypingPortuguese(true);
+    }
+  }, [mic.recording, stopAudio, stuck, t]);
+
+  const releaseStuck = useCallback(async () => {
+    if (!holdingRef.current) return;
+    holdingRef.current = false;
+    const clip = await stuck.stop();
+    if (!clip) return;
+    if (clip.durationMs < MIN_CODE_SWITCH_MS) {
+      setNote(t("Hold the button while you say it in Portuguese."));
+      return;
+    }
+    setStuckTranscribing(true);
+    try {
+      // Forced Portuguese: in auto mode Whisper may render this stretch as English or translate it.
+      const text = await transcribeAudio(clip.blob, undefined, { language: "pt" });
+      if (!text) {
+        setNote(t("Couldn't make out that stretch. Type it in Portuguese instead."));
+        setTypingPortuguese(true);
+        return;
+      }
+      const turn = codeSwitchTurn(text, "voice", Date.now(), clip.durationMs);
+      await sendTurn(turn.text, turn);
+    } catch (err: unknown) {
+      setNote(err instanceof Error ? err.message : t("Transcription failed."));
+      setTypingPortuguese(true);
+    } finally {
+      setStuckTranscribing(false);
+    }
+  }, [sendTurn, stuck, t]);
+
+  const sendPortuguese = useCallback(async () => {
+    const text = portuguese.trim();
+    if (!text) return;
+    setPortuguese("");
+    const turn = codeSwitchTurn(text, "typed", Date.now());
+    await sendTurn(turn.text, turn);
+  }, [portuguese, sendTurn]);
+
   const cloudNote = activeProvider && !activeProvider.isLocal
     ? t("Your turns are sent to {provider} to generate replies.", { provider: activeProvider.label })
     : null;
@@ -327,6 +391,8 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
         </div>
         <p className="text-xs text-ink-muted">
           {t("{count} of your turns", { count: finished.turns.filter((turn) => turn.role === "user").length })}
+          {" · "}
+          {t("Stuck {count} times · {seconds}s in Portuguese", { count: codeSwitchStats(finished.turns).count, seconds: codeSwitchStats(finished.turns).recordedSeconds })}
         </p>
       </Card>
     );
@@ -440,8 +506,60 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
         {timeUp && <Notice tone="warning">{t("Time is up. Finish your sentence and send it; the review comes next.")}</Notice>}
         {note && <p className="text-xs text-danger">{note}</p>}
         <LocalModelNotice model={whisper} />
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="secondary"
+            aria-label={t("Hold to say it in Portuguese")}
+            disabled={!running || busy || stuckTranscribing || mic.recording || transcribing}
+            className={cn("h-11 touch-none select-none", stuck.recording && "border-accent text-accent")}
+            onPointerDown={(event) => {
+              event.currentTarget.setPointerCapture?.(event.pointerId);
+              void startStuck();
+            }}
+            onPointerUp={() => void releaseStuck()}
+            onPointerCancel={() => void releaseStuck()}
+            onKeyDown={(event) => {
+              if ((event.key === " " || event.key === "Enter") && !event.repeat) {
+                event.preventDefault();
+                void startStuck();
+              }
+            }}
+            onKeyUp={(event) => {
+              if (event.key === " " || event.key === "Enter") void releaseStuck();
+            }}
+          >
+            {stuckTranscribing ? <Spinner className="h-4 w-4" /> : stuck.recording ? t("Speaking Portuguese… release to send") : t("I'm stuck · hold to say it in Portuguese")}
+          </Button>
+          <button type="button" className="text-xs text-ink-muted underline hover:no-underline" disabled={!running}
+            onClick={() => setTypingPortuguese((open) => !open)}>
+            {typingPortuguese ? t("Hide") : t("Type it in Portuguese")}
+          </button>
+        </div>
+        {typingPortuguese && (
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              lang="pt"
+              value={portuguese}
+              onChange={(event) => setPortuguese(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  void sendPortuguese();
+                }
+              }}
+              placeholder={t("What you wanted to say, in Portuguese")}
+              aria-label={t("What you wanted to say, in Portuguese")}
+              disabled={!running || busy}
+              className="h-10 flex-1"
+            />
+            <Button variant="secondary" className="h-10" disabled={!running || busy || !portuguese.trim()} onClick={() => void sendPortuguese()}>
+              {t("Send")}
+            </Button>
+          </div>
+        )}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <Button variant="secondary" onClick={() => void toggleMic()} disabled={!running || transcribing}
+          <Button variant="secondary" onClick={() => void toggleMic()} disabled={!running || transcribing || stuck.recording}
             className={cn("h-11 shrink-0", mic.recording && "border-danger text-danger")}>
             {transcribing ? <Spinner className="h-4 w-4" /> : mic.recording ? t("Stop") : t("Speak")}
           </Button>

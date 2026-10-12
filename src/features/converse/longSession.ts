@@ -164,3 +164,21 @@ export interface LongSessionTopic {
   /** Domain expressions the partner may introduce at B1/B2. */
   expressions?: string[];
 }
+
+/** Shortest held-button clip worth transcribing; anything shorter was a tap, not speech. */
+export const MIN_CODE_SWITCH_MS = 400;
+
+/**
+ * The learner turn a "travei" produces: their Portuguese, marked, with when it was said and — for
+ * a recording only — how long it ran.
+ */
+export function codeSwitchTurn(text: string, input: "voice" | "typed", at: number, durationMs?: number): ConversationTurn {
+  return {
+    role: "user",
+    text: text.trim(),
+    codeSwitch: true,
+    codeSwitchInput: input,
+    at,
+    ...(input === "voice" && durationMs !== undefined ? { durationMs: Math.max(0, Math.round(durationMs)), spoken: true } : {}),
+  };
+}
