@@ -5,6 +5,35 @@ contagens de testes e diagnósticos antigos não são um retrato automaticamente
 Direção vigente: [produto](product.md). Contratos: [arquitetura](README.md).
 Estudos com alunos: [validação](validation.md).
 
+## 12/10/2026 — Sessão longa de conversa (experimental)
+
+As oito frentes do plano da sessão longa foram implementadas em commits locais, sem push:
+idioma forçado na transcrição e script de comparação de gravações; modo sessão longa com
+timer e sem limite de falas; botão "travei" com plano B digitado; revisão da conversa inteira
+em lacunas com prova e reconstrução; registro de lacunas com recorrência, fechamento sem ajuda
+após 24h e teto de 9; perfil de domínio de desenvolvimento de software; revisor escolhível e
+script de comparação de modelos; números da avaliação de 2 semanas na exportação do piloto.
+O plano foi incorporado a produto, arquitetura e validação. Decisões tomadas na execução:
+a revisão também informa o núcleo da forma natural (2–5 palavras), usado para detectar o uso
+posterior; a IA puxa uma lacuna por vez, só quando ela já pode fechar, até 2 vezes por sessão;
+a sessão longa não grava tentativas de produção do método nem toca no tutor.
+
+Verificação desta rodada: `yarn test` passou com 993 testes em 127 arquivos (antes do build,
+três testes dependentes do ambiente Windows — clipes de áudio ainda não gerados e um timeout —
+falhavam, também sem as mudanças); `yarn lint` sem erros, com três avisos preexistentes;
+`npx tsc --noEmit -p .` passou; `yarn build` com Turbopack concluiu, incluindo o prebuild de
+áudio. No servidor de produção, sem IA: `/app` respondeu 200, `/api/transcribe` recusou idioma
+inválido com 400 e `/api/conversation/review` recusou sessão sem falas e falta de IA com
+mensagens em PT-BR. Os dry-runs dos dois scripts rodaram; o de revisão parou antes de chamar
+um provedor não configurado. O segundo modelo apontou 21 de 60 expressões; as correções
+procedentes foram aplicadas.
+
+Limites: não houve condução da interface em navegador nem conversa com IA real (sem Playwright
+nem Ollama nesta máquina); o `graphify` não estava instalado, então o grafo não foi atualizado.
+Pendências humanas: gravar e avaliar os quatro áudios do teste de transcrição; revisar funções
+e as 64 expressões do perfil (`reviewed: false`) e os textos novos em PT/EN; comparar
+modelos de revisão com conversas reais; usar por 2 semanas e ler os três números.
+
 ## 01/10/2026 — Experiência de aprendizagem e ferramentas do piloto
 
 As onze frentes do plano foram implementadas em commits locais, sem push: descarte do timer

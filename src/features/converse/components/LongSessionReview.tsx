@@ -226,11 +226,11 @@ function Reconstruction({ conversation, onUpdate }: { conversation: Conversation
       ...conversation,
       longSession: {
         ...conversation.longSession,
-        reconstructions: [...attempts, { gapIndex: index, text: draft.text.trim(), spoken: draft.spoken, at: Date.now() }],
+        reconstructions: [...(conversation.longSession.reconstructions ?? []), { gapIndex: index, text: draft.text.trim(), spoken: draft.spoken, at: Date.now() }],
       },
     });
     setDrafts((prev) => ({ ...prev, [index]: { text: "", spoken: false } }));
-  }, [attempts, conversation, drafts, onUpdate]);
+  }, [conversation, drafts, onUpdate]);
 
   return (
     <section className="space-y-3 rounded-lg border border-accent/30 bg-accent/5 p-4">
