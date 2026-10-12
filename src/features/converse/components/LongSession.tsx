@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { getReviewModelPreference, resolveReviewSelection, subscribeToReviewModel } from "@/features/converse/reviewModel";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
@@ -78,6 +79,10 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
   const { t } = useT();
   const selection = useProviderSelection({ fallbackToEvaluator: true });
   const { provider, activeProvider, hasEvaluator, selectedModel } = selection;
+  // The review may use a different (usually larger) model than the conversation; default: same.
+  const reviewPreference = useSyncExternalStore(subscribeToReviewModel, () => JSON.stringify(getReviewModelPreference()), () => "{}");
+  const reviewer = resolveReviewSelection(JSON.parse(reviewPreference), { provider, model: provider === "ollama" ? selectedModel : undefined },
+    selection.providers, selection.ollamaModels);
   const whisper = useWhisperModel();
   const [topicId, setTopicId] = useState<string>(() => topics[0]?.id ?? FREE_TOPIC);
   const [customTopic, setCustomTopic] = useState("");
@@ -194,8 +199,8 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
     const sessionTopic = topics.find((item) => item.id === target.longSession?.scenarioId);
     try {
       const { review, judge } = await requestGapReview({
-        provider,
-        selectedModel,
+        provider: reviewer.provider,
+        selectedModel: reviewer.model,
         turns: target.turns,
         level: target.level,
         scenario: target.scenario,
@@ -211,7 +216,7 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
     } finally {
       setReviewing(false);
     }
-  }, [provider, saveFinished, selectedModel, storeGaps, t, topics]);
+  }, [reviewer.model, reviewer.provider, saveFinished, storeGaps, t, topics]);
 
   const openReview = useCallback((target: Conversation) => {
     setFinished(target);
@@ -485,9 +490,10 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
         topic={topics.find((item) => item.id === finished.longSession?.scenarioId)}
         registry={gaps}
         reviewing={reviewing}
-        reviewerNote={activeProvider && !activeProvider.isLocal
-          ? t("The whole conversation is sent to {provider} for the review.", { provider: activeProvider.label })
-          : null}
+        reviewerNote={[
+          reviewer.fellBack ? t("The AI chosen for reviews is unavailable, so this review uses the conversation's AI.") : "",
+          !reviewer.isLocal ? t("The whole conversation is sent to {provider} for the review.", { provider: reviewer.label }) : "",
+        ].filter(Boolean).join(" ") || null}
         note={reviewNote}
         onRetry={() => void runReview(finished)}
         onUpdate={saveFinished}

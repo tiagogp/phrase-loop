@@ -59,6 +59,11 @@ export const longSessionMessages = {
   "Work area": { pt: "Área de trabalho" },
   "Gives the long conversation session scenarios from your work. Optional.": { pt: "Dá à sessão longa de conversa cenários do seu trabalho. Opcional." },
   "None": { pt: "Nenhuma" },
+  "AI for long-session reviews": { pt: "IA para revisar a sessão longa" },
+  "The review reads the whole conversation; a larger model may find gaps more reliably. Cloud AIs receive the whole conversation.": { pt: "A revisão lê a conversa inteira; um modelo maior pode achar lacunas com mais segurança. IAs na nuvem recebem a conversa inteira." },
+  "Same as the conversation": { pt: "A mesma da conversa" },
+  "cloud": { pt: "nuvem" },
+  "The AI chosen for reviews is unavailable, so this review uses the conversation's AI.": { pt: "A IA escolhida para revisões não está disponível, então esta revisão usa a IA da conversa." },
   "Type it in Portuguese": { pt: "Digitar em português" },
   "What you wanted to say, in Portuguese": { pt: "O que você queria dizer, em português" },
 };
