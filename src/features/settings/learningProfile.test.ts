@@ -137,3 +137,12 @@ describe("learning profile", () => {
     });
   });
 });
+
+describe("work area", () => {
+  it("links the professional goal to a known domain profile and drops unknown areas", () => {
+    installStorage();
+    expect(saveLearningProfile({ objective: "professional", domainArea: "software-dev" }).domainArea).toBe("software-dev");
+    saveLearningProfile({ domainArea: "lawyer" as never });
+    expect(getLearningProfile().domainArea).toBeUndefined();
+  });
+});

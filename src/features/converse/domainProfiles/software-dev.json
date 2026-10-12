@@ -1,0 +1,903 @@
+{
+  "id": "software-dev",
+  "version": 1,
+  "label": {
+    "pt": "Desenvolvimento de software",
+    "en": "Software development"
+  },
+  "provenance": "Cenários: lista do responsável (12/10/2026). Funções: derivadas das descrições dos cenários, pendentes de confirmação do responsável. Expressões: geradas por modelo e conferidas por um segundo modelo; nenhuma revisada por humano.",
+  "scenarios": [
+    {
+      "id": "daily-standup",
+      "label": {
+        "pt": "Daily",
+        "en": "Daily stand-up"
+      },
+      "situation": {
+        "en": "Daily stand-up of a remote software team. The learner gives their update: what they did, what they will do next and what is blocking them.",
+        "pt": "Daily de um time remoto. Você dá seu update: o que fez, o que vai fazer e o que está te bloqueando."
+      },
+      "aiRole": "the engineering manager running the stand-up, who asks short follow-up questions about progress and blockers",
+      "functions": [
+        {
+          "id": "report-progress",
+          "label": {
+            "en": "say what you finished and what is still in progress",
+            "pt": "dizer o que terminou e o que ainda está em andamento"
+          }
+        },
+        {
+          "id": "plan-next",
+          "label": {
+            "en": "say what you will work on next",
+            "pt": "dizer no que vai trabalhar em seguida"
+          }
+        },
+        {
+          "id": "flag-blocker",
+          "label": {
+            "en": "raise a blocker and ask for what you need",
+            "pt": "avisar de um bloqueio e pedir o que precisa"
+          }
+        }
+      ],
+      "expressions": [
+        {
+          "text": "I wrapped up",
+          "functionId": "report-progress",
+          "register": "casual",
+          "note": "wrap up = terminar, fechar uma tarefa",
+          "reviewed": false
+        },
+        {
+          "text": "I should have it up for review by",
+          "functionId": "plan-next",
+          "register": "neutral",
+          "note": "abrir o PR para revisão até tal momento",
+          "reviewed": false
+        },
+        {
+          "text": "next up, I'm picking up",
+          "functionId": "plan-next",
+          "register": "casual",
+          "note": "pick up = pegar uma tarefa/ticket",
+          "reviewed": false
+        },
+        {
+          "text": "I'm blocked on",
+          "functionId": "flag-blocker",
+          "register": "neutral",
+          "note": "estar travado por causa de algo",
+          "reviewed": false
+        },
+        {
+          "text": "I'm waiting on",
+          "functionId": "flag-blocker",
+          "register": "neutral",
+          "note": "estar esperando algo/alguém para seguir",
+          "reviewed": false
+        },
+        {
+          "text": "I'm still working on",
+          "functionId": "report-progress",
+          "register": "neutral",
+          "note": "ainda estou trabalhando em",
+          "reviewed": false
+        }
+      ]
+    },
+    {
+      "id": "code-review-disagree",
+      "label": {
+        "pt": "Discordar no code review",
+        "en": "Disagree in a code review"
+      },
+      "situation": {
+        "en": "A senior engineer left a review comment asking the learner to change their approach. The learner thinks the original approach is better and discusses it in a call.",
+        "pt": "Um engenheiro sênior deixou um comentário pedindo para você mudar a abordagem. Você acha a sua melhor e discute isso numa call."
+      },
+      "aiRole": "the senior engineer who wrote the review comment, polite but convinced of their suggestion",
+      "functions": [
+        {
+          "id": "disagree-politely",
+          "label": {
+            "en": "disagree politely",
+            "pt": "discordar com educação"
+          }
+        },
+        {
+          "id": "justify-with-reasons",
+          "label": {
+            "en": "back your choice up with a concrete reason",
+            "pt": "sustentar sua escolha com um motivo concreto"
+          }
+        },
+        {
+          "id": "propose-compromise",
+          "label": {
+            "en": "propose a middle ground",
+            "pt": "propor um meio-termo"
+          }
+        }
+      ],
+      "expressions": [
+        {
+          "text": "I see where you're coming from, but",
+          "functionId": "disagree-politely",
+          "register": "neutral",
+          "note": "reconhecer o ponto do outro antes de discordar",
+          "reviewed": false
+        },
+        {
+          "text": "I'm not sure I agree",
+          "functionId": "disagree-politely",
+          "register": "neutral",
+          "note": "discordar de forma suave",
+          "reviewed": false
+        },
+        {
+          "text": "the reason I went with",
+          "functionId": "justify-with-reasons",
+          "register": "neutral",
+          "note": "explicar por que escolheu uma opção",
+          "reviewed": false
+        },
+        {
+          "text": "would it work if we",
+          "functionId": "propose-compromise",
+          "register": "neutral",
+          "note": "propor um meio-termo em forma de pergunta",
+          "reviewed": false
+        },
+        {
+          "text": "that said, I'm happy to",
+          "functionId": "propose-compromise",
+          "register": "neutral",
+          "note": "dito isso, por mim tudo bem…",
+          "reviewed": false
+        }
+      ]
+    },
+    {
+      "id": "incident-explain",
+      "label": {
+        "pt": "Explicar um incidente",
+        "en": "Explain an incident"
+      },
+      "situation": {
+        "en": "Yesterday's deploy caused an outage. In the post-incident review, the learner explains what happened, the root cause and what the team will change.",
+        "pt": "O deploy de ontem derrubou o serviço. Na revisão do incidente, você explica o que aconteceu, a causa e o que o time vai mudar."
+      },
+      "aiRole": "the head of engineering running the incident review, asking for precise details",
+      "functions": [
+        {
+          "id": "describe-timeline",
+          "label": {
+            "en": "describe what happened, in order",
+            "pt": "descrever o que aconteceu, em ordem"
+          }
+        },
+        {
+          "id": "explain-root-cause",
+          "label": {
+            "en": "explain the root cause",
+            "pt": "explicar a causa raiz"
+          }
+        },
+        {
+          "id": "commit-to-actions",
+          "label": {
+            "en": "commit to what will change",
+            "pt": "se comprometer com o que vai mudar"
+          }
+        }
+      ],
+      "expressions": [
+        {
+          "text": "we caught it when",
+          "functionId": "describe-timeline",
+          "register": "neutral",
+          "note": "dizer quando o problema foi percebido",
+          "reviewed": false
+        },
+        {
+          "text": "we rolled back at",
+          "functionId": "describe-timeline",
+          "register": "neutral",
+          "note": "revertemos às (horário); roll back = reverter a versão",
+          "reviewed": false
+        },
+        {
+          "text": "the root cause was",
+          "functionId": "explain-root-cause",
+          "register": "neutral",
+          "note": "a causa raiz foi",
+          "reviewed": false
+        },
+        {
+          "text": "it slipped through because",
+          "functionId": "explain-root-cause",
+          "register": "neutral",
+          "note": "slip through = passar despercebido",
+          "reviewed": false
+        },
+        {
+          "text": "going forward, we're going to",
+          "functionId": "commit-to-actions",
+          "register": "neutral",
+          "note": "daqui para frente, vamos…",
+          "reviewed": false
+        }
+      ]
+    },
+    {
+      "id": "estimate-uncertainty",
+      "label": {
+        "pt": "Estimar com incerteza",
+        "en": "Estimate with uncertainty"
+      },
+      "situation": {
+        "en": "The product manager asks how long a feature will take, but there are unknowns. The learner has to give a useful estimate without overpromising.",
+        "pt": "O PM pergunta quanto tempo uma funcionalidade vai levar, mas há incertezas. Você precisa dar uma estimativa útil sem prometer demais."
+      },
+      "aiRole": "a product manager who needs a date for the roadmap and pushes for a single number",
+      "functions": [
+        {
+          "id": "give-range",
+          "label": {
+            "en": "give an estimate as a range",
+            "pt": "dar a estimativa como um intervalo"
+          }
+        },
+        {
+          "id": "state-assumptions",
+          "label": {
+            "en": "state the assumptions behind it",
+            "pt": "dizer as premissas por trás dela"
+          }
+        },
+        {
+          "id": "flag-risks",
+          "label": {
+            "en": "flag what could make it slip",
+            "pt": "apontar o que pode atrasar"
+          }
+        }
+      ],
+      "expressions": [
+        {
+          "text": "my best guess is",
+          "functionId": "give-range",
+          "register": "casual",
+          "note": "minha melhor estimativa é",
+          "reviewed": false
+        },
+        {
+          "text": "somewhere between two and three weeks",
+          "functionId": "give-range",
+          "register": "neutral",
+          "note": "dar um intervalo em vez de uma data",
+          "reviewed": false
+        },
+        {
+          "text": "that's assuming",
+          "functionId": "state-assumptions",
+          "register": "neutral",
+          "note": "isso considerando que…",
+          "reviewed": false
+        },
+        {
+          "text": "there are still a few unknowns",
+          "functionId": "flag-risks",
+          "register": "neutral",
+          "note": "ainda há pontos incertos",
+          "reviewed": false
+        },
+        {
+          "text": "I'd rather not commit to a date until",
+          "functionId": "state-assumptions",
+          "register": "neutral",
+          "note": "evitar prometer uma data antes de saber mais",
+          "reviewed": false
+        },
+        {
+          "text": "the main risk is",
+          "functionId": "flag-risks",
+          "register": "neutral",
+          "note": "o principal risco é",
+          "reviewed": false
+        }
+      ]
+    },
+    {
+      "id": "defend-tradeoff",
+      "label": {
+        "pt": "Defender um trade-off",
+        "en": "Defend a trade-off"
+      },
+      "situation": {
+        "en": "In an architecture meeting, the learner proposes one technical option over another, for example a message queue instead of direct calls, and has to defend it.",
+        "pt": "Numa reunião de arquitetura, você propõe uma opção técnica em vez de outra, por exemplo uma fila em vez de chamadas diretas, e precisa defendê-la."
+      },
+      "aiRole": "a staff engineer who prefers the other option and challenges the proposal",
+      "functions": [
+        {
+          "id": "compare-options",
+          "label": {
+            "en": "compare the two options",
+            "pt": "comparar as duas opções"
+          }
+        },
+        {
+          "id": "defend-choice",
+          "label": {
+            "en": "defend your choice",
+            "pt": "defender sua escolha"
+          }
+        },
+        {
+          "id": "acknowledge-downside",
+          "label": {
+            "en": "acknowledge the downside honestly",
+            "pt": "admitir a desvantagem com honestidade"
+          }
+        }
+      ],
+      "expressions": [
+        {
+          "text": "the trade-off is",
+          "functionId": "compare-options",
+          "register": "neutral",
+          "note": "o trade-off é (o que se ganha e o que se perde)",
+          "reviewed": false
+        },
+        {
+          "text": "on the plus side",
+          "functionId": "compare-options",
+          "register": "neutral",
+          "note": "do lado positivo",
+          "reviewed": false
+        },
+        {
+          "text": "it's worth the extra complexity because",
+          "functionId": "defend-choice",
+          "register": "neutral",
+          "note": "justificar uma complexidade a mais",
+          "reviewed": false
+        },
+        {
+          "text": "I'd argue that",
+          "functionId": "defend-choice",
+          "register": "neutral",
+          "note": "eu defenderia que",
+          "reviewed": false
+        },
+        {
+          "text": "the downside is",
+          "functionId": "acknowledge-downside",
+          "register": "neutral",
+          "note": "a desvantagem é",
+          "reviewed": false
+        }
+      ]
+    },
+    {
+      "id": "slack-ask-help",
+      "label": {
+        "pt": "Pedir ajuda no Slack",
+        "en": "Ask for help on Slack"
+      },
+      "situation": {
+        "en": "The learner is stuck on a bug and asks a teammate for help in a Slack huddle, without sounding lost.",
+        "pt": "Você está travado num bug e pede ajuda a um colega num huddle do Slack, sem parecer perdido."
+      },
+      "aiRole": "a busy but friendly teammate who knows this part of the codebase",
+      "functions": [
+        {
+          "id": "give-context",
+          "label": {
+            "en": "give just enough context",
+            "pt": "dar o contexto necessário"
+          }
+        },
+        {
+          "id": "ask-specific-question",
+          "label": {
+            "en": "ask a specific question",
+            "pt": "fazer uma pergunta específica"
+          }
+        },
+        {
+          "id": "show-what-tried",
+          "label": {
+            "en": "show what you already tried",
+            "pt": "mostrar o que já tentou"
+          }
+        }
+      ],
+      "expressions": [
+        {
+          "text": "so I'm working on",
+          "functionId": "give-context",
+          "register": "neutral",
+          "note": "estou mexendo em… (para dar contexto)",
+          "reviewed": false
+        },
+        {
+          "text": "quick question about",
+          "functionId": "ask-specific-question",
+          "register": "casual",
+          "note": "pergunta rápida sobre",
+          "reviewed": false
+        },
+        {
+          "text": "could you point me in the right direction?",
+          "functionId": "ask-specific-question",
+          "register": "neutral",
+          "note": "pedir uma orientação, não a solução pronta",
+          "reviewed": false
+        },
+        {
+          "text": "here's what I've tried so far",
+          "functionId": "show-what-tried",
+          "register": "neutral",
+          "note": "mostrar o que já tentou",
+          "reviewed": false
+        },
+        {
+          "text": "I'm not sure if I'm missing something",
+          "functionId": "ask-specific-question",
+          "register": "neutral",
+          "note": "admitir dúvida sem parecer perdido",
+          "reviewed": false
+        },
+        {
+          "text": "I already tried",
+          "functionId": "show-what-tried",
+          "register": "neutral",
+          "note": "eu já tentei",
+          "reviewed": false
+        }
+      ]
+    },
+    {
+      "id": "say-no-pm",
+      "label": {
+        "pt": "Dizer \"não\" ao PM",
+        "en": "Say no to the PM"
+      },
+      "situation": {
+        "en": "The product manager wants to add a feature to the current sprint. The learner has to say it does not fit and negotiate.",
+        "pt": "O PM quer colocar mais uma funcionalidade na sprint atual. Você precisa dizer que não cabe e negociar."
+      },
+      "aiRole": "a product manager under pressure from a client, insisting the feature is small",
+      "functions": [
+        {
+          "id": "say-no-diplomatically",
+          "label": {
+            "en": "say no without closing the door",
+            "pt": "dizer não sem fechar a porta"
+          }
+        },
+        {
+          "id": "explain-constraint",
+          "label": {
+            "en": "explain the constraint",
+            "pt": "explicar a restrição"
+          }
+        },
+        {
+          "id": "offer-alternative",
+          "label": {
+            "en": "offer an alternative",
+            "pt": "oferecer uma alternativa"
+          }
+        }
+      ],
+      "expressions": [
+        {
+          "text": "I don't think we can fit that in this sprint",
+          "functionId": "say-no-diplomatically",
+          "register": "neutral",
+          "note": "dizer que não cabe na sprint",
+          "reviewed": false
+        },
+        {
+          "text": "it's not as small as it looks",
+          "functionId": "explain-constraint",
+          "register": "neutral",
+          "note": "não é tão pequeno quanto parece",
+          "reviewed": false
+        },
+        {
+          "text": "something else would have to give",
+          "functionId": "explain-constraint",
+          "register": "casual",
+          "note": "outra coisa teria que sair",
+          "reviewed": false
+        },
+        {
+          "text": "if we cut scope, we could",
+          "functionId": "offer-alternative",
+          "register": "neutral",
+          "note": "cortar escopo para caber",
+          "reviewed": false
+        },
+        {
+          "text": "could we push it to next sprint?",
+          "functionId": "offer-alternative",
+          "register": "casual",
+          "note": "empurrar para a próxima sprint",
+          "reviewed": false
+        }
+      ]
+    },
+    {
+      "id": "client-demo",
+      "label": {
+        "pt": "Demo para cliente",
+        "en": "Client demo"
+      },
+      "situation": {
+        "en": "The learner demos a new feature to a client stakeholder over a video call and answers their questions.",
+        "pt": "Você apresenta uma funcionalidade nova para um cliente numa videochamada e responde às perguntas."
+      },
+      "aiRole": "a client stakeholder who asks practical questions and points out what is missing",
+      "functions": [
+        {
+          "id": "walk-through",
+          "label": {
+            "en": "walk through the feature",
+            "pt": "conduzir a apresentação"
+          }
+        },
+        {
+          "id": "handle-question",
+          "label": {
+            "en": "handle a question you did not expect",
+            "pt": "lidar com uma pergunta inesperada"
+          }
+        },
+        {
+          "id": "admit-limitation",
+          "label": {
+            "en": "admit a limitation without losing confidence",
+            "pt": "admitir uma limitação sem perder a confiança"
+          }
+        }
+      ],
+      "expressions": [
+        {
+          "text": "let me walk you through",
+          "functionId": "walk-through",
+          "register": "neutral",
+          "note": "deixa eu te mostrar passo a passo",
+          "reviewed": false
+        },
+        {
+          "text": "as you can see here",
+          "functionId": "walk-through",
+          "register": "neutral",
+          "note": "como você pode ver aqui",
+          "reviewed": false
+        },
+        {
+          "text": "let me get back to you on that",
+          "functionId": "handle-question",
+          "register": "neutral",
+          "note": "vou verificar e te respondo depois",
+          "reviewed": false
+        },
+        {
+          "text": "that's not supported yet, but it's on our roadmap",
+          "functionId": "admit-limitation",
+          "register": "neutral",
+          "note": "ainda não existe, mas está planejado",
+          "reviewed": false
+        },
+        {
+          "text": "under the hood",
+          "functionId": "walk-through",
+          "register": "neutral",
+          "note": "nos bastidores, por dentro do sistema",
+          "reviewed": false
+        }
+      ]
+    },
+    {
+      "id": "one-on-one",
+      "label": {
+        "pt": "1:1 com o chefe",
+        "en": "1:1 with your manager"
+      },
+      "situation": {
+        "en": "In a 1:1 with their manager, the learner talks about career growth, asks for feedback and raises a concern.",
+        "pt": "Num 1:1 com seu chefe, você fala de carreira, pede feedback e levanta uma preocupação."
+      },
+      "aiRole": "the learner's engineering manager, supportive but direct",
+      "functions": [
+        {
+          "id": "ask-for-feedback",
+          "label": {
+            "en": "ask for honest feedback",
+            "pt": "pedir feedback sincero"
+          }
+        },
+        {
+          "id": "talk-about-goals",
+          "label": {
+            "en": "talk about where you want to grow",
+            "pt": "falar de onde quer crescer"
+          }
+        },
+        {
+          "id": "raise-concern",
+          "label": {
+            "en": "raise a concern tactfully",
+            "pt": "levantar uma preocupação com tato"
+          }
+        }
+      ],
+      "expressions": [
+        {
+          "text": "is there anything I could be doing better?",
+          "functionId": "ask-for-feedback",
+          "register": "neutral",
+          "note": "pedir feedback de forma aberta",
+          "reviewed": false
+        },
+        {
+          "text": "I'd like to take on more",
+          "functionId": "talk-about-goals",
+          "register": "neutral",
+          "note": "assumir mais responsabilidade",
+          "reviewed": false
+        },
+        {
+          "text": "I'd like to grow into a senior role",
+          "functionId": "talk-about-goals",
+          "register": "neutral",
+          "note": "crescer até um papel sênior",
+          "reviewed": false
+        },
+        {
+          "text": "I wanted to bring something up",
+          "functionId": "raise-concern",
+          "register": "neutral",
+          "note": "abrir um assunto delicado",
+          "reviewed": false
+        },
+        {
+          "text": "something that's been on my mind",
+          "functionId": "raise-concern",
+          "register": "casual",
+          "note": "algo que está me incomodando",
+          "reviewed": false
+        }
+      ]
+    },
+    {
+      "id": "tech-interview",
+      "label": {
+        "pt": "Entrevista técnica",
+        "en": "Technical interview"
+      },
+      "situation": {
+        "en": "In a technical interview, the learner explains a past project and the reasoning behind their decisions.",
+        "pt": "Numa entrevista técnica, você explica um projeto e o raciocínio por trás das suas decisões."
+      },
+      "aiRole": "an interviewer at a software company who digs into decisions and trade-offs",
+      "functions": [
+        {
+          "id": "describe-project",
+          "label": {
+            "en": "describe the project and your role",
+            "pt": "descrever o projeto e seu papel"
+          }
+        },
+        {
+          "id": "explain-reasoning",
+          "label": {
+            "en": "explain the reasoning behind a decision",
+            "pt": "explicar o raciocínio de uma decisão"
+          }
+        },
+        {
+          "id": "discuss-mistake",
+          "label": {
+            "en": "talk about a mistake and what you learned",
+            "pt": "falar de um erro e do que aprendeu"
+          }
+        }
+      ],
+      "expressions": [
+        {
+          "text": "I was responsible for",
+          "functionId": "describe-project",
+          "register": "neutral",
+          "note": "eu era responsável por",
+          "reviewed": false
+        },
+        {
+          "text": "the main challenge was",
+          "functionId": "describe-project",
+          "register": "neutral",
+          "note": "o principal desafio era",
+          "reviewed": false
+        },
+        {
+          "text": "we went with",
+          "functionId": "explain-reasoning",
+          "register": "neutral",
+          "note": "go with = escolher uma opção",
+          "reviewed": false
+        },
+        {
+          "text": "in hindsight, I would have",
+          "functionId": "discuss-mistake",
+          "register": "neutral",
+          "note": "olhando para trás, eu teria",
+          "reviewed": false
+        },
+        {
+          "text": "it taught me to",
+          "functionId": "discuss-mistake",
+          "register": "neutral",
+          "note": "isso me ensinou a",
+          "reviewed": false
+        }
+      ]
+    },
+    {
+      "id": "onboarding-colleague",
+      "label": {
+        "pt": "Onboarding de colega",
+        "en": "Onboard a new colleague"
+      },
+      "situation": {
+        "en": "A new developer joined the team. The learner explains how the system is organized and how to get started.",
+        "pt": "Um dev novo entrou no time. Você explica como o sistema é organizado e como começar."
+      },
+      "aiRole": "a new team member who asks many basic questions",
+      "functions": [
+        {
+          "id": "explain-overview",
+          "label": {
+            "en": "give a high-level overview",
+            "pt": "dar uma visão geral"
+          }
+        },
+        {
+          "id": "give-instructions",
+          "label": {
+            "en": "give step-by-step instructions",
+            "pt": "dar instruções passo a passo"
+          }
+        },
+        {
+          "id": "check-understanding",
+          "label": {
+            "en": "check that they understood",
+            "pt": "verificar se a pessoa entendeu"
+          }
+        }
+      ],
+      "expressions": [
+        {
+          "text": "at a high level",
+          "functionId": "explain-overview",
+          "register": "neutral",
+          "note": "numa visão geral",
+          "reviewed": false
+        },
+        {
+          "text": "this is where the billing logic lives",
+          "functionId": "explain-overview",
+          "register": "neutral",
+          "note": "é aqui que fica (o código de cobrança)",
+          "reviewed": false
+        },
+        {
+          "text": "the first thing you want to do is",
+          "functionId": "give-instructions",
+          "register": "neutral",
+          "note": "a primeira coisa a fazer é",
+          "reviewed": false
+        },
+        {
+          "text": "does that make sense so far?",
+          "functionId": "check-understanding",
+          "register": "neutral",
+          "note": "até aqui faz sentido?",
+          "reviewed": false
+        },
+        {
+          "text": "feel free to ping me",
+          "functionId": "give-instructions",
+          "register": "casual",
+          "note": "pode me chamar à vontade",
+          "reviewed": false
+        },
+        {
+          "text": "any questions so far?",
+          "functionId": "check-understanding",
+          "register": "neutral",
+          "note": "alguma dúvida até aqui?",
+          "reviewed": false
+        }
+      ]
+    },
+    {
+      "id": "remote-small-talk",
+      "label": {
+        "pt": "Small talk em reunião remota",
+        "en": "Small talk before a remote meeting"
+      },
+      "situation": {
+        "en": "A remote meeting is about to start and people are waiting for others to join. The learner makes small talk, then moves to the agenda.",
+        "pt": "Uma reunião remota vai começar e o pessoal espera os outros entrarem. Você puxa assunto e depois passa para a pauta."
+      },
+      "aiRole": "a friendly colleague from another team who joined early",
+      "functions": [
+        {
+          "id": "open-small-talk",
+          "label": {
+            "en": "open some small talk",
+            "pt": "puxar assunto"
+          }
+        },
+        {
+          "id": "share-something-personal",
+          "label": {
+            "en": "share a small personal detail",
+            "pt": "contar algo pessoal leve"
+          }
+        },
+        {
+          "id": "move-to-agenda",
+          "label": {
+            "en": "move the meeting to the agenda",
+            "pt": "levar a reunião para a pauta"
+          }
+        }
+      ],
+      "expressions": [
+        {
+          "text": "how's your week going?",
+          "functionId": "open-small-talk",
+          "register": "casual",
+          "note": "como está sua semana?",
+          "reviewed": false
+        },
+        {
+          "text": "it's been a busy one",
+          "functionId": "share-something-personal",
+          "register": "casual",
+          "note": "foi uma semana corrida",
+          "reviewed": false
+        },
+        {
+          "text": "I just got back from",
+          "functionId": "share-something-personal",
+          "register": "casual",
+          "note": "acabei de voltar de",
+          "reviewed": false
+        },
+        {
+          "text": "alright, let's kick things off",
+          "functionId": "move-to-agenda",
+          "register": "casual",
+          "note": "bom, vamos começar",
+          "reviewed": false
+        },
+        {
+          "text": "should we get started?",
+          "functionId": "move-to-agenda",
+          "register": "neutral",
+          "note": "vamos começar?",
+          "reviewed": false
+        }
+      ]
+    }
+  ]
+}

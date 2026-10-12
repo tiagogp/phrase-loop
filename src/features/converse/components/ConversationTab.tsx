@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -8,6 +8,7 @@ import { useT } from "@/i18n/I18nProvider";
 import ConverseTab from "@/features/converse/components/ConverseTab";
 import LongSession from "@/features/converse/components/LongSession";
 import { isLongSessionLevel } from "@/features/converse/longSession";
+import { profileTopics } from "@/features/converse/domainProfile";
 import { Segmented } from "@/components/ui/Segmented";
 import { ADVANCED_CONVERSATION_SCENARIOS } from "@/features/converse/constants";
 import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
@@ -17,7 +18,6 @@ import { GuidedSpeaking } from "@/features/pronunciation/components/GuidedSpeaki
 
 /** Conversation is discoverable at every level; unavailable AI has a useful local alternative. */
 export default function ConversationTab({ onOpenSettings, onPracticeSource, active = true }: { onOpenSettings?: () => void; onPracticeSource?: (cardId: string) => void; active?: boolean }) {
-  const { t } = useT();
   const { hasEvaluator } = useProviderSelection({ fallbackToEvaluator: true });
   const { loading } = useAiSettings();
   const [guided, setGuided] = useState(false);
@@ -25,6 +25,11 @@ export default function ConversationTab({ onOpenSettings, onPracticeSource, acti
   const level = useSyncExternalStore(subscribeToProfile, () => getLearningProfile().level, () => DEFAULT_LEARNING_PROFILE.level);
   const advanced = level === "C1" || level === "C2";
   const longAvailable = isLongSessionLevel(level);
+  const domainArea = useSyncExternalStore(subscribeToProfile,
+    () => { const profile = getLearningProfile(); return profile.objective === "professional" ? profile.domainArea : undefined; },
+    () => undefined);
+  const { t, lang } = useT();
+  const topics = useMemo(() => (domainArea ? profileTopics(domainArea, lang === "pt" ? "pt" : "en") : []), [domainArea, lang]);
   return (
     <div className="space-y-5">
       <PageHeader title={t("Conversation")}
@@ -46,7 +51,7 @@ export default function ConversationTab({ onOpenSettings, onPracticeSource, acti
             />
           )}
           {longAvailable && mode === "long"
-            ? <LongSession active={active} onOpenSettings={onOpenSettings} onPracticeSource={onPracticeSource} />
+            ? <LongSession key={domainArea ?? "free"} active={active} onOpenSettings={onOpenSettings} onPracticeSource={onPracticeSource} topics={topics} />
             : <>
               <ConverseTab active={active} onOpenSettings={onOpenSettings}
                 scenarios={advanced ? ADVANCED_CONVERSATION_SCENARIOS : undefined}

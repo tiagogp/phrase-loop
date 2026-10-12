@@ -178,10 +178,13 @@ export interface LongSessionTopic {
   id: string;
   profileId?: string;
   label: string;
+  /** English situation handed to the partner. */
   situation: string;
+  /** The same situation in the interface language, shown at setup. */
+  displaySituation?: string;
   aiRole?: string;
-  /** What the learner has to do with the language here; fed to the prompt. */
-  functions?: { id: string; label: string }[];
+  /** What the learner has to do with the language here; `label` (English) is fed to the prompt. */
+  functions?: { id: string; label: string; displayLabel?: string }[];
   /** Domain expressions the partner may introduce at B1/B2. */
   expressions?: string[];
 }

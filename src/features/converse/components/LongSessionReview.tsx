@@ -128,7 +128,8 @@ function GapCard({ gap, recurring, topic, conversationId, onPracticeSource }: { 
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const functionLabel = topic?.functions?.find((item) => item.id === gap.functionId)?.label;
+  const fn = topic?.functions?.find((item) => item.id === gap.functionId);
+  const functionLabel = fn?.displayLabel ?? fn?.label;
 
   const save = useCallback(async (practice: boolean) => {
     setSaving(true);

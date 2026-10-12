@@ -199,7 +199,7 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
         turns: target.turns,
         level: target.level,
         scenario: target.scenario,
-        functions: sessionTopic?.functions,
+        functions: sessionTopic?.functions?.map((item) => ({ id: item.id, label: item.label })),
         knownPatternLabels: knownPatternLabels(gapsRef.current),
       });
       const reviewedAt = Date.now();
@@ -517,7 +517,7 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
               <Chip active={topicId === FREE_TOPIC} onClick={() => setTopicId(FREE_TOPIC)}>{t("Free topic")}</Chip>
             </div>
           </Field>
-          {topic && <p className="text-xs text-ink-soft">{topic.situation}</p>}
+          {topic && <p className="text-xs text-ink-soft">{topic.displaySituation ?? topic.situation}</p>}
           {topicId === FREE_TOPIC && (
             <Field label={t("What do you want to talk about?")}>
               <Input type="text" value={customTopic} onChange={(event) => setCustomTopic(event.target.value)}

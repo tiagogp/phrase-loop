@@ -5,6 +5,7 @@ import {
   isTargetLanguageCode,
 } from "@/features/settings/languages";
 import { MAX_GOAL, MIN_GOAL, setWeeklyGoal } from "@/features/study/weeklyGoal";
+import { isDomainArea, type DomainArea } from "@/features/converse/domainProfile";
 
 const PROFILE_KEY = "phraseloop.learningProfile.v1";
 
@@ -60,6 +61,11 @@ export interface LearningProfile {
   unlockedTabTier: number;
   /** Domain picked once for the C1 diagnosis loop (experimental), e.g. "work", "university". */
   c1Domain: string;
+  /**
+   * Work area inside the professional goal; selects the domain profile whose scenarios the long
+   * session offers. Optional and only meaningful with `objective: "professional"`.
+   */
+  domainArea?: DomainArea;
 }
 
 export const DEFAULT_LEARNING_PROFILE: LearningProfile = {
@@ -157,6 +163,7 @@ function normalizeProfile(value: unknown): LearningProfile {
     onboardingCompleted: raw.onboardingCompleted === true,
     unlockedTabTier: unlockedTabTierOrDefault(raw.unlockedTabTier),
     c1Domain: typeof raw.c1Domain === "string" ? raw.c1Domain.trim() : "",
+    domainArea: isDomainArea(raw.domainArea) ? raw.domainArea : undefined,
   };
 }
 

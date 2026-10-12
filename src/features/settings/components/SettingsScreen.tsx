@@ -37,6 +37,7 @@ import {
 } from "@/lib/store/repository";
 import type { StoreName } from "@/lib/store/db";
 import { useT } from "@/i18n/I18nProvider";
+import { DOMAIN_AREAS, domainProfile, isDomainArea } from "@/features/converse/domainProfile";
 
 type StatusTone = NonNullable<StatusPillProps["tone"]>;
 
@@ -102,6 +103,7 @@ export default function SettingsScreen({
   const { fullNavigation } = useExperiencePreferences();
   const objective = useSyncExternalStore(subscribeToProfile, () => getLearningProfile().objective, () => DEFAULT_LEARNING_PROFILE.objective);
   const minutes = useSyncExternalStore(subscribeToProfile, () => getLearningProfile().dailyMinutes ?? 10, () => 10);
+  const domainArea = useSyncExternalStore(subscribeToProfile, () => getLearningProfile().domainArea ?? "", () => "");
   const { settings, loading, save, test, refresh } = useAiSettings();
   const restoreInputRef = useRef<HTMLInputElement | null>(null);
   const [ollamaUrlDraft, setOllamaUrl] = useState<string | null>(null);
@@ -706,6 +708,12 @@ export default function SettingsScreen({
             const option = OBJECTIVE_OPTIONS.find(item => item.objective === value);
             if (option) saveLearningProfile({ objective: option.objective, focus: option.label });
           }} /></Field>
+          {objective === "professional" && (
+            <Field label={t("Work area")} hint={t("Gives the long conversation session scenarios from your work. Optional.")}>
+              <Select value={domainArea} options={[{ value: "", label: t("None") }, ...DOMAIN_AREAS.map(area => ({ value: area, label: domainProfile(area).label[lang === "pt" ? "pt" : "en"] }))]}
+                onChange={value => saveLearningProfile({ domainArea: isDomainArea(value) ? value : undefined })} />
+            </Field>
+          )}
           <Field label={t("Time for today")}><Select value={String(minutes)} options={[5, 10, 20].map(value => ({ value: String(value), label: t("{count} min", { count: value }) }))} onChange={value => saveLearningProfile({ dailyMinutes: Number(value) })} /></Field>
         </div>
         <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-lg border border-line p-4 text-sm text-ink">

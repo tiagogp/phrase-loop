@@ -56,6 +56,9 @@ export const longSessionMessages = {
   "You said it on your own this time": { pt: "Desta vez você disse sozinho" },
   "first stuck on:": { pt: "travou antes em:" },
   "Came up again": { pt: "Apareceu de novo" },
+  "Work area": { pt: "Área de trabalho" },
+  "Gives the long conversation session scenarios from your work. Optional.": { pt: "Dá à sessão longa de conversa cenários do seu trabalho. Opcional." },
+  "None": { pt: "Nenhuma" },
   "Type it in Portuguese": { pt: "Digitar em português" },
   "What you wanted to say, in Portuguese": { pt: "O que você queria dizer, em português" },
 };
