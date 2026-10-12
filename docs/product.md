@@ -212,6 +212,9 @@ disposição declarada com compra observada.
 ## Princípios de aprendizagem e confiança
 
 Produção antes da resposta, recuperação espaçada, feedback focal e retry orientam o método.
+A pesquisa por trás de cada princípio, a força da evidência e o roteiro para revisar novas
+funcionalidades estão em [learning.md](learning.md); `yarn learning:harness` mostra quais
+regras o app aplica.
 Desafio e apoio devem se ajustar sem forçar dificuldade, inventar domínio ou transformar CEFR
 autodeclarado em nível comprovado. Observações, preferências e interpretações provisórias
 precisam permanecer distinguíveis, com origem e controle do aluno.

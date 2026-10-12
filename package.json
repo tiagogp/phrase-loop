@@ -20,6 +20,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "learning:harness": "node scripts/learning-harness.mjs",
     "app": "env -u ELECTRON_RUN_AS_NODE electron electron/main.js",
     "app:dist": "bash electron/build-app.sh",
     "app:linux": "bash electron/build-linux.sh",
