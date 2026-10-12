@@ -56,25 +56,39 @@ pain are observed.
 
 ## Stack
 
-- **Frontend** — Next.js + TypeScript + Tailwind CSS + next-themes
-- **Local speech runtime** — Kokoro 1.0 via sherpa-onnx and whisper.cpp/Metal, loaded directly by Node
+- **Frontend** — Next.js + TypeScript + Tailwind CSS, with a small in-app theme provider
+- **Desktop shell** — Electron (macOS, Windows, Linux)
+- **Local speech runtime** — Kokoro 1.0 via sherpa-onnx and whisper.cpp (Metal on macOS), loaded directly by Node
 
 ## Requirements
 
-- Apple Silicon Mac running macOS 14+
-- Node.js 22.13+
+- Node.js 22.13+ and Yarn 1.22 (the version pinned in `package.json`)
+- To **run from source**: macOS, Windows or Linux
+- To **build a desktop package** for a platform, run the build on that platform:
+
+| Package | Build machine | Output |
+| --- | --- | --- |
+| macOS | Apple Silicon Mac, macOS 14+ | `dist/PhraseLoop-<version>.dmg` |
+| Windows | Windows 10/11 x64 with [Git for Windows](https://git-scm.com/download/win) | `dist/PhraseLoop-<version>-Setup.exe` |
+| Linux | Linux x64 | `dist/PhraseLoop-<version>.AppImage` |
+
+Cross-building is not supported: the speech addons are native binaries for each platform.
+Linux arm64 and Intel Macs are not tested.
 
 ## Setup
 
-Install dependencies:
+Install dependencies (the same on every platform):
 
 ```bash
-npm install
+yarn install
 ```
 
-Kokoro and Whisper models are stored under
-`~/Library/Application Support/PhraseLoop/models/native`. Downloads are verified
-by SHA-256 and installed atomically.
+Kokoro and Whisper models are stored in the app's data folder. Downloads are verified
+by SHA-256 and installed atomically:
+
+- macOS: `~/Library/Application Support/PhraseLoop/models/native`
+- Windows: `%APPDATA%\PhraseLoop\models\native`
+- Linux: `~/.config/PhraseLoop/models/native`
 
 Kokoro (349 MB) starts downloading on its own as soon as onboarding finishes, so
 it is usually in place before the learner first needs generated audio; a bar
@@ -85,44 +99,47 @@ run `yarn learn:audio` to generate those assets; `yarn build` also does this aut
 
 ## Running
 
-Start the Electron app and its standalone Next server with a single command:
+Start the Electron app from the source checkout:
 
 ```bash
-./scripts/start.sh
+yarn app
 ```
 
+It runs the same way on macOS, Windows and Linux. `yarn start` is an alias.
 Speech inference runs inside the Next Node process through native addons. No
 Python, helper app, or auxiliary Dock icon is used. The only external binary is
 `yt-dlp`, needed for YouTube import only (`brew install yt-dlp`; ffmpeg is
 optional and improves the audio format).
 
-## Building the macOS app
+## Building desktop packages
 
-Generate the native app:
-
-```bash
-npm run app:dist
-```
-
-The app is written to:
+Each command must run on the platform it packages:
 
 ```bash
-dist/mac-arm64/PhraseLoop.app
+yarn app:dist        # macOS (Apple Silicon): dist/mac-arm64/PhraseLoop.app and the .dmg
+yarn app:windows     # Windows: dist/PhraseLoop-<version>-Setup.exe
+yarn app:linux       # Linux: dist/PhraseLoop-<version>.AppImage
 ```
 
-The package includes standalone Next.js and signed arm64 native libraries. It
-also creates a user config file on first launch:
+`yarn app:download` builds the shareable package for the current OS and, on Linux,
+installs it for your user. Every build starts with `yarn build`, which first generates
+the lesson audio (`yarn learn:audio`).
 
-```bash
-~/Library/Application Support/PhraseLoop/phraseloop.env
-```
+The Windows and Linux builds run through `electron/build-*.sh`; the entry point
+`scripts/build-desktop.mjs` finds Git for Windows' bash so that a WSL `bash` on
+`PATH` is never used.
 
-### Distributing the app
+The package includes standalone Next.js and native libraries for its platform. On
+first launch the app creates a user config file, `phraseloop.env`, in its data folder
+(macOS: `~/Library/Application Support/PhraseLoop/`, Windows: `%APPDATA%\PhraseLoop\`,
+Linux: `~/.config/PhraseLoop/`).
+
+### macOS distribution
 
 Build a shareable disk image:
 
 ```bash
-PHRASELOOP_SKIP_MAC_CLEAN_INSTALL=1 npm run app:download
+yarn app:download
 ```
 
 This packages the native runtime and writes a drag-to-Applications disk image
@@ -130,13 +147,12 @@ to `dist/PhraseLoop-mac-arm64.dmg`. Share that file: the recipient
 opens the `.dmg`, drags **PhraseLoop** to **Applications**, and double-clicks to
 launch. No Terminal window and no install script.
 
-On macOS, `PHRASELOOP_SKIP_MAC_CLEAN_INSTALL=1` preserves the installed app and its
-local data. Without that flag, the script removes them before building. The same
-command can be run directly as
-`PHRASELOOP_SKIP_MAC_CLEAN_INSTALL=1 bash scripts/make-download.sh`.
-The app and disk image are built once; the download script renames the completed
-image. Packaging preserves `.next/dev`, so a running development server keeps its
-manifests while production output is rebuilt.
+On macOS the build keeps the installed app and its local data by default. To wipe them
+first (a clean first-run test), set `PHRASELOOP_CLEAN_INSTALL=1`; this deletes the
+installed app and the local models and library, so use it deliberately. The app and
+disk image are built once; the download script renames the completed image. Packaging
+preserves `.next/dev`, so a running development server keeps its manifests while
+production output is rebuilt.
 
 > A build signed and notarized with a Developer ID (set `APPLE_DEVELOPER_ID`
 > plus the notarytool credentials before `app:download`) launches with a plain
@@ -202,6 +218,9 @@ core loop is understood, **Settings → Advanced AI for custom content** lets yo
 default, test a connection, or override the provider for one Discover/Correct task. Ollama is the
 default; PhraseLoop never sends content to a cloud provider unless you explicitly select it.
 
+Environment variables are read from `phraseloop.env` in the app's data folder (the desktop app)
+or from `.env.local` in a source checkout (`yarn dev`, `yarn app`). Saving a key in Settings needs neither.
+
 | Provider | Evaluates free text? | How to enable |
 | --- | --- | --- |
 | **OpenRouter** | Yes | Save an OpenRouter key in Settings, or set `OPENROUTER_API_KEY` in `.env.local`. Default model `openrouter/fusion` (override with `OPENROUTER_MODEL`). |
@@ -265,7 +284,8 @@ module ownership, and build record.
 │   ├── lib/                   # shared pure/domain utilities
 │   └── types/
 ├── scripts/                   # Build, launch, and asset-generation scripts
-│   └── start.sh               # Starts Electron and standalone Next
+│   ├── run-electron.mjs       # `yarn app`: starts Electron and the standalone Next server
+│   └── build-desktop.mjs      # `yarn app:*`: desktop packages for macOS, Windows, Linux
 ├── docs/                      # Product, architecture, and validation docs
 └── assets/                    # Imported source decks/data fixtures
 ```

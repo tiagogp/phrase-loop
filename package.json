@@ -17,15 +17,16 @@
     "learn:audio:ci": "node scripts/generate-learn-audio.mjs --verify --strict-coverage",
     "learn:content:validate": "node scripts/validate-lesson-content.mjs",
     "learn:content:report": "node scripts/validate-lesson-content.mjs --json",
-    "start": "next start",
+    "start": "node scripts/run-electron.mjs",
+    "start:web": "next start",
     "lint": "eslint",
     "test": "vitest run",
     "learning:harness": "node scripts/learning-harness.mjs",
-    "app": "env -u ELECTRON_RUN_AS_NODE electron electron/main.js",
-    "app:dist": "bash electron/build-app.sh",
-    "app:linux": "bash electron/build-linux.sh",
-    "app:windows": "bash electron/build-windows.sh",
-    "app:download": "bash scripts/make-download.sh",
+    "app": "node scripts/run-electron.mjs",
+    "app:dist": "node scripts/build-desktop.mjs mac",
+    "app:linux": "node scripts/build-desktop.mjs linux",
+    "app:windows": "node scripts/build-desktop.mjs windows",
+    "app:download": "node scripts/build-desktop.mjs download",
     "landing:dev": "yarn workspace landing dev",
     "landing:build": "yarn workspace landing build"
   },
@@ -48,7 +49,7 @@
       "icon": "electron/assets/icon.icns",
       "category": "public.app-category.education",
       "target": "dir",
-      "identity": "PhraseLoop Dev",
+      "identity": null,
       "minimumSystemVersion": "14.0"
     },
     "linux": {
@@ -102,7 +103,6 @@
     "linkedom": "^0.18.12",
     "motion": "^12.41.0",
     "next": "^16.2.9",
-    "next-themes": "^0.4.6",
     "openai": "^6.44.0",
     "pdfjs-dist": "^6.0.227",
     "pino": "^10.3.1",
@@ -130,7 +130,6 @@
     "eslint-config-next": "^16.2.9",
     "fake-indexeddb": "^6.2.5",
     "tailwindcss": "^4",
-    "turbo": "^2.5.8",
     "typescript": "^5",
     "vitest": "^4.1.9"
   }

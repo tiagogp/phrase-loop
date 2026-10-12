@@ -90,8 +90,10 @@ remove_path_if_exists() {
 }
 
 clean_macos_install() {
-  if [ "${PHRASELOOP_SKIP_MAC_CLEAN_INSTALL:-0}" = "1" ]; then
-    echo "→ Skipping installed macOS app cleanup."
+  # Opt-in: the default keeps the installed app and the user's downloaded models
+  # and library. Removing them is destructive, so it needs an explicit request.
+  if [ "${PHRASELOOP_CLEAN_INSTALL:-0}" != "1" ]; then
+    echo "→ Keeping the installed app and its data (set PHRASELOOP_CLEAN_INSTALL=1 to wipe them)."
     return
   fi
 

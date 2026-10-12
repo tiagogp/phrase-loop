@@ -15,41 +15,43 @@ Avoid starting with native binary packaging, provider-wide rewrites, local data 
 
 ## Local Setup
 
-Install dependencies:
+Install dependencies (the repo pins Yarn 1 in `package.json`; use Yarn for every command below):
 
 ```bash
-npm install
+yarn install
 ```
 
 Run the web app during development:
 
 ```bash
-npm run dev
+yarn dev
 ```
 
 Run the Electron app:
 
 ```bash
-./scripts/start.sh
+yarn app
 ```
 
-Apple Silicon macOS 14+ is the best-tested desktop setup. YouTube import also needs `yt-dlp` on PATH. The first lesson, local review, and deterministic correction checks work without an AI provider.
+Apple Silicon macOS 14+ is the best-tested desktop setup; Windows and Linux are supported
+for running and packaging (see the README's build requirements). YouTube import also needs `yt-dlp` on PATH.
+The first lesson, local review, and deterministic correction checks work without an AI provider.
 
 ## Checks
 
 Before opening a PR, run the smallest relevant checks first:
 
 ```bash
-npm test
-npm run lint
-npm run build
+yarn test
+yarn lint
+yarn build
 ```
 
 For lesson-content changes, also run:
 
 ```bash
-npm run learn:content:validate
-npm run learn:audio:verify
+yarn learn:content:validate
+yarn learn:audio:verify
 ```
 
 ## Product Guardrails

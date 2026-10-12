@@ -96,7 +96,7 @@ else
   rm -rf .next
 fi
 
-npm run build
+yarn build
 
 echo "Preparing standalone Next.js payload..."
 rm -rf .next/standalone/.next/static .next/standalone/public .next/standalone/dist

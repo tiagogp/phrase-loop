@@ -29,12 +29,14 @@ describe("model manager", () => {
   it("checks bundled models even when Electron sets a writable data dir", () => {
     const previousDataDir = process.env.PHRASELOOP_DATA_DIR;
     const previousBundledDir = process.env.PHRASELOOP_BUNDLED_MODELS_DIR;
-    process.env.PHRASELOOP_DATA_DIR = "/tmp/phraseloop-user-data";
-    process.env.PHRASELOOP_BUNDLED_MODELS_DIR = "/tmp/phraseloop-bundled-models";
+    const userDataDir = path.join(os.tmpdir(), "phraseloop-user-data");
+    const bundledModelsDir = path.join(os.tmpdir(), "phraseloop-bundled-models");
+    process.env.PHRASELOOP_DATA_DIR = userDataDir;
+    process.env.PHRASELOOP_BUNDLED_MODELS_DIR = bundledModelsDir;
     try {
       expect(modelDirs()).toEqual([
-        "/tmp/phraseloop-user-data/models/native",
-        "/tmp/phraseloop-bundled-models",
+        path.join(userDataDir, "models", "native"),
+        bundledModelsDir,
       ]);
     } finally {
       if (previousDataDir === undefined) delete process.env.PHRASELOOP_DATA_DIR;

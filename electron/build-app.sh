@@ -24,7 +24,7 @@ node scripts/fix-native-rpaths.mjs
 mkdir -p .next
 find .next -mindepth 1 -maxdepth 1 ! -name cache ! -name dev -exec rm -rf {} +
 
-npm run build
+yarn build
 
 test -f .next/BUILD_ID
 test -f .next/standalone/server.js

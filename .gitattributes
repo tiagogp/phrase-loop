@@ -1,3 +1,7 @@
+# Shell scripts need LF endings: bash on Windows fails or misreads CRLF, and a
+# checkout with core.autocrlf=true would otherwise write CRLF into them.
+*.sh text eol=lf
+
 /.yarn/**            linguist-vendored
 /.yarn/releases/*    binary
 /.yarn/plugins/**/*  binary

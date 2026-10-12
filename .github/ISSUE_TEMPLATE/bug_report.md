@@ -21,7 +21,7 @@ labels: bug
 - macOS version:
 - Chip: Apple Silicon / Intel / other
 - Node version:
-- Running as: `npm run dev` / Electron app / packaged app
+- Running as: `yarn dev` / `yarn app` / packaged app (macOS, Windows or Linux)
 - AI provider: none / Ollama / OpenRouter / Claude / OpenAI
 
 ## Logs or screenshots

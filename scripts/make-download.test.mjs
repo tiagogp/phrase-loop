@@ -18,7 +18,7 @@ function fixture() {
   file("package.json", JSON.stringify({ version: "1.2.3" }));
   file("bin/uname", '#!/bin/sh\ncase "$1" in -s) echo Darwin;; -m) echo arm64;; esac\n', true);
   file("bin/stat", '#!/bin/sh\necho "${FIXTURE_DMG_BYTES:-13}"\n', true);
-  const env = { ...process.env, PATH: `${root}/bin:${process.env.PATH}`, PHRASELOOP_SKIP_MAC_CLEAN_INSTALL: "1" };
+  const env = { ...process.env, PATH: `${root}/bin:${process.env.PATH}` };
   return { root, file, env };
 }
 
@@ -28,7 +28,7 @@ describe("macOS packaging scripts", () => {
     f.file("electron/build-app.sh", readFileSync(new URL("../electron/build-app.sh", import.meta.url), "utf8"));
     f.file("scripts/fix-native-rpaths.mjs", "// No native dependencies in this fixture.\n");
     // Stop at the build boundary: exercise the real cleanup, never package or sign.
-    f.file("bin/npm", "#!/bin/sh\nexit 37\n", true);
+    f.file("bin/yarn", "#!/bin/sh\nexit 37\n", true);
     f.file(".next/dev/routes-manifest.json", "live-dev-manifest");
     f.file(".next/cache/compiler", "cached");
     f.file(".next/standalone/server.js", "stale-server");

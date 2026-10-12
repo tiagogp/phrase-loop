@@ -242,6 +242,8 @@ function spawnService(name, command, args, cwd, baseEnv, options = {}) {
     cwd,
     detached: options.detached !== false,
     env,
+    // npm is npm.cmd on Windows; without a shell, spawn cannot find it.
+    shell: process.platform === "win32",
     stdio: options.stdio || ["ignore", "pipe", "pipe"],
   });
   const tag = `[${name}]`;

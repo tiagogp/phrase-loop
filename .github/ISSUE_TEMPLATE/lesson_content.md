@@ -21,4 +21,4 @@ Level:
 - [ ] Comprehension questions test meaning, not only word discrimination.
 - [ ] Production prompt asks the learner to use English in a new situation.
 - [ ] Pronunciation focus is framed as practice, not definitive phonetic assessment.
-- [ ] `npm run learn:content:validate` passes.
+- [ ] `yarn learn:content:validate` passes.
