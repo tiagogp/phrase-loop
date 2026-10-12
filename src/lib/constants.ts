@@ -4,6 +4,16 @@ export const MAX_TTS_TEXT_CHARS = 4096;
 /** Max uploaded/transcribed audio size accepted by browser-facing routes. */
 export const MAX_AUDIO_UPLOAD_BYTES = 25 * 1024 * 1024;
 
+/** Languages a caller may force on Whisper; anything else falls back to auto-detection. */
+export const TRANSCRIPTION_LANGUAGES = ["pt", "en"] as const;
+export type TranscriptionLanguage = (typeof TRANSCRIPTION_LANGUAGES)[number];
+
+export function parseTranscriptionLanguage(value: unknown): TranscriptionLanguage | null {
+  return typeof value === "string" && (TRANSCRIPTION_LANGUAGES as readonly string[]).includes(value)
+    ? (value as TranscriptionLanguage)
+    : null;
+}
+
 /** Max PDF upload size before extraction. */
 export const MAX_PDF_UPLOAD_BYTES = 25 * 1024 * 1024;
 

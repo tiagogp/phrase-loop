@@ -171,6 +171,24 @@ e casos individuais. Falha de contrato ou de chamada conta como discordância. O
 não contêm chaves nem são enviados por telemetria. A execução real e a revisão dos casos
 permanecem pendentes; um dry-run não mede concordância.
 
+## Teste de transcrição com troca de idioma
+
+Antes do botão “Travei” da sessão longa de conversa, verificar se o Whisper local transcreve
+português quando o idioma é forçado. `/api/transcribe` aceita `language` opcional (`pt` ou
+`en`; ausente = detecção automática).
+
+1. Gravar quatro áudios numa pasta fora do repositório: só inglês; só português; misturado com
+   o trecho em PT gravado separado (simulando o botão); misturado sem botão.
+2. Com o app rodando (`yarn dev`), executar
+   `node scripts/check-codeswitch-transcription.mjs <pasta> --output /tmp/codeswitch.md`
+   (`--base-url` se não for a porta 3000; `--dry-run` só lista os arquivos; saída `.json` também é aceita).
+3. O relatório mostra cada arquivo nos modos auto, `pt` e `en`, lado a lado. Passa se o trecho
+   gravado com o botão sai em português correto no modo `pt`. O modo automático é só medido,
+   para decidir depois sobre detecção sem botão.
+
+Gravações e relatórios ficam no computador e não entram no repositório. Resultado: pendente,
+a preencher pelo responsável. Se falhar, o plano B é digitar o trecho em português.
+
 ## Exportação do piloto
 
 Em Configurações → Dados e privacidade, “Exportar dados do piloto” baixa um JSON no

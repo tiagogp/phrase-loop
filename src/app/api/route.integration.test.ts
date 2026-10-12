@@ -417,6 +417,46 @@ describe("API route integration", () => {
     }));
   });
 
+  it("/api/transcribe forwards a forced language to the local runtime", async () => {
+    localRequest.mockResolvedValueOnce(localResponse({ text: "eu não sei dizer isso" }));
+    const { POST } = await import("@/app/api/transcribe/route");
+    const form = new FormData();
+    form.append("language", "pt");
+    form.append("file", new File([new Uint8Array([1, 2, 3])], "clip.webm", { type: "audio/webm" }));
+
+    const response = await POST(formRequest("/api/transcribe", form) as never);
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).text).toBe("eu não sei dizer isso");
+    expect(localRequest).toHaveBeenCalledWith("/transcribe", expect.objectContaining({
+      headers: expect.objectContaining({ "X-Language": "pt" }),
+    }));
+  });
+
+  it("/api/transcribe keeps auto-detection when no language is sent", async () => {
+    localRequest.mockResolvedValueOnce(localResponse({ text: "hello" }));
+    const { POST } = await import("@/app/api/transcribe/route");
+    const form = new FormData();
+    form.append("file", new File([new Uint8Array([1, 2, 3])], "clip.webm", { type: "audio/webm" }));
+
+    await POST(formRequest("/api/transcribe", form) as never);
+
+    const headers = localRequest.mock.calls[0][1].headers as Record<string, string>;
+    expect(headers).not.toHaveProperty("X-Language");
+  });
+
+  it("/api/transcribe rejects an unsupported language before calling the runtime", async () => {
+    const { POST } = await import("@/app/api/transcribe/route");
+    const form = new FormData();
+    form.append("language", "fr");
+    form.append("file", new File([new Uint8Array([1, 2, 3])], "clip.webm", { type: "audio/webm" }));
+
+    const response = await POST(formRequest("/api/transcribe", form) as never);
+
+    expect(response.status).toBe(400);
+    expect(localRequest).not.toHaveBeenCalled();
+  });
+
   it("/api/pronunciation/assess hides runtime failures", async () => {
     localRequest.mockResolvedValueOnce(localResponse({ detail: "failed" }, 500));
     const { POST } = await import("@/app/api/pronunciation/assess/route");

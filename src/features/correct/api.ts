@@ -3,6 +3,7 @@ import type { ProviderKind, TaskAssessment } from "@/lib/cards/provider";
 import { getLearnerLangs } from "@/features/settings/learningProfile";
 import { watchModelNotReady } from "@/features/speech/modelStore";
 import { modelJudge, type JudgeStamp } from "@/lib/evaluation/judge";
+import type { TranscriptionLanguage } from "@/lib/constants";
 
 export interface DeckGenerationResult {
   cards?: Card[];
@@ -154,7 +155,12 @@ export async function reviewAdvancedText(input: {
   };
 }
 
-export async function transcribeAudio(blob: Blob, filename?: string): Promise<string> {
+/** `language` forces Whisper's language (e.g. "pt" for a code-switch clip); omitted = auto. */
+export async function transcribeAudio(
+  blob: Blob,
+  filename?: string,
+  options: { language?: TranscriptionLanguage } = {},
+): Promise<string> {
   const ext = filename?.includes(".")
     ? filename.split(".").pop()!.toLowerCase()
     : blob.type.includes("ogg")
@@ -164,6 +170,7 @@ export async function transcribeAudio(blob: Blob, filename?: string): Promise<st
         : "webm";
   const form = new FormData();
   form.append("file", blob, filename || `clip.${ext}`);
+  if (options.language) form.append("language", options.language);
   const response = await fetch("/api/transcribe", { method: "POST", body: form });
   const data = (await response.json().catch(() => ({}))) as {
     text?: string;

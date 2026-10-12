@@ -11,6 +11,7 @@ import { ensureKokoroModel, ensureWhisperModel, kokoroInstalled, modelStatus, wh
 import { assessPronunciation } from "./native/pronunciation";
 import { synthesize, transcribe } from "./native/speech";
 import { logger } from "@/lib/logger";
+import { parseTranscriptionLanguage } from "@/lib/constants";
 
 export interface LocalResponse {
   status: number;
@@ -225,7 +226,8 @@ const handleTranscribe: RouteHandler = async (options) => {
   try {
     const result = await transcribe({
       audio: body,
-      language: options.headers?.["X-Language"] || null,
+      // Only "pt"/"en" are forced; anything else stays Whisper auto-detection.
+      language: parseTranscriptionLanguage(options.headers?.["X-Language"]),
     });
     return response(200, { text: result.text });
   } catch (error) {

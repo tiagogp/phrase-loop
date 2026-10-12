@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import path from "node:path";
 import { localRequest } from "@/server/localRuntime";
-import { MAX_AUDIO_UPLOAD_BYTES } from "@/lib/constants";
+import { MAX_AUDIO_UPLOAD_BYTES, parseTranscriptionLanguage } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
@@ -28,12 +28,19 @@ export async function POST(req: NextRequest) {
     if (file.size > MAX_AUDIO_UPLOAD_BYTES) {
       return NextResponse.json({ error: AUDIO_TOO_LARGE_ERROR }, { status: 413 });
     }
+    // Optional forced language ("pt" | "en"); absent means Whisper auto-detects.
+    const rawLanguage = formData.get("language");
+    const language = parseTranscriptionLanguage(rawLanguage);
+    if (rawLanguage !== null && rawLanguage !== "" && !language) {
+      return NextResponse.json({ error: "Idioma de transcrição inválido." }, { status: 400 });
+    }
     const res = await localRequest("/transcribe", {
       method: "POST",
       body: Buffer.from(await file.arrayBuffer()),
       headers: {
         "Content-Type": file.type || "application/octet-stream",
         "X-File-Suffix": path.extname(file.name || "clip.webm") || ".webm",
+        ...(language ? { "X-Language": language } : {}),
       },
       timeoutMs: 120_000,
     });
