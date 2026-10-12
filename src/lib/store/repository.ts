@@ -21,6 +21,7 @@ import type { C1Diagnosis } from "@/features/c1/types";
 import type { StoredLevelTestAttempt } from "@/features/levelup/testModel";
 import type { ConversationTurn } from "@/lib/cards/provider";
 import type { RepertoireItem } from "@/features/converse/repertoire";
+import type { LongSessionRecord } from "@/features/converse/longSession";
 import type {
   AudioRecording,
   ListeningAttempt,
@@ -582,6 +583,9 @@ export interface Conversation {
    * stripped before a turn is stored, and because the review reports uptake after the fact.
    */
   repertoire?: RepertoireItem[];
+  /** Experimental long session (B1+): timed, no turn limit, reviewed into gaps. */
+  mode?: "long";
+  longSession?: LongSessionRecord;
 }
 
 export function saveConversation(conversation: Conversation): Promise<void> {

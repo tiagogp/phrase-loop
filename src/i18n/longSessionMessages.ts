@@ -1,0 +1,21 @@
+/** Copy for the experimental long conversation session (B1+). */
+export const longSessionMessages = {
+  "Long session": { pt: "Sessão longa" },
+  "Long session (experimental)": { pt: "Sessão longa (experimental)" },
+  "Conversation type": { pt: "Tipo de conversa" },
+  "Talk for 5 or 10 minutes. Nothing is corrected while you talk, and your partner will not make the question easier when you get stuck. At the end you see what you could not say yet.": { pt: "Converse por 5 ou 10 minutos. Nada é corrigido enquanto você fala, e seu parceiro não facilita a pergunta quando você trava. No final você vê o que ainda não conseguiu dizer." },
+  "Topic": { pt: "Tema" },
+  "Free topic": { pt: "Tema livre" },
+  "e.g. explaining why the release slipped": { pt: "ex.: explicar por que a entrega atrasou" },
+  "Duration": { pt: "Duração" },
+  "Start long session →": { pt: "Começar sessão longa →" },
+  "Recent long sessions": { pt: "Sessões longas recentes" },
+  "paused · {time} left": { pt: "pausada · faltam {time}" },
+  "Time left": { pt: "Tempo restante" },
+  "Paused. The timer stops while paused; resume when you are ready.": { pt: "Pausada. O tempo para enquanto a sessão está pausada; continue quando quiser." },
+  "Time is up. Finish your sentence and send it; the review comes next.": { pt: "O tempo acabou. Termine sua frase e envie; a revisão vem em seguida." },
+  "The session ended before you spoke, so there is nothing to review.": { pt: "A sessão terminou antes de você falar, então não há o que revisar." },
+  "Session finished": { pt: "Sessão encerrada" },
+  "{count} of your turns": { pt: "{count} falas suas" },
+  "In Portuguese": { pt: "Em português" },
+};

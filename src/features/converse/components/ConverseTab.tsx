@@ -261,7 +261,8 @@ export default function ConverseTab({
   const refreshPast = useCallback(async () => {
     try {
       const all = await getConversations();
-      setPast(all.sort((a, b) => b.startedAt - a.startedAt));
+      // Long sessions live in their own workspace and resume with their own clock.
+      setPast(all.filter((item) => item.mode !== "long").sort((a, b) => b.startedAt - a.startedAt));
     } catch {
       /* store unavailable (SSR / private mode) — leave the list empty */
     }

@@ -1,4 +1,4 @@
-import type { ConversationTurn, ProviderKind } from "@/lib/cards/provider";
+import type { ConversationTurn, LongSessionPromptOptions, ProviderKind } from "@/lib/cards/provider";
 import { getLearnerLangs } from "@/features/settings/learningProfile";
 
 /**
@@ -22,6 +22,8 @@ export async function sendConversationTurn(input: {
   taughtExpressions?: string[];
   /** C1-C2 repertoire mode: heard but never said back, so the partner makes room for them. */
   elicitExpressions?: string[];
+  /** Experimental long session; the route then builds the long-session prompt. */
+  longSession?: LongSessionPromptOptions;
   history: ConversationTurn[];
   signal?: AbortSignal;
 }): Promise<{ reply: string }> {
@@ -44,6 +46,7 @@ export async function sendConversationTurn(input: {
       speakerFamiliarity: input.speakerFamiliarity,
       taughtExpressions: input.taughtExpressions,
       elicitExpressions: input.elicitExpressions,
+      longSession: input.longSession,
       history: input.history,
     }),
     signal: input.signal,

@@ -1,6 +1,7 @@
 import { journeyMessages } from "./journeyMessages";
 import { tutorMessages } from "./tutorMessages";
 import { experienceMessages } from "./experienceMessages";
+import { longSessionMessages } from "./longSessionMessages";
 import type { UiLang } from "./config";
 
 /**
@@ -15,6 +16,7 @@ import type { UiLang } from "./config";
 export const messages: Record<string, Partial<Record<UiLang, string>>> = {
   ...tutorMessages,
   ...experienceMessages,
+  ...longSessionMessages,
   "{count} characters · minimum {minimum}": { pt: "{count} caracteres · mínimo de {minimum}" },
   "Pause": { pt: "Pausar" },
   "Theme": { pt: "Tema" },

@@ -791,6 +791,7 @@ export const CONVERSATION_KICKOFF =
  * afterwards (Phase 2), so corrections don't break the flow.
  */
 export function buildConverseSystem(opts: ConverseOptions): string {
+  if (opts.longSession) return buildLongSessionSystem(opts);
   const sourceLang = opts.sourceLang || DEFAULT_LEARNER_LANG;
   const levelLine = cefrLanguageLine(opts.level);
   const depthLine = opts.followUpDepth === "counterpoint" || opts.challenge
@@ -824,6 +825,63 @@ export function buildConverseSystem(opts: ConverseOptions): string {
 }
 
 /**
+ * B1/B2 long session: new expressions are rationed by the client (at most 2 every few turns, 3 per
+ * session), so this asks for an exact count and reuses the repertoire markup the client parses.
+ * Glosses stay in the learner's language below C1.
+ */
+function longSessionExpressionInstruction(budget: number, taught: string[], suggested: string[], sourceLang: string): string {
+  const recent = taught.slice(-MAX_TAUGHT_EXPRESSIONS);
+  return [
+    `In this turn, work in at most ${budget} useful expression${budget === 1 ? "" : "s"} a professional would naturally use here, inside your own sentences.`,
+    suggested.length > 0 ? `Prefer one of these when it fits what you are saying: ${suggested.join("; ")}.` : "",
+    recent.length > 0 ? `Do not reuse any of these: ${recent.join("; ")}.` : "",
+    `Wrap each one in double asterisks where it occurs, e.g. "we could **push back the release** a week". Never list or define expressions inside your reply.`,
+    `After your reply, add exactly one final line in this form and write nothing after it:`,
+    `[[repertoire: EXPRESSION — short definition]]`,
+    `Write each definition in ${sourceLang}, under 8 words.`,
+  ].filter(Boolean).join(" ");
+}
+
+/**
+ * Long session prompt. The learner talks for 5 or 10 minutes; the point is to surface what they
+ * cannot yet say, so the partner speaks little, keeps the demand of the scenario's functions, and —
+ * unlike the turn-limited conversation — never simplifies the question when the learner gets
+ * stuck: simplifying teaches them to route around the gap.
+ */
+export function buildLongSessionSystem(opts: ConverseOptions): string {
+  const sourceLang = opts.sourceLang || DEFAULT_LEARNER_LANG;
+  const long = opts.longSession ?? {};
+  const functions = (long.functions ?? []).filter(Boolean);
+  const budget = Math.max(0, Math.min(2, long.newExpressionBudget ?? 0));
+  return [
+    `You are a conversation partner in a realistic role-play so someone can practice speaking ${opts.targetLang} at length.`,
+    `Scenario: "${opts.scenario}".${long.aiRole ? ` Your role: ${long.aiRole}.` : ""} Stay in character and speak only ${opts.targetLang}.`,
+    cefrLanguageLine(opts.level),
+    `Speak little: 1 to 2 short sentences per turn, so the learner does almost all the talking.`,
+    functions.length > 0
+      ? `Deepen the conversation through what this situation demands of the learner: ${functions.join("; ")}. Ask questions and create small complications that require them to do these things — not just "why?".`
+      : `Deepen with questions that make the learner explain, give an example, take a position or handle a complication — not just "why?".`,
+    `Do NOT correct their grammar or wording and never explain language. Their mistakes are reviewed after the session.`,
+    `If they hesitate, get stuck or switch to ${sourceLang}, keep the same question and the same demand: wait, or say only "Try saying it another way." Do not make the question easier and do not change the subject.`,
+    long.codeSwitch
+      ? `The learner just got stuck and said this in ${sourceLang}: "${long.codeSwitch}". In your reply, stay in character and naturally use the natural ${opts.targetLang} way of saying what they meant, as part of your reaction — without pointing it out, translating it explicitly, correcting or explaining. Then continue the conversation.`
+      : "",
+    long.elicitGap
+      ? `Separately, steer this turn so the learner naturally needs to express this meaning: "${long.elicitGap.intent}". Create the situation for it; do not say "${long.elicitGap.natural}" or anything close to it yourself, and never tell them what to say.`
+      : "",
+    isRepertoireLevel(opts.level)
+      ? repertoireInstruction(opts.taughtExpressions, opts.elicitExpressions)
+      : budget > 0 && !long.elicitGap
+        ? longSessionExpressionInstruction(budget, opts.taughtExpressions ?? [], long.suggestedExpressions ?? [], sourceLang)
+        : "",
+    `There is no turn limit; a timer ends the session. Never wrap up or say goodbye on your own.`,
+  ].filter(Boolean).join(" ");
+}
+
+/** How a "travei" stretch reads in the history the model sees: marked, not mistaken for English. */
+const CODE_SWITCH_PREFIX = "[I got stuck and said this in Portuguese]";
+
+/**
  * Map the stored turn history to the `{ role, content }` shape both the Anthropic and
  * OpenAI-compatible SDKs accept. When there's no history yet, inject a single kickoff
  * user turn so the assistant opens the scenario (both APIs require a leading user message).
@@ -832,7 +890,10 @@ export function conversationMessages(
   history: ConversationTurn[],
 ): { role: "user" | "assistant"; content: string }[] {
   if (history.length === 0) return [{ role: "user", content: CONVERSATION_KICKOFF }];
-  return history.map((turn) => ({ role: turn.role, content: turn.text }));
+  return history.map((turn) => ({
+    role: turn.role,
+    content: turn.role === "user" && turn.codeSwitch ? `${CODE_SWITCH_PREFIX} ${turn.text}` : turn.text,
+  }));
 }
 
 export function normalizeCorrected(

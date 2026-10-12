@@ -26,6 +26,68 @@ describe("conversationMessages", () => {
   });
 });
 
+describe("long session prompt", () => {
+  const base = {
+    scenario: "Disagree with a code review comment",
+    targetLang: "en",
+    sourceLang: "pt",
+    level: "B1",
+    maxTurns: 6,
+    longSession: { aiRole: "a senior engineer who left the comment", functions: ["disagree politely", "defend a trade-off"] },
+  };
+
+  it("keeps the demand when the learner gets stuck instead of simplifying the question", () => {
+    const system = buildConverseSystem(base);
+    expect(system).not.toContain("simpler rephrasing");
+    expect(system).toContain("Try saying it another way");
+    expect(system).toContain("Do not make the question easier");
+    expect(system.toLowerCase()).toContain("do not correct");
+  });
+
+  it("deepens through the scenario's functions and speaks little", () => {
+    const system = buildConverseSystem(base);
+    expect(system).toContain("disagree politely; defend a trade-off");
+    expect(system).toContain("a senior engineer who left the comment");
+    expect(system).toContain("1 to 2 short sentences");
+  });
+
+  it("has no turn limit even when one is passed", () => {
+    const system = buildConverseSystem(base);
+    expect(system).not.toContain("limited to about");
+    expect(system).toContain("There is no turn limit");
+  });
+
+  it("answers a travei stretch with the English form, in character, without correcting", () => {
+    const system = buildConverseSystem({ ...base, longSession: { ...base.longSession, codeSwitch: "a gente precisa adiar o deploy" } });
+    expect(system).toContain('"a gente precisa adiar o deploy"');
+    expect(system).toContain("without pointing it out");
+  });
+
+  it("marks travei turns in the history the model reads", () => {
+    expect(conversationMessages([{ role: "user", text: "não sei dizer isso", codeSwitch: true }])).toEqual([
+      { role: "user", content: "[I got stuck and said this in Portuguese] não sei dizer isso" },
+    ]);
+  });
+
+  it("pulls a gap without saying it, and skips new expressions that turn", () => {
+    const system = buildConverseSystem({
+      ...base,
+      longSession: { ...base.longSession, elicitGap: { intent: "dizer que o prazo é apertado", natural: "the timeline is tight" }, newExpressionBudget: 2 },
+    });
+    expect(system).toContain("dizer que o prazo é apertado");
+    expect(system).toContain('do not say "the timeline is tight"');
+    expect(system).not.toContain("[[repertoire:");
+  });
+
+  it("asks B1/B2 for at most the budgeted expressions, glossed in the learner's language", () => {
+    const system = buildConverseSystem({ ...base, longSession: { ...base.longSession, newExpressionBudget: 1, suggestedExpressions: ["push back on"] } });
+    expect(system).toContain("at most 1 useful expression ");
+    expect(system).toContain("push back on");
+    expect(system).toContain("definition in pt");
+    expect(buildConverseSystem(base)).not.toContain("[[repertoire:");
+  });
+});
+
 describe("buildConverseSystem", () => {
   it("encodes the scenario, target language, level, and the no-mid-correction rule", () => {
     const system = buildConverseSystem({

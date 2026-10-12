@@ -65,6 +65,37 @@ export interface ConversationTurn {
   text: string;
   /** Present for learner turns when the response came from the microphone. */
   spoken?: boolean;
+  /**
+   * Long session: the learner got stuck ("travei") and said this turn in their own language.
+   * The text is the Portuguese they said; the partner answers with the English form.
+   */
+  codeSwitch?: boolean;
+  /** How the code-switch stretch came in: held-to-talk recording or the typed fallback. */
+  codeSwitchInput?: "voice" | "typed";
+  /** Recorded length of a voice code-switch stretch; typed stretches have none. */
+  durationMs?: number;
+  /** When the turn was said (long session only). */
+  at?: number;
+}
+
+/**
+ * Long session additions to the conversation prompt. Present only in that mode; the partner then
+ * speaks little, deepens through the scenario's functions and never simplifies when the learner
+ * gets stuck.
+ */
+export interface LongSessionPromptOptions {
+  /** Who the partner plays in the scenario, from the domain profile. */
+  aiRole?: string;
+  /** What the learner has to do with the language in this scenario (disagree, estimate…). */
+  functions?: string[];
+  /** Portuguese the learner just said after getting stuck; the reply uses its English form. */
+  codeSwitch?: string;
+  /** An open gap from an earlier session the partner should make room for, without saying it. */
+  elicitGap?: { intent: string; natural: string };
+  /** B1/B2: how many new expressions this turn may introduce (0 = none). */
+  newExpressionBudget?: number;
+  /** B1/B2: domain expressions to prefer when introducing new ones. */
+  suggestedExpressions?: string[];
 }
 
 /** What `converse()` needs to role-play a scenario at the learner's level. */
@@ -95,6 +126,8 @@ export interface ConverseOptions {
    * partner steers the turn so producing one becomes natural, without breaking character.
    */
   elicitExpressions?: string[];
+  /** Experimental long session (B1+); replaces the turn-limited conversation prompt. */
+  longSession?: LongSessionPromptOptions;
 }
 
 export type ProviderKind = "openrouter" | "ollama" | "claude" | "openai";

@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { safeStr } from "@/lib/cards/intake";
 import { isProviderAvailable, resolveProvider } from "@/lib/cards/registry";
-import type { ConversationTurn, ProviderKind } from "@/lib/cards/provider";
+import type { ConversationTurn, LongSessionPromptOptions, ProviderKind } from "@/lib/cards/provider";
 import { getDefaultProvider } from "@/server/aiSettings";
 import { isHttpError, isProviderKind, readJsonObject } from "@/server/http/validation";
 import {
@@ -43,6 +43,30 @@ function parseExpressions(raw: unknown): string[] | undefined {
   return out.length > 0 ? out : undefined;
 }
 
+const MAX_FUNCTIONS = 8;
+const MAX_FUNCTION_CHARS = 120;
+
+/** Long session options, each field bounded so a crafted body can't pad the system prompt. */
+function parseLongSession(raw: unknown): LongSessionPromptOptions | undefined {
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return undefined;
+  const o = raw as Record<string, unknown>;
+  const functions = Array.isArray(o.functions)
+    ? o.functions.slice(0, MAX_FUNCTIONS).map((item) => safeStr(item, "", MAX_FUNCTION_CHARS)).filter(Boolean)
+    : [];
+  const gap = typeof o.elicitGap === "object" && o.elicitGap !== null ? (o.elicitGap as Record<string, unknown>) : null;
+  const intent = gap ? safeStr(gap.intent, "", 300) : "";
+  const natural = gap ? safeStr(gap.natural, "", 200) : "";
+  const budget = typeof o.newExpressionBudget === "number" ? Math.max(0, Math.min(2, Math.round(o.newExpressionBudget))) : 0;
+  return {
+    aiRole: safeStr(o.aiRole, "", 200) || undefined,
+    functions: functions.length > 0 ? functions : undefined,
+    codeSwitch: safeStr(o.codeSwitch, "", MAX_TURN_CHARS) || undefined,
+    elicitGap: intent && natural ? { intent, natural } : undefined,
+    newExpressionBudget: budget,
+    suggestedExpressions: parseExpressions(o.suggestedExpressions),
+  };
+}
+
 function conversationProviderKind(raw: unknown): ProviderKind {
   return isProviderKind(raw) ? raw : getDefaultProvider();
 }
@@ -57,7 +81,8 @@ function parseTurns(raw: unknown): ConversationTurn[] {
     const role = o.role === "assistant" ? "assistant" : o.role === "user" ? "user" : null;
     const text = typeof o.text === "string" ? o.text.trim().slice(0, MAX_TURN_CHARS) : "";
     if (!role || !text) continue;
-    out.push({ role, text });
+    // A "travei" stretch must stay marked so the partner reads it as Portuguese, not as English.
+    out.push(role === "user" && o.codeSwitch === true ? { role, text, codeSwitch: true } : { role, text });
   }
   return out;
 }
@@ -92,6 +117,7 @@ export async function POST(req: NextRequest) {
     const taughtExpressions = parseExpressions(obj.taughtExpressions);
     const elicitExpressions = parseExpressions(obj.elicitExpressions);
     const history = parseTurns(obj.history);
+    const longSession = parseLongSession(obj.longSession);
     const model = safeStr(obj.ollamaModel, "", 100) || undefined;
 
     const kind = conversationProviderKind(obj.provider);
@@ -124,6 +150,7 @@ export async function POST(req: NextRequest) {
         speakerFamiliarity,
         taughtExpressions,
         elicitExpressions,
+        longSession,
       },
       { signal: req.signal, timeoutMs: PROVIDER_SINGLE_CALL_TIMEOUT_MS },
     );
