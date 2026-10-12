@@ -29,7 +29,7 @@ import { Notice } from "@/components/ui/Notice";
 import { StatusPill, type StatusPillProps } from "@/components/ui/StatusPill";
 import {
   exportLocalBackup,
-  getProductionAttempts, getReviews, getRetryOutcomes,
+  getProductionAttempts, getReviews, getRetryOutcomes, getConversations, getConversationGaps,
   restoreLocalBackup,
   validateLocalBackup,
   wipeLocalData,
@@ -211,8 +211,8 @@ export default function SettingsScreen({
   const downloadPilot = async () => {
     setBusy("pilot"); setNotice(null);
     try {
-      const [sessions, preferences, production, reviews, retries, activities] = await Promise.all([getTutorSessions(), getTutorPreferences(), getProductionAttempts(), getReviews(), getRetryOutcomes(), getActivityLog()]);
-      const report = buildPilotExport({ sessions, preferences, production, reviews, retries, activities, profileCreatedAt: getLearningProfile().createdAt }, Date.now(), includePilotAnswers);
+      const [sessions, preferences, production, reviews, retries, activities, conversations, gaps] = await Promise.all([getTutorSessions(), getTutorPreferences(), getProductionAttempts(), getReviews(), getRetryOutcomes(), getActivityLog(), getConversations(), getConversationGaps()]);
+      const report = buildPilotExport({ sessions, preferences, production, reviews, retries, activities, conversations, gaps, profileCreatedAt: getLearningProfile().createdAt }, Date.now(), includePilotAnswers);
       const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2) + "\n"], { type: "application/json" }));
       const link = document.createElement("a"); link.href = url;
       link.download = `phraseloop-pilot-${new Date().toISOString().slice(0, 10)}.json`;

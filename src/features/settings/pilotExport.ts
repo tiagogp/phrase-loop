@@ -2,7 +2,9 @@ import type { TutorPreferences, TutorSession } from "@/features/tutor/types";
 import { allowedTutorAttempt, tutorSkillEvidence } from "@/features/tutor/learning";
 import { isTutorConceptId, verifiedTutorContext } from "@/features/tutor/catalog";
 import type { ProductionAttempt, RetryOutcome } from "@/lib/performance/types";
-import type { ReviewRecord } from "@/lib/store/repository";
+import type { Conversation, ReviewRecord } from "@/lib/store/repository";
+import type { ConversationGap } from "@/features/converse/gaps";
+import { longSessionMetrics } from "@/features/converse/longSessionMetrics";
 import type { ActivityEvent } from "@/lib/store/activityLog";
 
 const DAY = 86_400_000;
@@ -14,6 +16,9 @@ export interface PilotHistory {
   reviews: ReviewRecord[];
   activities: ActivityEvent[];
   profileCreatedAt?: number;
+  /** Experimental long sessions and their gaps; kept apart from the tutor's measures. */
+  conversations?: Conversation[];
+  gaps?: ConversationGap[];
 }
 
 /** Explicit projection: no raw histories, generated tasks, feedback, recordings or keys. */
@@ -62,6 +67,7 @@ export function buildPilotExport(history: PilotHistory, now: number, includeAnsw
     support: { tutorAttempts: tutorRows.filter(r => r.supported).length, productionAttempts: production.filter(p => p.scaffoldUsed).length,
       unknownProductionAttempts: production.filter(p => p.scaffoldUsed === undefined).length },
     bySkill: skills, tutorAttempts: tutorRows,
+    longSessions: longSessionMetrics(history.conversations ?? [], history.gaps ?? [], now, includeAnswers),
     definitions: { d1: "[24h,48h) after first completed practice", d7: "[5,11) days after first completed practice (D7 protocol: days 5–10)",
       firstAttemptClock: "earliest known profile creation, first-run start or tutor session start; null when unavailable",
       completion: "tutor completion with eligible non-uncertain assessment, or explicitly timestamped production completion",

@@ -22,6 +22,7 @@ describe("local pilot metrics", () => {
     expect(report.tutorAttempts).toHaveLength(4);
     for (const text of [origin.attempts[0].text, origin.task.situation, origin.attempts[0].feedback.example.english, preferences.goal]) expect(JSON.stringify(report)).not.toContain(text);
     expect(report).not.toHaveProperty("answers");
+    expect(report.longSessions).toMatchObject({ measures: expect.stringContaining("not proficiency"), sessions: [], gaps: { total: 0, closedShare: null } });
     expect(buildPilotExport(history, 12 * DAY, true).answers?.[0].text).toBe(origin.attempts[0].text);
   });
   it("distinguishes local self-assessment, missing timing and incomplete observation windows", () => {
