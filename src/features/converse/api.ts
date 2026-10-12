@@ -1,5 +1,7 @@
 import type { ConversationTurn, LongSessionPromptOptions, ProviderKind } from "@/lib/cards/provider";
 import { getLearnerLangs } from "@/features/settings/learningProfile";
+import type { GapReview } from "@/features/converse/gapReview";
+import type { JudgeStamp } from "@/lib/evaluation/judge";
 
 /**
  * Ask the AI for the next assistant turn. `history` is the full prior exchange (empty for the
@@ -73,4 +75,32 @@ export async function synthesizeSpeech(text: string, signal?: AbortSignal): Prom
     throw new Error(data.error ?? `TTS failed (${response.status})`);
   }
   return response.blob();
+}
+
+/** Long-session review: the whole conversation in, strengths and at most 3 gaps with proof out. */
+export async function requestGapReview(input: {
+  provider: ProviderKind;
+  selectedModel?: string;
+  turns: ConversationTurn[];
+  level?: string;
+  scenario: string;
+  functions?: { id: string; label: string }[];
+  knownPatternLabels?: string[];
+}): Promise<{ review: GapReview; judge?: JudgeStamp }> {
+  const response = await fetch("/api/conversation/review", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      provider: input.provider,
+      ollamaModel: input.selectedModel || undefined,
+      turns: input.turns.map((turn) => ({ role: turn.role, text: turn.text, ...(turn.codeSwitch ? { codeSwitch: true } : {}) })),
+      level: input.level,
+      scenario: input.scenario,
+      functions: input.functions,
+      knownPatternLabels: input.knownPatternLabels,
+    }),
+  });
+  const data = (await response.json().catch(() => ({}))) as { review?: GapReview; judge?: JudgeStamp; error?: string };
+  if (!response.ok || !data.review) throw new Error(data.error ?? `Request failed (${response.status})`);
+  return { review: data.review, judge: data.judge };
 }

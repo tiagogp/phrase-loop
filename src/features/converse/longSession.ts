@@ -8,6 +8,8 @@
  */
 
 import type { ConversationTurn } from "@/lib/cards/provider";
+import type { JudgeStamp } from "@/lib/evaluation/judge";
+import type { GapReview } from "./gapReview";
 
 export const LONG_SESSION_DURATIONS = [5, 10] as const;
 export type LongSessionDuration = (typeof LONG_SESSION_DURATIONS)[number];
@@ -150,6 +152,21 @@ export interface LongSessionRecord extends LongSessionClock {
   label?: string;
   endedBy?: "time" | "learner";
   pacing: ExpressionPacing;
+  /** Set once the review ran; reopening shows it instead of re-charging the provider. */
+  review?: GapReview & { reviewedAt: number; judge?: JudgeStamp };
+  /**
+   * The learner saying each gap again with the natural form, at the end of the review. Recorded,
+   * never evaluated: it is practice next to the feedback, not tutor evidence.
+   */
+  reconstructions?: Reconstruction[];
+}
+
+export interface Reconstruction {
+  /** Position of the gap in `review.gaps`. */
+  gapIndex: number;
+  text: string;
+  spoken: boolean;
+  at: number;
 }
 
 /** A topic offered at setup: a domain-profile scenario, already localized for the learner. */

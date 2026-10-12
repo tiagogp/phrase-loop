@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { safeStr } from "@/lib/cards/intake";
 import { isProviderAvailable, resolveProvider } from "@/lib/cards/registry";
-import type { ConversationTurn, LongSessionPromptOptions, ProviderKind } from "@/lib/cards/provider";
+import type { LongSessionPromptOptions, ProviderKind } from "@/lib/cards/provider";
 import { getDefaultProvider } from "@/server/aiSettings";
 import { isHttpError, isProviderKind, readJsonObject } from "@/server/http/validation";
 import {
@@ -21,13 +21,11 @@ import {
 } from "@/server/http/providerFailure";
 import { MAX_CORRECTION_JSON_BYTES, PROVIDER_SINGLE_CALL_TIMEOUT_MS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
+import { MAX_TURN_CHARS, parseConversationTurns } from "@/server/http/conversationTurns";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
-/** Bound history so one long session can't blow the model's context or the request timeout. */
-const MAX_TURNS = 60;
-const MAX_TURN_CHARS = 2000;
 const MAX_SCENARIO_CHARS = 300;
 /** Repertoire lists are short phrases; bound both so a crafted body can't pad the system prompt. */
 const MAX_EXPRESSIONS = 30;
@@ -71,22 +69,6 @@ function conversationProviderKind(raw: unknown): ProviderKind {
   return isProviderKind(raw) ? raw : getDefaultProvider();
 }
 
-function parseTurns(raw: unknown): ConversationTurn[] {
-  if (!Array.isArray(raw)) return [];
-  const out: ConversationTurn[] = [];
-  // Keep only the most recent turns — the tail is what matters for the next reply.
-  for (const item of raw.slice(-MAX_TURNS)) {
-    if (typeof item !== "object" || item === null) continue;
-    const o = item as Record<string, unknown>;
-    const role = o.role === "assistant" ? "assistant" : o.role === "user" ? "user" : null;
-    const text = typeof o.text === "string" ? o.text.trim().slice(0, MAX_TURN_CHARS) : "";
-    if (!role || !text) continue;
-    // A "travei" stretch must stay marked so the partner reads it as Portuguese, not as English.
-    out.push(role === "user" && o.codeSwitch === true ? { role, text, codeSwitch: true } : { role, text });
-  }
-  return out;
-}
-
 export async function POST(req: NextRequest) {
   try {
     const obj = await readJsonObject(req, { maxBytes: MAX_CORRECTION_JSON_BYTES });
@@ -116,7 +98,7 @@ export async function POST(req: NextRequest) {
       : undefined;
     const taughtExpressions = parseExpressions(obj.taughtExpressions);
     const elicitExpressions = parseExpressions(obj.elicitExpressions);
-    const history = parseTurns(obj.history);
+    const history = parseConversationTurns(obj.history);
     const longSession = parseLongSession(obj.longSession);
     const model = safeStr(obj.ollamaModel, "", 100) || undefined;
 

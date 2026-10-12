@@ -16,7 +16,8 @@ import { deleteConversation, getConversations, saveConversation, type Conversati
 import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
 import { getLearnerLangs } from "@/features/settings/learningProfile";
 import { transcribeAudio } from "@/features/correct/api";
-import { sendConversationTurn, synthesizeSpeech } from "@/features/converse/api";
+import { requestGapReview, sendConversationTurn, synthesizeSpeech } from "@/features/converse/api";
+import { LongSessionReview } from "@/features/converse/components/LongSessionReview";
 import { createMediaRun } from "@/features/converse/mediaRun";
 import { mergeRepertoire, parseRepertoire, recentTaughtExpressions, segmentRepertoire, type RepertoireItem } from "@/features/converse/repertoire";
 import { useClipRecorder } from "@/features/converse/useClipRecorder";
@@ -24,7 +25,6 @@ import LocalModelNotice from "@/features/speech/components/LocalModelNotice";
 import { useWhisperModel } from "@/features/speech/hooks/useLocalModel";
 import {
   aiTurnCount,
-  codeSwitchStats,
   codeSwitchTurn,
   endDisposition,
   formatRemaining,
@@ -50,13 +50,15 @@ export interface LongSessionProps {
   onOpenSettings?: () => void;
   /** Scenarios from the learner's domain profile; a free topic is always available. */
   topics?: LongSessionTopic[];
+  /** Opens a tutor situation from a phrase saved out of a gap. */
+  onPracticeSource?: (cardId: string) => void;
 }
 
 /**
  * Experimental long session (B1+): 5 or 10 minutes with no turn limit and no correction while it
  * runs. The partner keeps the demand when the learner gets stuck; the review comes at the end.
  */
-export default function LongSession({ active = true, onOpenSettings, topics = [] }: LongSessionProps) {
+export default function LongSession({ active = true, onOpenSettings, topics = [], onPracticeSource }: LongSessionProps) {
   const { t } = useT();
   const selection = useProviderSelection({ fallbackToEvaluator: true });
   const { provider, activeProvider, hasEvaluator, selectedModel } = selection;
@@ -66,6 +68,8 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
   const [duration, setDuration] = useState<LongSessionDuration>(10);
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [finished, setFinished] = useState<Conversation | null>(null);
+  const [reviewing, setReviewing] = useState(false);
+  const [reviewNote, setReviewNote] = useState<string | null>(null);
   const [past, setPast] = useState<Conversation[]>([]);
   const [typed, setTyped] = useState("");
   const [busy, setBusy] = useState(false);
@@ -147,6 +151,41 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
     }
   }, []);
 
+  const saveFinished = useCallback((next: Conversation) => {
+    setFinished(next);
+    void saveConversation(next).then(refreshPast);
+  }, [refreshPast]);
+
+  /** Runs once per session; reopening shows the stored review instead of re-charging the provider. */
+  const runReview = useCallback(async (target: Conversation) => {
+    if (!target.longSession) return;
+    setReviewing(true);
+    setReviewNote(null);
+    const sessionTopic = topics.find((item) => item.id === target.longSession?.scenarioId);
+    try {
+      const { review, judge } = await requestGapReview({
+        provider,
+        selectedModel,
+        turns: target.turns,
+        level: target.level,
+        scenario: target.scenario,
+        functions: sessionTopic?.functions,
+        knownPatternLabels: [],
+      });
+      saveFinished({ ...target, longSession: { ...target.longSession, review: { ...review, reviewedAt: Date.now(), judge } } });
+    } catch (err: unknown) {
+      setReviewNote(err instanceof Error ? err.message : t("Couldn't review the conversation."));
+    } finally {
+      setReviewing(false);
+    }
+  }, [provider, saveFinished, selectedModel, t, topics]);
+
+  const openReview = useCallback((target: Conversation) => {
+    setFinished(target);
+    setReviewNote(null);
+    if (!target.longSession?.review) void runReview(target);
+  }, [runReview]);
+
   /** End the session: a session where the learner never spoke is dropped without review. */
   const finish = useCallback((endedBy: "time" | "learner") => {
     const current = conversationRef.current;
@@ -167,8 +206,8 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
     }
     const ended: Conversation = { ...current, endedAt, longSession: { ...pauseClock(current.longSession, endedAt), endedBy } };
     void saveConversation(ended).then(refreshPast);
-    setFinished(ended);
-  }, [mic, refreshPast, stopAudio, stuck, t]);
+    openReview(ended);
+  }, [mic, openReview, refreshPast, stopAudio, stuck, t]);
 
   const requestReply = useCallback(async (base: Conversation) => {
     const long = base.longSession;
@@ -381,20 +420,22 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
     ? t("Your turns are sent to {provider} to generate replies.", { provider: activeProvider.label })
     : null;
 
-  // ───────────────────────── finished ─────────────────────────
+  // ───────────────────────── review ─────────────────────────
   if (finished) {
     return (
-      <Card className="space-y-4 p-5">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-sm font-semibold text-ink">{t("Session finished")} · {finished.longSession?.label ?? finished.context}</p>
-          <Button variant="secondary" className="h-9" onClick={() => setFinished(null)}>{t("Done")}</Button>
-        </div>
-        <p className="text-xs text-ink-muted">
-          {t("{count} of your turns", { count: finished.turns.filter((turn) => turn.role === "user").length })}
-          {" · "}
-          {t("Stuck {count} times · {seconds}s in Portuguese", { count: codeSwitchStats(finished.turns).count, seconds: codeSwitchStats(finished.turns).recordedSeconds })}
-        </p>
-      </Card>
+      <LongSessionReview
+        conversation={finished}
+        topic={topics.find((item) => item.id === finished.longSession?.scenarioId)}
+        reviewing={reviewing}
+        reviewerNote={activeProvider && !activeProvider.isLocal
+          ? t("The whole conversation is sent to {provider} for the review.", { provider: activeProvider.label })
+          : null}
+        note={reviewNote}
+        onRetry={() => void runReview(finished)}
+        onUpdate={saveFinished}
+        onDone={() => setFinished(null)}
+        onPracticeSource={onPracticeSource}
+      />
     );
   }
 
@@ -460,7 +501,9 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
                       {item.endedAt ? "" : ` · ${t("paused · {time} left", { time: formatRemaining(item.longSession ? remainingMs(item.longSession, now) : 0) })}`}
                     </p>
                   </div>
-                  {!item.endedAt && <Chip onClick={() => resume(item)}>{t("Resume")}</Chip>}
+                  {item.endedAt
+                    ? <Chip onClick={() => openReview(item)}>{t("Review")}</Chip>
+                    : <Chip onClick={() => resume(item)}>{t("Resume")}</Chip>}
                 </li>
               ))}
             </ul>

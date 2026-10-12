@@ -16,7 +16,7 @@ import { DEFAULT_LEARNING_PROFILE, getLearningProfile, subscribeToProfile } from
 import { GuidedSpeaking } from "@/features/pronunciation/components/GuidedSpeaking";
 
 /** Conversation is discoverable at every level; unavailable AI has a useful local alternative. */
-export default function ConversationTab({ onOpenSettings, active = true }: { onOpenSettings?: () => void; active?: boolean }) {
+export default function ConversationTab({ onOpenSettings, onPracticeSource, active = true }: { onOpenSettings?: () => void; onPracticeSource?: (cardId: string) => void; active?: boolean }) {
   const { t } = useT();
   const { hasEvaluator } = useProviderSelection({ fallbackToEvaluator: true });
   const { loading } = useAiSettings();
@@ -46,7 +46,7 @@ export default function ConversationTab({ onOpenSettings, active = true }: { onO
             />
           )}
           {longAvailable && mode === "long"
-            ? <LongSession active={active} onOpenSettings={onOpenSettings} />
+            ? <LongSession active={active} onOpenSettings={onOpenSettings} onPracticeSource={onPracticeSource} />
             : <>
               <ConverseTab active={active} onOpenSettings={onOpenSettings}
                 scenarios={advanced ? ADVANCED_CONVERSATION_SCENARIOS : undefined}

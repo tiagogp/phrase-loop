@@ -154,7 +154,7 @@ function TabContent({
   }
   if (tab === "progress") return <ProgressPage active={active} onPractice={onOpenPractice} onTutor={onTutor} />;
   if (tab === "study") return <StudyTab active={active} onHome={onHome} onTools={() => exploreActions.onTools("anki")} reviewRequest={reviewRequest} onOpenSettings={onOpenSettings} view={studyView} onViewChange={onStudyViewChange} onProgress={onProgress} onDiscover={onOpenDiscover} onConversation={onSpeak} onLesson={onFirstLesson} onCorrect={onOpenCorrect} />;
-  if (tab === "conversa") return <ConversationTab active={active} onOpenSettings={onOpenSettings} />;
+  if (tab === "conversa") return <ConversationTab active={active} onOpenSettings={onOpenSettings} onPracticeSource={onContentPractice} />;
   if (tab === "correct") return <CorrectTab onOpenSettings={onOpenSettings} onStudyNow={onOpenPractice} kokoroModel={kokoro} />;
   return null;
 }
