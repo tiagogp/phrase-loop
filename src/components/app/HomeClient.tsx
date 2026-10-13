@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ComponentProps } from "react";
 import { m } from "motion/react";
-import dynamic from "next/dynamic";
-import { BLUR, springSoft, TRAVEL } from "@/lib/motion";
+import { createWorkspace } from "@/components/app/createWorkspace";
+import { BLUR, springSoft } from "@/lib/motion";
+import { preloadWorkspaces } from "@/components/app/preloadWorkspaces";
 import AppHeader from "@/components/app/AppHeader";
 import { type HomeTab } from "@/components/app/homeTabs";
 import AppProviders from "@/components/app/AppProviders";
@@ -48,18 +49,24 @@ function WorkspaceLoading() {
   return <div role="status" aria-live="polite" className="flex min-h-48 items-center justify-center gap-3 rounded-panel border border-line bg-card p-6 text-sm text-ink-muted"><Spinner className="h-5 w-5 text-accent" />{t("Loading…")}</div>;
 }
 
-const C1Tab = dynamic(() => import("@/features/c1/components/C1Tab"), { loading: WorkspaceLoading });
-const ConversationTab = dynamic(() => import("@/features/converse/components/ConversationTab"), { loading: WorkspaceLoading });
-const CorrectTab = dynamic(() => import("@/features/correct/components/CorrectTab"), { loading: WorkspaceLoading });
-const DiscoverTab = dynamic(() => import("@/features/discover/components/DiscoverTab"), { loading: WorkspaceLoading });
-const SettingsScreen = dynamic(() => import("@/features/settings/components/SettingsScreen"), { loading: WorkspaceLoading });
-const SpeechTab = dynamic(() => import("@/features/speech/components/SpeechTab"), { loading: WorkspaceLoading });
-const StudyTab = dynamic(() => import("@/features/study/components/StudyTab"), { loading: WorkspaceLoading });
-const ProgressPage = dynamic(() => import("@/features/progress/components/ProgressPage"), { loading: WorkspaceLoading });
-const TutorWorkspace = dynamic(() => import("@/features/tutor/components/TutorWorkspace"), { loading: WorkspaceLoading });
+const { Screen: C1Tab, preload: preloadC1Tab } = createWorkspace(() => import("@/features/c1/components/C1Tab"), WorkspaceLoading);
+const { Screen: ConversationTab, preload: preloadConversationTab } = createWorkspace(() => import("@/features/converse/components/ConversationTab"), WorkspaceLoading);
+const { Screen: CorrectTab, preload: preloadCorrectTab } = createWorkspace(() => import("@/features/correct/components/CorrectTab"), WorkspaceLoading);
+const { Screen: DiscoverTab, preload: preloadDiscoverTab } = createWorkspace(() => import("@/features/discover/components/DiscoverTab"), WorkspaceLoading);
+const { Screen: SettingsScreen, preload: preloadSettingsScreen } = createWorkspace(() => import("@/features/settings/components/SettingsScreen"), WorkspaceLoading);
+const { Screen: SpeechTab, preload: preloadSpeechTab } = createWorkspace<NonNullable<ComponentProps<typeof import("@/features/speech/components/SpeechTab").default>>>(() => import("@/features/speech/components/SpeechTab"), WorkspaceLoading);
+const { Screen: StudyTab, preload: preloadStudyTab } = createWorkspace(() => import("@/features/study/components/StudyTab"), WorkspaceLoading);
+const { Screen: ProgressPage, preload: preloadProgressPage } = createWorkspace(() => import("@/features/progress/components/ProgressPage"), WorkspaceLoading);
+const { Screen: TutorWorkspace, preload: preloadTutorWorkspace } = createWorkspace(() => import("@/features/tutor/components/TutorWorkspace"), WorkspaceLoading);
+const { Screen: LessonView, preload: preloadLessonView } = createWorkspace(async () => ({ default: (await import("@/features/learn/components/LessonView")).LessonView }), WorkspaceLoading);
+const { Screen: PlanOnboarding, preload: preloadPlanOnboarding } = createWorkspace(async () => ({ default: (await import("@/features/plan/components/PlanOnboarding")).PlanOnboarding }), WorkspaceLoading);
 
-const LessonView = dynamic(() => import("@/features/learn/components/LessonView").then(module => module.LessonView), { loading: WorkspaceLoading });
-const PlanOnboarding = dynamic(() => import("@/features/plan/components/PlanOnboarding").then(module => module.PlanOnboarding), { loading: WorkspaceLoading });
+// Warm code in idle turns without mounting screens or starting their effects.
+const workspaceLoaders = [
+  preloadStudyTab, preloadConversationTab, preloadDiscoverTab, preloadProgressPage,
+  preloadSettingsScreen, preloadTutorWorkspace, preloadLessonView, preloadCorrectTab,
+  preloadSpeechTab, preloadC1Tab, preloadPlanOnboarding,
+];
 
 async function recommendedLessonId(): Promise<string> {
   const profile = getLearningProfile();
@@ -223,6 +230,8 @@ function HomeContent() {
   const { fullNavigation } = useExperiencePreferences();
   const { settings } = useAiSettings();
   useDockDueBadge();
+
+  useEffect(() => preloadWorkspaces(workspaceLoaders), []);
 
   // Attempt records are the source of truth for support level. Refresh their
   // derived snapshot immediately after IndexedDB confirms a write, rather than
@@ -413,13 +422,10 @@ function HomeContent() {
                     tabIndex={0}
                     className="h-full overflow-y-auto app-scroll-region"
                   >
-                    {/* Mount stays alive across tab switches so each tab keeps its
-                        state; only the entrance animation replays on activation. */}
-                    {visitedTabs.has(item.id) && <m.div
+                    {/* Restore the mounted screen immediately, including its draft
+                        and scroll position; fading it back in looks like a reload. */}
+                    {visitedTabs.has(item.id) && <div
                       className="max-w-5xl mx-auto px-4 pt-5 pb-14 sm:pt-7 sm:pb-20"
-                      initial={false}
-                      animate={active ? { opacity: 1, y: 0 } : { opacity: 0, y: TRAVEL }}
-                      transition={springSoft}
                     >
                       <TabErrorBoundary>
                         <WorkspaceActivityContext value={active && overlay === null && lessonId === null}>
@@ -456,7 +462,7 @@ function HomeContent() {
                           />
                         </WorkspaceActivityContext>
                       </TabErrorBoundary>
-                    </m.div>}
+                    </div>}
                   </section>
                 );
               })}
