@@ -335,8 +335,8 @@
     "semantic_hash": ""
   },
   "src/components/app/HomeClient.tsx": {
-    "mtime": 1791895531.026042,
-    "ast_hash": "ada699bc777de950652e95aa55191bb1",
+    "mtime": 1791896582.3687553,
+    "ast_hash": "fa5460fef3771852a398c346e3c9d305",
     "semantic_hash": ""
   },
   "src/components/app/ThemeProvider.tsx": {
@@ -545,8 +545,8 @@
     "semantic_hash": ""
   },
   "src/features/correct/hooks/useCorrectionAudio.ts": {
-    "mtime": 1791863015.6670837,
-    "ast_hash": "19f9607ecb2d6af96aa3a60c69a2cd8a",
+    "mtime": 1791932788.481769,
+    "ast_hash": "9e627d7192d63e03ea2ea3285a8538f0",
     "semantic_hash": ""
   },
   "src/features/correct/model.test.ts": {
@@ -650,8 +650,8 @@
     "semantic_hash": ""
   },
   "src/features/plan/components/PlanTaskRow.tsx": {
-    "mtime": 1791892797.4309483,
-    "ast_hash": "f14f186a80aa88b56452e4cdd4af720e",
+    "mtime": 1791899534.5616307,
+    "ast_hash": "02cfd855feaaa7f8a99ed4a740c28513",
     "semantic_hash": ""
   },
   "src/features/plan/constants.ts": {
@@ -685,8 +685,8 @@
     "semantic_hash": ""
   },
   "src/features/plan/hooks/useTodayPlan.ts": {
-    "mtime": 1790787721.03212,
-    "ast_hash": "0c22041373f46b4f4f2b7aee3b979f06",
+    "mtime": 1791896731.3940444,
+    "ast_hash": "fc07410c5070c3df07a14e96d0fac8ac",
     "semantic_hash": ""
   },
   "src/features/plan/prompts.ts": {
@@ -750,9 +750,9 @@
     "semantic_hash": ""
   },
   "src/features/settings/context/AiSettingsContext.tsx": {
-    "mtime": 1790713419.585542,
-    "ast_hash": "abf1ad2a6e81787c6623d8a80a5cf025",
-    "semantic_hash": "abf1ad2a6e81787c6623d8a80a5cf025"
+    "mtime": 1791932788.4819636,
+    "ast_hash": "c49e10b3ffa62c3c89a4b43213349a66",
+    "semantic_hash": ""
   },
   "src/features/settings/languages.ts": {
     "mtime": 1790713419.5855908,
@@ -840,8 +840,8 @@
     "semantic_hash": ""
   },
   "src/features/study/components/StudyTab.tsx": {
-    "mtime": 1791892782.6398737,
-    "ast_hash": "b8d45a1221bc15e00eab583b3d489046",
+    "mtime": 1791896678.5657861,
+    "ast_hash": "1f24e22badd04fddc9f1680a9b53b592",
     "semantic_hash": ""
   },
   "src/features/study/components/WeaknessList.tsx": {
@@ -1455,8 +1455,8 @@
     "semantic_hash": ""
   },
   "src/features/study/useStudySession.ts": {
-    "mtime": 1790794663.155753,
-    "ast_hash": "de923013a858d23b0d1918b7d5bc381c",
+    "mtime": 1791896731.3951247,
+    "ast_hash": "20bbd15bb098c69c0e1c7397bd7ea5e9",
     "semantic_hash": ""
   },
   "src/features/home/returnMoment.test.ts": {
@@ -1865,8 +1865,8 @@
     "semantic_hash": ""
   },
   "src/features/study/components/TransferPracticeCard.tsx": {
-    "mtime": 1791892782.6419702,
-    "ast_hash": "862d858a040386f65cacc8d3c2ce92b0",
+    "mtime": 1791896731.3946686,
+    "ast_hash": "e3e94558ae5a5d7ffab7e79dbbcf9968",
     "semantic_hash": ""
   },
   "src/features/correct/micFallback.ts": {
@@ -1895,8 +1895,8 @@
     "semantic_hash": ""
   },
   "src/features/plan/components/TodayPlanCard.tsx": {
-    "mtime": 1791892797.43113,
-    "ast_hash": "a01821f5d4b1be907ebab4a3acd3c9fd",
+    "mtime": 1791899444.3555145,
+    "ast_hash": "b98c09e7aaa71efc02ce6418f91138ab",
     "semantic_hash": ""
   },
   "src/features/method/progressionPersistence.test.ts": {
@@ -2320,8 +2320,8 @@
     "semantic_hash": ""
   },
   "src/features/progress/components/ProgressPage.tsx": {
-    "mtime": 1791892797.4316163,
-    "ast_hash": "ff24caf4a52e936a4918a4987e6cdfe5",
+    "mtime": 1791896582.3754568,
+    "ast_hash": "918b1deabbfb848bff8634d56d585e76",
     "semantic_hash": ""
   },
   "src/features/progress/learningEvidence.test.ts": {
@@ -2365,8 +2365,8 @@
     "semantic_hash": ""
   },
   "src/features/tutor/components/TutorPractice.tsx": {
-    "mtime": 1791892827.0498083,
-    "ast_hash": "24e73cbd67d9a5d1bd49a10c3ca0de56",
+    "mtime": 1791932788.4821215,
+    "ast_hash": "332f7becc57d01698f33e4392cdc6b24",
     "semantic_hash": ""
   },
   "src/features/tutor/components/TutorProgressCard.tsx": {
@@ -2375,8 +2375,8 @@
     "semantic_hash": ""
   },
   "src/features/tutor/components/TutorWorkspace.tsx": {
-    "mtime": 1791895870.59104,
-    "ast_hash": "aa468031c170d044ad8ed6086bcb7cdb",
+    "mtime": 1791932788.4822853,
+    "ast_hash": "edb7e3255c6cbf7431f111286010fba1",
     "semantic_hash": ""
   },
   "src/features/tutor/contract.ts": {
@@ -2410,8 +2410,8 @@
     "semantic_hash": ""
   },
   "src/features/tutor/store.ts": {
-    "mtime": 1790830888.6109195,
-    "ast_hash": "9f4218d19be42791c3b396e01fb155ea",
+    "mtime": 1791932788.4824498,
+    "ast_hash": "6f30398dbfddfd6e4244ae3bf21b13cf",
     "semantic_hash": ""
   },
   "src/features/tutor/testFixtures.ts": {
@@ -2940,8 +2940,8 @@
     "semantic_hash": ""
   },
   "src/components/ui/MicButton.tsx": {
-    "mtime": 1791863774.0760403,
-    "ast_hash": "22fab1ad9dc97abfcf880d255107478f",
+    "mtime": 1791899444.355234,
+    "ast_hash": "d30c8b8a508f865b641668691cdc7aad",
     "semantic_hash": ""
   },
   "src/features/correct/hooks/useInputLevel.ts": {
@@ -2949,29 +2949,19 @@
     "ast_hash": "6c7926c670f486a7add6d29ec4338606",
     "semantic_hash": ""
   },
-  "src/components/app/createWorkspace.test.tsx": {
-    "mtime": 1791895531.0264463,
-    "ast_hash": "f70069016ebf27e592863a4af4aa1393",
-    "semantic_hash": ""
-  },
-  "src/components/app/createWorkspace.tsx": {
-    "mtime": 1791895422.9111867,
-    "ast_hash": "c5aa47e7b71b33b6f85d75c0e3992d71",
-    "semantic_hash": ""
-  },
-  "src/components/app/preloadWorkspaces.test.ts": {
-    "mtime": 1791895325.842038,
-    "ast_hash": "a0e2222504d73f96a03c1d7508064aa0",
-    "semantic_hash": ""
-  },
-  "src/components/app/preloadWorkspaces.ts": {
-    "mtime": 1791895282.961526,
-    "ast_hash": "7ac522b5d5924d6b3ecb9ecb95689b44",
-    "semantic_hash": ""
-  },
   "src/components/ui/Select.test.tsx": {
     "mtime": 1791895934.9234624,
     "ast_hash": "d24c50d633e5b21796addb12c69c08dc",
+    "semantic_hash": ""
+  },
+  "src/features/plan/todayPlanResource.test.ts": {
+    "mtime": 1791896783.094365,
+    "ast_hash": "e18d80a2150f456a05367280c2a398c0",
+    "semantic_hash": ""
+  },
+  "src/features/plan/todayPlanResource.ts": {
+    "mtime": 1791896640.7903836,
+    "ast_hash": "4ea928db2ef6b22e870bd52a39138a73",
     "semantic_hash": ""
   }
 }
