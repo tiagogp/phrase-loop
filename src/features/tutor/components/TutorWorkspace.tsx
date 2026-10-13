@@ -11,6 +11,8 @@ import { Card } from "@/components/ui/Card";
 import { LoadingStatus } from "@/components/ui/LoadingStatus";
 import { Notice } from "@/components/ui/Notice";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Field } from "@/components/ui/Field";
+import Select from "@/components/ui/Select";
 import { ProviderPicker } from "@/features/cards/components/ProviderPicker";
 import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
 import { getLearningProfile } from "@/features/settings/learningProfile";
@@ -159,11 +161,17 @@ function TutorSetup({ memory, autoStart, onOpen, onSettings, onPractice, onConte
   return <Card className="space-y-5 p-5 sm:p-7">
     <p className="text-sm text-ink-soft">{intent === "new" ? t("You can choose another goal without losing your previous session.") : localize(recommendation.reason)}</p>
     {(!autoStart || error) && <label className="block space-y-2 text-sm font-medium text-ink"><span>{t("What do you want to be able to do?")}</span><input value={focus} maxLength={500} disabled={blocked} onChange={e => setFocus(e.target.value)} className={tutorInputClass} /></label>}
-    {!autoStart && <label className="block space-y-2 text-sm text-ink-soft"><span>{t("Skill practiced:")}</span><select className={tutorInputClass} value={chosenConcept} disabled={blocked} onChange={e => { setChosenConcept(e.target.value); setFocus(localize(TUTOR_CONCEPTS[e.target.value as keyof typeof TUTOR_CONCEPTS].label)); }}>{Object.entries(TUTOR_CONCEPTS).map(([id, concept]) => <option key={id} value={id}>{localize(concept.label)}</option>)}</select></label>}
+    {!autoStart && <Field label={t("Skill practiced:")}>
+      <Select value={chosenConcept} disabled={blocked}
+        onChange={value => { setChosenConcept(value); setFocus(localize(TUTOR_CONCEPTS[value as keyof typeof TUTOR_CONCEPTS].label)); }}
+        options={Object.entries(TUTOR_CONCEPTS).map(([value, concept]) => ({ value, label: localize(concept.label) }))} />
+    </Field>}
     <Disclosure title={`${t("Adjust session ·")} ${minutes} min · ${level}`} contentClassName="space-y-4" nested>
-      <label className="block space-y-2 text-sm text-ink-soft"><span>{t("Level")}</span><select className={tutorInputClass} value={level} disabled={blocked} onChange={e => setLevel(e.target.value as EnglishLevel)}>{ENGLISH_LEVELS.map(l => <option key={l.value} value={l.value}>{l.value}</option>)}</select></label>
-      <label className="block space-y-2 text-sm text-ink-soft"><span>{t("Approximate time")}</span><select className={tutorInputClass} value={minutes} disabled={blocked} onChange={e => setMinutes(Number(e.target.value) as 5 | 10 | 20)}>{[5, 10, 20].map(m => <option key={m} value={m}>{t("{count} min", { count: m })}</option>)}</select></label>
-      <label className="block space-y-2 text-sm text-ink-soft"><span>{t("Content as a starting point")}</span><select className={tutorInputClass} value={sourceId} disabled={blocked} onChange={e => setSourceId(e.target.value)}><option value="">{t("A situation suggested by PhraseLoop")}</option>{cards.map(c => <option key={c.id} value={c.id}>{c.front.slice(0, 100)}</option>)}</select></label>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label={t("Level")}><Select value={level} disabled={blocked} onChange={value => setLevel(value as EnglishLevel)} options={ENGLISH_LEVELS.map(level => ({ value: level.value, label: level.value }))} /></Field>
+        <Field label={t("Approximate time")}><Select value={String(minutes)} disabled={blocked} onChange={value => setMinutes(Number(value) as 5 | 10 | 20)} options={[5, 10, 20].map(count => ({ value: String(count), label: t("{count} min", { count }) }))} /></Field>
+      </div>
+      <Field label={t("Content as a starting point")}><Select value={sourceId} disabled={blocked} onChange={setSourceId} options={[{ value: "", label: t("A situation suggested by PhraseLoop") }, ...cards.map(card => ({ value: card.id, label: card.front }))]} /></Field>
       <ProviderPicker selection={selection} disabled={blocked} />
     </Disclosure>
     {!selection.providerReady && <Notice>{t("Connect an AI to receive feedback. You can also access your saved phrases.")}<div className="mt-3 flex flex-wrap gap-2"><Button onClick={onSettings}>{t("Connect AI")}</Button><Button variant="secondary" onClick={onPractice}>{t("Review phrases")}</Button><Button variant="ghost" onClick={onContent}>{t("Add content")}</Button></div></Notice>}

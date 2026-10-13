@@ -6,6 +6,8 @@ import { useTutorTranslation } from "../useTutorTranslation";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Notice } from "@/components/ui/Notice";
+import { Field } from "@/components/ui/Field";
+import Select from "@/components/ui/Select";
 import { saveTutorPreferences, type TutorMemory } from "../store";
 import type { TutorPreferences } from "../types";
 
@@ -28,8 +30,9 @@ export function TutorMemoryPanel({ memory }: { memory: TutorMemory }) {
     <p className="text-sm text-ink-soft">{t("Your history stays in this browser. When you request a task, the tutor receives your goal and up to six relevant records. You can exclude records from this context without deleting your history.")}</p>
     <label className="block space-y-2 text-sm text-ink-soft"><span>{t("What I want to be able to do in English")}</span>
       <input className={tutorInputClass} maxLength={500} value={goal} onChange={e => setGoal(e.target.value)} placeholder={t("For example: take part in my team's meetings")} /></label>
-    <label className="block space-y-2 text-sm text-ink-soft"><span>{t("Explanation language for future sessions")}</span>
-      <select className={tutorInputClass} value={language} onChange={e => setLanguage(e.target.value as "pt" | "en")}><option value="pt">{t("Portuguese")}</option><option value="en">English</option></select></label>
+    <Field label={t("Explanation language for future sessions")}>
+      <Select value={language} onChange={value => setLanguage(value as "pt" | "en")} options={[{ value: "pt", label: t("Portuguese") }, { value: "en", label: "English" }]} />
+    </Field>
     <Button variant="secondary" disabled={saving} onClick={() => void save({ ...memory.preferences, goal: goal.trim(), explanationLanguage: language })}>{t("Save preferences")}</Button>
     {message && <p role="status" className="text-sm text-ink-soft">{localize(message)}</p>}
     <h3 className="border-t border-line pt-4 text-sm font-medium text-ink">{t("Recent observations and their sources")}</h3>
