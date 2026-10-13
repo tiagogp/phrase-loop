@@ -8,6 +8,11 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
+# Desktop (Electron) UX/UI
+
+Before changing `electron/*`, `src/platform/electron/*`, `src/app/desktop-shell.css` or the app
+shell, read [docs/desktop-ux.md](docs/desktop-ux.md) and run its section 10 checklist when done.
+
 # Current Scope
 
 The previous validation freeze has been retired. Normal product work is allowed across the repo,

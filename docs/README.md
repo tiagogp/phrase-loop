@@ -2,7 +2,8 @@
 
 Mapa técnico consolidado em 30/09/2026. Direção e critérios pedagógicos ficam em
 [product.md](product.md), pesquisa de aprendizagem em [learning.md](learning.md),
-protocolos em [validation.md](validation.md) e marcos de
+protocolos em [validation.md](validation.md), regras de UX/UI e segurança do shell Electron em
+[desktop-ux.md](desktop-ux.md) e marcos de
 implementação em [history.md](history.md). Instalação e comandos estão no [README](../README.md).
 
 ## Limites e navegação

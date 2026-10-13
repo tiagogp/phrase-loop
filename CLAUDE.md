@@ -1,3 +1,9 @@
+## Desktop (Electron) UX/UI
+
+Ao mexer em `electron/*`, `src/platform/electron/*`, `src/app/desktop-shell.css` ou no shell
+(`AppHeader`, `HomeClient`), leia antes [docs/desktop-ux.md](docs/desktop-ux.md) e percorra o
+checklist da seção 10 ao terminar. As lacunas conhecidas (seção 9) são tarefas separadas.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
