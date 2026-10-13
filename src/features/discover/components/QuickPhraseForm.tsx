@@ -45,7 +45,7 @@ export function QuickPhraseForm({ onStudy, onPracticeSource }: { onStudy?: () =>
     }
   };
   const edit = () => { setMessage(null); setFailed(false); setSavedCardId(null); };
-  return <Card className="space-y-4 p-5">
+  return <Card className="space-y-4 p-5 sm:p-6">
     <div><h2 className="text-lg font-semibold text-ink">{t("Keep one useful phrase")}</h2>
       <p className="mt-1 text-sm text-ink-muted">{t("Already know what you want to practice? Add the phrase and its meaning. No AI needed.")}</p></div>
     <form onSubmit={(event) => { event.preventDefault(); void save(); }} className="space-y-4">
@@ -62,7 +62,7 @@ export function QuickPhraseForm({ onStudy, onPracticeSource }: { onStudy?: () =>
         </Field>
       </div>
       <p className="text-xs text-ink-muted">{t("Use a phrase you checked in a reliable source. Manual entries are saved as you write them.")}</p>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         <Button type="submit" variant="primary" disabled={busy || !english.trim() || !meaning.trim()}>{t(busy ? "Saving…" : "Save phrase")}</Button>
         {savedCardId && onPracticeSource && <Button type="button" onClick={() => onPracticeSource(savedCardId)}>{t("Practice a situation with this phrase")}</Button>}
         {message && !failed && onStudy && <Button type="button" variant="secondary" onClick={onStudy}>{t("Review saved phrases")}</Button>}

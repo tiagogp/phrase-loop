@@ -106,13 +106,13 @@ export function GuidedSpeaking({ onDone, active = true }: { onDone?: () => void;
       </Card>
 
       {repeatSteps.map((step, index) => (
-        <Card key={`${step.phrase.en}-${index}`} className="space-y-3 p-5">
+        <Card key={`${step.phrase.en}-${index}`} className="space-y-4 p-4 sm:p-5">
           <div>
             <p className="text-xs uppercase tracking-[0.5px] text-ink-muted">
               {t("Repeat {current} of {total}", { current: index + 1, total: repeatSteps.length })}
             </p>
-            <p className="mt-1 text-base font-medium text-ink">{step.phrase.en}</p>
-            <p className="mt-0.5 text-sm text-ink-soft">{step.phrase.pt}</p>
+            <p className="mt-2 text-lg font-medium leading-relaxed text-ink [overflow-wrap:anywhere]">{step.phrase.en}</p>
+            <p className="mt-1 text-sm leading-relaxed text-ink-soft [overflow-wrap:anywhere]">{step.phrase.pt}</p>
             <p className="mt-1 text-xs text-ink-muted">{t(step.prompt)}</p>
           </div>
           <PronunciationCoach

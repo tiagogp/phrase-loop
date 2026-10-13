@@ -442,7 +442,7 @@ export function TransferPracticeCard({ onCompleted, onOpenSettings }: { onComple
           }}
           rows={3}
           placeholder={t("Write or say a new sentence…")}
-          className="w-full resize-y rounded-lg border border-line bg-input px-3 py-2 text-sm text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent/40"
+          className="w-full resize-y rounded-lg border border-line bg-input px-3 py-2.5 text-base text-ink sm:text-sm placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent/40"
         />
       </div>
       {activity.spoken && (

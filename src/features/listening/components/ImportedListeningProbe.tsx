@@ -269,9 +269,10 @@ export function ImportedListeningProbe({
                   <legend className="text-sm text-ink">{question.prompt}</legend>
                   <div className="flex flex-col gap-1">
                     {question.options.map((option) => (
-                      <label key={option} className="flex items-center gap-2 text-sm text-ink-soft">
+                      <label key={option} className="flex min-h-12 cursor-pointer items-start gap-3 rounded-xl border border-line bg-surface/50 px-3 py-3 text-sm leading-relaxed text-ink-soft transition-colors hover:border-accent/40 has-checked:border-accent has-checked:bg-accent/10 has-checked:text-ink has-focus-visible:ring-2 has-focus-visible:ring-accent/40">
                         <input
                           type="radio"
+                          className="mt-1 h-4 w-4 shrink-0 accent-accent"
                           name={`${result.sourceId}-${index}`}
                           checked={answers[index] === option}
                           onChange={() => setAnswers((current) => current.map((value, position) => (position === index ? option : value)))}

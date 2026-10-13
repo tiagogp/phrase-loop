@@ -38,20 +38,20 @@ export function SavedCardsBrowser({ cards }: { cards: Card[] }) {
             value={query}
             onChange={(event) => { setQuery(event.target.value); setVisibleCount(30); }}
             placeholder={t("Search phrases")}
-            className="h-9 w-full text-sm sm:w-72"
+            className="min-h-11 w-full sm:w-72"
           />
         </div>}
       </div>
 
       {cards.length === 0 ? (
-        <p className="text-xs text-ink-muted">{t("Practice phrases you save will appear here.")}</p>
+        <p className="rounded-xl border border-dashed border-line bg-surface px-5 py-10 text-center text-sm leading-relaxed text-ink-muted">{t("Practice phrases you save will appear here.")}</p>
       ) : filtered.length === 0 ? (
         <div className="space-y-3"><p className="text-sm text-ink-muted">{t("No phrases match that search.")}</p><Button variant="secondary" size="sm" onClick={() => setQuery("")}>{t("Clear search")}</Button></div>
       ) : (
-        <ul className="max-h-[32rem] divide-y divide-line overflow-y-auto pr-1">
+        <ul className="space-y-3">
           {filtered.slice(0, visibleCount).map((card) => (
-            <li key={card.id} className="grid gap-1 py-3 [overflow-wrap:anywhere] sm:grid-cols-2 sm:gap-x-6">
-              <p className="text-sm leading-relaxed text-ink">{card.front}</p>
+            <li key={card.id} className="grid gap-2 rounded-xl border border-line bg-surface/50 p-4 [overflow-wrap:anywhere] sm:grid-cols-2 sm:gap-x-6">
+              <p className="text-sm font-medium leading-relaxed text-ink">{card.front}</p>
               <p className="text-sm leading-relaxed text-ink-soft">{card.back}</p>
               {(card.direction || card.concept || card.errorType || card.context) && (
                 <p className="text-xs text-ink-muted sm:col-span-2">

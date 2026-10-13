@@ -1126,7 +1126,8 @@ export default function ConverseTab({
                   }}
                   rows={3}
                   placeholder={t("Write your improved response here…")}
-                  className="w-full resize-y rounded border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent/40"
+                  aria-label={t("Your answer")}
+                  className="w-full resize-y rounded border border-line bg-input px-3 py-2.5 text-base text-ink sm:text-sm placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent/40"
                   disabled={retryChecking}
                 />
                 <LocalModelNotice model={whisper} />
@@ -1356,7 +1357,7 @@ export default function ConverseTab({
         {cloudNote && <p className="text-xs text-ink-muted">{cloudNote}</p>}
         {note && <p className="text-xs text-danger">{note}</p>}
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Button variant="primary" onClick={start} disabled={!canStart || busy} className="h-10">
             {busy ? t("Starting…") : t("Start practice →")}
           </Button>
@@ -1385,8 +1386,8 @@ export default function ConverseTab({
             <p className="mb-3 text-sm font-semibold tracking-[-0.01em] text-ink">{t("Recent conversations")}</p>
             <ul className="space-y-2">
               {past.slice(0, 6).map((c) => (
-                <li key={c.id} className="flex items-center gap-3 py-1">
-                  <div className="min-w-0 flex-1">
+                <li key={c.id} className="flex flex-wrap items-center gap-2 rounded-xl border border-line bg-surface/50 p-3 sm:gap-3">
+                  <div className="min-w-0 basis-full sm:flex-1 sm:basis-auto">
                     <p className="truncate text-sm text-ink">{c.context}</p>
                     <p className="text-xs text-ink-muted">
                       {c.turns.length === 1 ? t("1 turn") : t("{count} turns", { count: c.turns.length })} · {formatWhen(c.startedAt, t)}
@@ -1398,7 +1399,7 @@ export default function ConverseTab({
                   <button
                     type="button"
                     onClick={() => void removePast(c.id)}
-                    className="shrink-0 cursor-pointer rounded-sm px-2 py-1 text-xs font-medium text-ink-muted opacity-60 transition-opacity hover:text-danger hover:opacity-100"
+                    className="min-h-11 shrink-0 cursor-pointer rounded-lg px-3 py-2 text-xs font-medium text-ink-muted transition-colors hover:bg-danger/10 hover:text-danger focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                     aria-label={t("Delete conversation")}
                   >
                     {t("Delete")}
@@ -1414,7 +1415,7 @@ export default function ConverseTab({
 
   // ───────────────────────── active conversation ─────────────────────────
   return (
-    <Card className="flex h-[calc(100dvh-12rem)] flex-col overflow-hidden border-line-strong shadow-[0_18px_45px_rgb(17_17_17_/_0.08)] sm:h-[calc(100dvh-13rem)]">
+    <Card className="flex h-[max(32rem,calc(100dvh-12rem))] flex-col overflow-hidden border-line-strong shadow-[0_18px_45px_rgb(17_17_17_/_0.08)] sm:h-[max(32rem,calc(100dvh-13rem))]">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-surface px-4 py-3 sm:px-5">
         <div className="min-w-0 space-y-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -1466,7 +1467,7 @@ export default function ConverseTab({
         )}
       </div>
 
-      <div className="space-y-2 border-t border-line bg-surface p-3 sm:p-4">
+      <div className="shrink-0 space-y-2 border-t border-line bg-surface p-3 sm:p-4">
         {note && <p className="text-xs text-danger">{note}</p>}
         <LocalModelNotice model={whisper} />
         <p className="text-[11px] text-ink-muted">
@@ -1475,12 +1476,12 @@ export default function ConverseTab({
             total: progressionSupport.conversation.maxTurns,
           })} · {t(progressionSupport.conversation.promptStyle)}
         </p>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center">
           <Button
             variant={recording ? "secondary" : "primary"}
             onClick={recording ? stopRecording : freeTalk ? startListening : startRecording}
             disabled={busy || transcribing}
-            className={cn("h-11 shrink-0 gap-2 sm:w-auto", recording && "border-danger bg-danger/10 text-danger")}
+            className={cn("col-span-2 min-h-11 shrink-0 gap-2 sm:col-span-1 sm:w-auto", recording && "border-danger bg-danger/10 text-danger")}
           >
             {recording ? (
               <>
@@ -1518,8 +1519,9 @@ export default function ConverseTab({
               }
             }}
             placeholder={t("Type your reply, or tap Speak…")}
+            aria-label={t("Your answer")}
             disabled={busy}
-            className="h-11 flex-1"
+            className="h-11 min-w-0 flex-1"
           />
           <Button
             variant="primary"
@@ -1589,7 +1591,7 @@ function TurnBubble({ turn, items = [] }: { turn: ConversationTurn; items?: Repe
     <m.li variants={listItem} className={cn("flex", isUser ? "justify-end" : "justify-start")}>
       <div
         className={cn(
-          "max-w-[88%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm sm:max-w-[76%]",
+          "min-w-0 max-w-[92%] whitespace-pre-wrap [overflow-wrap:anywhere] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm sm:max-w-[76%]",
           isUser
             ? "rounded-br-md bg-off-black text-white"
             : "rounded-bl-md border border-line bg-surface text-ink",

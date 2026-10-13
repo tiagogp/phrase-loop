@@ -63,6 +63,7 @@ export function TodayPlanCard({
   }
 
   const highlightedId = nextTaskId(today.tasks, nextRoute);
+  const completed = today.tasks.filter(task => task.completedAt != null).length;
 
   return (
     <Card className="space-y-3 p-5">
@@ -71,7 +72,10 @@ export function TodayPlanCard({
           <p className="text-xs uppercase tracking-[0.7px] text-accent">{t("Today’s plan")}</p>
           <p className="mt-1 text-sm text-ink-soft">{t("Do an activity and it is checked off for you.")}</p>
         </div>
-        <span className="text-xs tabular-nums text-ink-muted">{today.estimatedMinutes} min</span>
+        <span className="rounded-full border border-line bg-surface px-3 py-1.5 text-xs tabular-nums text-ink-soft">{today.estimatedMinutes} min</span>
+      </div>
+      <div role="progressbar" aria-label={t("Today’s plan")} aria-valuemin={0} aria-valuemax={today.tasks.length || 1} aria-valuenow={completed} className="h-1.5 overflow-hidden rounded-full bg-line">
+        <div className="h-full rounded-full bg-accent" style={{ width: `${today.tasks.length ? completed / today.tasks.length * 100 : 0}%` }} />
       </div>
       <ol className="space-y-2">
         {today.tasks.map((task) => (

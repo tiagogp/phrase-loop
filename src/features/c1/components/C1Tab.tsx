@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Field, Input, Textarea } from "@/components/ui/Field";
 import Disclosure from "@/components/ui/Disclosure";
 import ProviderBadge from "@/components/ui/ProviderBadge";
@@ -151,27 +152,19 @@ export default function C1Tab({ onOpenSettings }: { onOpenSettings?: () => void 
 
   return (
     <div className="space-y-5">
-      <Card className="space-y-3 p-5">
-        <div>
-          <p className="text-sm font-semibold tracking-[-0.01em] text-ink">
-            {t("C1 diagnosis")}{" "}
-            <span className="ml-1 rounded border border-line px-1.5 py-0.5 text-[0.65rem] font-normal text-ink-muted">
-              {t("Experimental")}
-            </span>
-          </p>
-          <p className="mt-0.5 text-xs text-ink-muted">
-            {t(
-              "Past B1/B2, grammar stops being the gap — register, naturalness, and collocation take over. This checks a short writing sample for that gap and lets you practice speaking the fix.",
-            )}
-          </p>
-        </div>
+      <PageHeader
+        eyebrow={t("Experimental")}
+        title={t("C1 diagnosis")}
+        description={t("Past B1/B2, grammar stops being the gap — register, naturalness, and collocation take over. This checks a short writing sample for that gap and lets you practice speaking the fix.")}
+      />
+      <Card className="space-y-3 p-5 sm:p-6">
 
         {domain && !editingDomain ? (
           <p className="text-xs text-ink-muted">
             {t("Domain: {domain}", { domain })}{" "}
             <button
               type="button"
-              className="underline hover:no-underline"
+              className="ml-2 inline-flex min-h-11 items-center rounded px-2 font-medium text-accent underline hover:no-underline"
               onClick={() => {
                 setDomainDraft(domain);
                 setEditingDomain(true);
@@ -188,7 +181,7 @@ export default function C1Tab({ onOpenSettings }: { onOpenSettings?: () => void 
                 "Work, university, immigration — one domain, picked once. Steers the feedback toward language you'll actually use.",
               )}
             </p>
-            <div className="mt-2 flex gap-2">
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
               <Input
                 aria-label={t("What's this for?")}
                 value={domainDraft}
@@ -206,7 +199,7 @@ export default function C1Tab({ onOpenSettings }: { onOpenSettings?: () => void 
 
       {!loadingDiagnosis && (grammarGaps.length > 0 || registerGaps.length > 0) && (
         <Card className="space-y-4 p-5">
-          <p className="text-sm font-medium text-ink">{t("Where you're stuck")}</p>
+          <h2 className="text-base font-semibold text-ink">{t("Where you're stuck")}</h2>
           {grammarGaps.length > 0 && (
             <div className="space-y-1.5">
               <p className="text-xs font-medium uppercase tracking-[0.7px] text-ink-muted">{t("Grammar")}</p>
@@ -308,7 +301,7 @@ export default function C1Tab({ onOpenSettings }: { onOpenSettings?: () => void 
 
       {flaggedItems.length > 0 && (
         <Card className="space-y-3 p-5">
-          <p className="text-sm font-medium text-ink">{t("Practice speaking the fix")}</p>
+          <h2 className="text-base font-semibold text-ink">{t("Practice speaking the fix")}</h2>
           {flaggedItems.map((item) => (
             <div key={item.id} className="rounded-md border border-line bg-surface px-3 py-2">
               <p className="text-sm leading-relaxed text-ink-muted line-through">{item.original}</p>

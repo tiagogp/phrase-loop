@@ -316,7 +316,7 @@ export function PronunciationCoach({
   }, []);
 
   return (
-    <div className={cn("rounded border border-line bg-surface/60 p-3", compact ? "space-y-2" : "space-y-3")}>
+    <div className={cn("rounded-xl border border-line bg-surface/60 p-4 [overflow-wrap:anywhere]", compact ? "space-y-2" : "space-y-3")}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
           <p className="text-xs font-medium uppercase tracking-[0.7px] text-ink-muted">{t("Pronunciation")}</p>
@@ -370,7 +370,7 @@ export function PronunciationCoach({
             value={fallbackText}
             onChange={(event) => setFallbackText(event.target.value)}
             aria-label={t("Typed repeat fallback")}
-            className="w-full rounded border border-line bg-surface px-3 py-2 text-sm text-ink"
+            className="w-full rounded border border-line bg-input px-3 py-2.5 text-base text-ink focus:outline-none focus:ring-2 focus:ring-accent/40 sm:text-sm"
             placeholder={targetText}
           />
           <Button type="button" variant="secondary" size="sm" onClick={completeTypedFallback}>
@@ -387,7 +387,7 @@ export function PronunciationCoach({
 
       {assessment && (
         <div className="space-y-2">
-          <div className="grid grid-cols-3 gap-2 text-xs">
+          <div className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-3">
             <Score label={t("Accuracy")} value={assessment.scores.accuracy} />
             <Score label={t("Completeness")} value={assessment.scores.completeness} />
             <Score label={t("Rhythm")} value={assessment.scores.fluency} />
@@ -426,7 +426,7 @@ export function PronunciationCoach({
 
 function Score({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded border border-line bg-card px-2 py-1.5">
+    <div className="flex items-center justify-between gap-2 rounded-lg border border-line bg-card px-3 py-2 sm:block">
       <p className="text-ink-muted">{label}</p>
       <p className={cn("font-semibold tabular-nums", scoreTone(value))}>{value}%</p>
     </div>

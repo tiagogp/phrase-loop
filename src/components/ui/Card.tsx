@@ -10,7 +10,7 @@ export function Card({ className, variant = "panel", ...props }: CardProps) {
   return (
     <div
       className={cn(
-        "bg-card",
+        "min-w-0 bg-card",
         variant === "panel"
           ? "rounded-panel border border-line/75 shadow-(--shadow-soft)"
           : "rounded-lg border border-line",

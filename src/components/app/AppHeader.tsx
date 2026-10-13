@@ -56,6 +56,11 @@ export default function AppHeader({
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   useEffect(() => {
+    tabRefs.current.find(element => element?.id === `tab-${selectedTab}`)
+      ?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "instant" });
+  }, [selectedTab]);
+
+  useEffect(() => {
     const dismissExplore = (event: PointerEvent) => {
       const menu = exploreRef.current;
       if (menu?.open && event.target instanceof Node && !menu.contains(event.target)) {
@@ -118,7 +123,7 @@ export default function AppHeader({
 
         <div className="app-header-nav flex min-w-0 items-center gap-2" data-no-window-drag="true">
         <div
-          className="relative grid min-w-0 flex-1 overflow-x-auto"
+          className="relative grid min-w-0 flex-1 overflow-x-auto app-scroll-region"
           style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(max-content, 1fr))` }}
           role="tablist"
           aria-label={t("PhraseLoop sections")}
@@ -137,7 +142,7 @@ export default function AppHeader({
                 id={`tab-${tab.id}`}
                 onClick={() => onTabChange(tab.id)}
                 onKeyDown={(event) => onTabKeyDown(event, index)}
-                className="app-tab relative flex min-h-12 min-w-0 items-center justify-center gap-1 px-1.5 py-3 text-xs font-medium transition-colors duration-200 sm:text-sm"
+                className="app-tab relative flex min-h-12 min-w-0 items-center justify-center gap-1 px-2.5 py-3 text-xs font-medium transition-colors duration-200 sm:text-sm"
                 data-active={active && !settingsOpen}
                 role="tab"
                 aria-selected={active && !settingsOpen}
@@ -152,7 +157,7 @@ export default function AppHeader({
                     {badge > 99 ? "99+" : badge}
                   </span>
                 )}
-                {active && (
+                {active && !settingsOpen && (
                   <m.span
                     layoutId="tab-underline"
                     aria-hidden="true"
@@ -186,7 +191,7 @@ export default function AppHeader({
 
         <div className="flex items-center gap-1" data-no-window-drag="true">
           {onToolsOpen && <Button variant="ghost" size="sm" onClick={onToolsOpen} aria-label={t("Kokoro & Anki")} className="text-xs">Anki</Button>}
-          <IconButton onClick={toggleDark} aria-label={t("Toggle dark mode")}>
+          <IconButton onClick={toggleDark} aria-label={t("Toggle dark mode")} title={t("Toggle dark mode")}>
             {isDark ? (
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" />
@@ -202,6 +207,7 @@ export default function AppHeader({
             onClick={onSettingsOpen}
             active={settingsOpen}
             aria-label={t("Open settings")}
+            title={t("Open settings")}
             aria-pressed={settingsOpen}
           >
             <svg

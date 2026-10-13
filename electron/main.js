@@ -464,7 +464,7 @@ function createWindow() {
   mainWindow.loadFile(path.join(__dirname, "loading.html"));
   mainWindow.webContents.on("did-finish-load", () => {
     mainWindow.webContents
-      .executeJavaScript('document.documentElement.dataset.electron = "true"')
+      .executeJavaScript(`document.documentElement.dataset.electron = "true"; document.documentElement.dataset.electronPlatform = ${JSON.stringify(process.platform)}`)
       .catch(() => {});
   });
   mainWindow.on("closed", () => {

@@ -12,6 +12,7 @@ import Disclosure from "@/components/ui/Disclosure";
 import Select from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Field, Label, Textarea } from "@/components/ui/Field";
 import { Notice } from "@/components/ui/Notice";
 import { Spinner } from "@/components/ui/Spinner";
@@ -54,7 +55,7 @@ function AudioStudio({ kokoroModel }: { kokoroModel?: LocalModelState } = {}) {
   return (
     <div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-        <div className="space-y-2 lg:col-span-3">
+        <div className="min-w-0 space-y-2 lg:col-span-3">
           <div className="relative">
             <Textarea
               value={text}
@@ -92,7 +93,7 @@ function AudioStudio({ kokoroModel }: { kokoroModel?: LocalModelState } = {}) {
           </div>
         </div>
 
-        <div className="lg:col-span-2">
+        <div className="min-w-0 lg:col-span-2">
           <Card className="space-y-5 p-5">
             <Field label={t("Voice")}>
               <Select
@@ -116,7 +117,7 @@ function AudioStudio({ kokoroModel }: { kokoroModel?: LocalModelState } = {}) {
                 step={0.05}
                 value={speed}
                 onChange={(event) => setSpeed(parseFloat(event.target.value))}
-                className="w-full"
+                className="min-h-11 w-full accent-accent"
               />
               <div className="flex justify-between text-xs text-ink-muted">
                 <span>0.5× {t("Slow")}</span>
@@ -133,7 +134,7 @@ function AudioStudio({ kokoroModel }: { kokoroModel?: LocalModelState } = {}) {
                 size="lg"
                 onClick={generate}
                 disabled={!canGenerate}
-                className="flex items-center justify-center gap-2 py-2.5"
+                className="flex w-full items-center justify-center gap-2 py-2.5"
               >
                 {loading || kokoro.ready === null ? (
                   <>
@@ -190,12 +191,12 @@ export default function SpeechTab({ kokoroModel, initialTool = "anki" }: { kokor
   const { t } = useT();
   const [tool, setTool] = useState(initialTool);
   return <div className="space-y-5">
-    <Segmented label={t("Kokoro & Anki")} value={tool} onChange={setTool} options={[
+    <PageHeader title={t("Kokoro & Anki")} description={t("Generate English audio with Kokoro, export a deck, or create phrases for a situation you want to practice.")} />
+    <Segmented label={t("Kokoro & Anki")} variant="fill" className="w-full sm:max-w-xl" value={tool} onChange={setTool} options={[
       { value: "anki", label: t("Anki deck") },
       { value: "audio", label: t("Generate audio") },
       { value: "themes", label: t("Theme phrases") },
     ]} />
-    <p className="max-w-2xl text-sm leading-relaxed text-ink-muted">{t("Generate English audio with Kokoro, export a deck, or create phrases for a situation you want to practice.")}</p>
     <div hidden={tool !== "anki"}><AnkiExporter embedded kokoroModel={kokoroModel} /></div>
     <div hidden={tool !== "audio"}><AudioStudio kokoroModel={kokoroModel} /></div>
     <div hidden={tool !== "themes"}><ThemePhraseGenerator embedded /></div>

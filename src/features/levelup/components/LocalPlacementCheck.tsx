@@ -132,7 +132,7 @@ export function LocalPlacementCheck({ onAccept, onClose, translate }: LocalPlace
                 </div>
                 <div className="space-y-1">
                   {item.options.map((option) => (
-                    <label key={option} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-ink-soft hover:bg-accent/5">
+                    <label key={option} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-line px-3 py-3 text-sm text-ink-soft transition-colors hover:bg-accent/5 has-checked:border-accent/50 has-checked:bg-accent/5">
                       <input
                         type="radio"
                         name={item.id}

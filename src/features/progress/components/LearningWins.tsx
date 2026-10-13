@@ -5,7 +5,7 @@ import { useT } from "@/i18n/I18nProvider";
 import type { LearningWin } from "../learningEvidence";
 
 export function LearningWins({ wins, compact = false }: { wins: LearningWin[]; compact?: boolean }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   return (
     <Card className="space-y-4 p-5 sm:p-6">
       <div>
@@ -28,9 +28,9 @@ export function LearningWins({ wins, compact = false }: { wins: LearningWin[]; c
                       : t("You recalled it without hints")}
               </p>
               {win.before && <p className="mt-2 text-sm text-ink-muted"><span className="mr-2 font-medium">{t("Before")}</span><span lang="en">{win.before}</span></p>}
-              <p className="mt-2 text-base leading-relaxed text-ink" lang="en">“{win.text}”</p>
+              <p className="mt-2 break-words text-base leading-relaxed text-ink" lang="en">“{win.text}”</p>
               <p className="mt-2 text-xs text-ink-muted">
-                {new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "short" }).format(win.at)}
+                {new Intl.DateTimeFormat(lang === "pt" ? "pt-BR" : "en-US", { day: "numeric", month: "short" }).format(win.at)}
                 {win.kind === "retry" ? ` · ${t(win.supported ? "With support" : "After feedback")}` : ` · ${t("Without hints")}`}
               </p>
             </li>

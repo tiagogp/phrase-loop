@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { Field, Input, Textarea } from "@/components/ui/Field";
 import { useT } from "@/i18n/I18nProvider";
@@ -60,9 +61,9 @@ export function ManualEntryForm({ draft, onChange, onToggleType, onAdd }: Manual
         />
       </Field>
 
-      <Chip active={canAdd} disabled={!canAdd} className="px-3 py-1.5" onClick={onAdd}>
+      <Button variant="primary" disabled={!canAdd} className="w-full sm:w-auto" onClick={onAdd}>
         {t("+ Add to list")}
-      </Chip>
+      </Button>
     </div>
   );
 }

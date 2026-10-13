@@ -755,7 +755,8 @@ function ProgressCheckInCard({
         value={writing}
         onChange={(event) => setWriting(event.target.value)}
         rows={4}
-        className="mt-4 w-full resize-y rounded-md border border-line bg-input px-3 py-2 text-sm text-ink outline-none transition-colors placeholder:text-ink-muted focus:border-accent"
+        aria-label={t("Progress check-in")}
+        className="mt-4 w-full resize-y rounded-lg border border-line bg-input px-3 py-3 text-base leading-relaxed text-ink sm:text-sm outline-none transition-colors placeholder:text-ink-muted focus:border-accent"
         placeholder={t("Answer in English: what got easier since your last session, and what still feels hard?")}
       />
 
@@ -803,13 +804,13 @@ function SkillBar({
   return (
     <div className="rounded-lg border border-line bg-surface px-3 py-2.5">
       <div className="flex items-center justify-between gap-2">
-        <p className="truncate text-xs font-medium text-ink">{t(label)}</p>
+        <p className="text-sm font-medium text-ink">{t(label)}</p>
         <span className="text-xs tabular-nums text-ink-muted">{score}</span>
       </div>
       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-line">
         <div className={cn("h-full rounded-full", score >= 75 ? "bg-emerald-500" : score >= 50 ? "bg-accent" : "bg-amber-500")} style={{ width: `${score}%` }} />
       </div>
-      <p className="mt-1.5 line-clamp-2 text-[11px] leading-snug text-ink-muted">{t(detail, detailVars)}</p>
+      <p className="mt-2 text-xs leading-relaxed text-ink-muted">{t(detail, detailVars)}</p>
     </div>
   );
 }

@@ -54,15 +54,15 @@ function HistoryItem({ entry, onRestore }: HistoryItemProps) {
       />
 
       {/* Top row: text + restore + download */}
-      <div className="flex items-start gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm text-ink">{entry.text}</p>
+      <div className="flex flex-col items-start gap-2 sm:flex-row sm:gap-3">
+        <div className="min-w-0 w-full flex-1">
+          <p className="line-clamp-2 break-words text-sm leading-relaxed text-ink">{entry.text}</p>
           <p className="mt-0.5 text-xs text-ink-muted">
             {ENGINE_LABELS[entry.engine] ?? entry.engine} · {VOICE_LABELS[entry.voice] ?? entry.voice} · {entry.speed}× · {new Date(entry.createdAt).toLocaleTimeString()}
           </p>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex w-full shrink-0 items-center justify-end gap-2 sm:w-auto">
           <button
             onClick={() => onRestore(entry)}
             className="min-h-11 cursor-pointer px-2 text-xs font-medium text-accent transition-opacity hover:opacity-80"

@@ -165,9 +165,9 @@ export function ReadinessCoach({ weaknesses, generatingKey, onPractice, onGenera
           <span className="text-ink-soft">{t("Evidence toward {level}", { level: readiness.targetLevel })}</span>
           <span className="font-medium text-ink">{readiness.score}%</span>
         </div>
-        <div className="h-1.5 overflow-hidden rounded-full bg-line">
+        <div role="progressbar" aria-label={t("Evidence toward {level}", { level: readiness.targetLevel })} aria-valuemin={0} aria-valuemax={100} aria-valuenow={readiness.score} className="h-2 overflow-hidden rounded-full bg-line">
           <div
-            className="h-full rounded-full bg-accent transition-[width]"
+            className="h-full rounded-full bg-accent transition-[width] motion-reduce:transition-none"
             style={{ width: `${readiness.score}%` }}
           />
         </div>
@@ -176,7 +176,7 @@ export function ReadinessCoach({ weaknesses, generatingKey, onPractice, onGenera
       {/* Criteria checklist with real numbers next to each line */}
       <ul className="space-y-1.5">
         {readiness.criteria.map((criterion) => (
-          <li key={criterion.id} className="flex items-center gap-2 text-xs">
+          <li key={criterion.id} className="flex items-start gap-3 rounded-lg bg-surface px-3 py-3 text-sm">
             <span
               aria-hidden
               className={
@@ -190,7 +190,7 @@ export function ReadinessCoach({ weaknesses, generatingKey, onPractice, onGenera
             <span className={criterion.achieved ? "text-ink-soft" : "text-ink"}>
               {t(CRITERION_LABEL[criterion.id])}
             </span>
-            <span className="ml-auto tabular-nums text-ink-muted">
+            <span className="ml-auto shrink-0 tabular-nums text-ink-muted">
               {criterion.id === "checkin"
                 ? criterion.achieved
                   ? t("done")
@@ -210,7 +210,7 @@ export function ReadinessCoach({ weaknesses, generatingKey, onPractice, onGenera
             return (
               <div key={key} className="rounded border border-line bg-surface px-3 py-2.5">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="min-w-0 flex-1 truncate text-sm text-ink">{gap.weakness.label}</p>
+                  <p className="min-w-0 flex-1 break-words text-sm text-ink">{gap.weakness.label}</p>
                   <div className="flex shrink-0 gap-2">
                     <Button variant="ghost" size="sm" onClick={() => onPractice(gap.weakness)}>
                       {t("Drill")}

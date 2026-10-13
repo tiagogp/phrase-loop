@@ -18,8 +18,8 @@ export function PlanTaskRow({
 
   return (
     <li
-      className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors ${
-        done ? "border-line bg-surface opacity-60" : highlight ? "border-accent/50 bg-accent/5" : "border-line bg-canvas"
+      className={`flex items-start gap-2 rounded-xl border p-3 sm:gap-3 transition-colors ${
+        done ? "border-line bg-surface" : highlight ? "border-accent/50 bg-accent/5" : "border-line bg-canvas"
       }`}
     >
       <button
@@ -28,7 +28,7 @@ export function PlanTaskRow({
         onClick={onComplete}
         disabled={!done}
         title={!done ? t("Complete this task by doing the linked activity") : undefined}
-        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+        className={`flex min-h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
           done
             ? "border-emerald-500 bg-emerald-500 text-white"
             : "border-line hover:border-accent"
@@ -47,7 +47,7 @@ export function PlanTaskRow({
         )}
       </button>
 
-      <div className="flex min-w-0 flex-1 items-center gap-2">
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 py-1">
         {highlight && !done && (
           <span className="shrink-0 rounded bg-accent px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent-contrast">
             {t("Next")}
@@ -60,7 +60,7 @@ export function PlanTaskRow({
         >
           {t(TASK_LABELS[task.type])}
         </span>
-        <p className={`truncate text-xs ${done ? "line-through text-ink-muted" : "text-ink-soft"}`}>
+        <p className={`w-full break-words text-sm leading-relaxed ${done ? "line-through text-ink-muted" : "text-ink"}`}>
           {task.instruction}
         </p>
       </div>
@@ -69,7 +69,8 @@ export function PlanTaskRow({
         <button
           type="button"
           onClick={onGo}
-          className="shrink-0 text-xs font-medium text-accent transition-opacity hover:opacity-70"
+          aria-label={`${t("Go")}: ${task.instruction}`}
+          className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg px-2 text-sm font-semibold text-accent transition-colors hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
           {t("Go")} &rarr;
         </button>

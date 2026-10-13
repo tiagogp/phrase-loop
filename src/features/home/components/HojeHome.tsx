@@ -104,25 +104,25 @@ export function HojeHome(props: HojeHomeProps) {
     {error ? <Notice tone="error">{t("Could not load your practice history.")} <Button variant="secondary" onClick={() => {
       setReload(value => value + 1); void learning.refresh(); void refreshTutor();
     }}>{t("Try again")}</Button></Notice> : !ready ? <Card className="p-6"><p role="status">{t("Preparing your next practice…")}</p></Card> :
-      <Card className="space-y-5 border-accent/25 bg-accent/5 p-6 sm:p-8">
+      <Card className="space-y-5 border-accent/25 bg-gradient-to-br from-accent/10 via-card to-card p-5 sm:p-8">
         <p className="text-xs font-semibold uppercase tracking-wider text-accent">{t(complete ? "Practice saved" : action === "resume" ? "Pick up where you left off" : "Your next practice")}</p>
         <h2 className="max-w-xl text-2xl font-semibold tracking-tight text-ink sm:text-3xl">{title}</h2>
         <p className="max-w-xl text-sm leading-relaxed text-ink-soft">{detail}</p>
-        {!complete && <p className="text-xs text-ink-muted">{t("About {count} min · you can pause anytime", { count: action === "lesson" ? 3 : minutes })}</p>}
+        {!complete && <p className="inline-flex rounded-full border border-accent/15 bg-card px-3 py-1.5 text-xs text-ink-soft">{t("About {count} min · you can pause anytime", { count: action === "lesson" ? 3 : minutes })}</p>}
         {reviewAt && complete && <p className="text-sm text-ink-soft">{t("Revisit from")} <strong>{new Date(reviewAt).toLocaleDateString(lang === "pt" ? "pt-BR" : "en-US")}</strong>. {t("Your next situation will appear in Today.")}</p>}
         {complete && !reviewAt && <p className="text-sm text-ink-soft">{t("Come back to Today for your next short practice. Your phrases keep their review schedule.")}</p>}
-        <div className="flex flex-wrap items-center gap-3"><Button variant={complete ? "secondary" : "primary"} size="lg" onClick={start}>{label}<span aria-hidden="true">→</span></Button>
+        <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center"><Button className="sm:w-auto sm:min-w-56" variant={complete ? "secondary" : "primary"} size="lg" onClick={start}>{label}<span aria-hidden="true">→</span></Button>
           {complete && memory && settings.providers.some(p => p.available) && extraPractice(memory.sessions, now) && <Button variant="secondary" onClick={props.onExtra}>{t("Practice one more situation")}</Button>}
           {!complete && <Button variant="ghost" onClick={props.onExplore}>{t("Choose another activity")}</Button>}</div>
         {!complete && !experience.firstLoopComplete && <p className="border-t border-line pt-4 text-xs leading-relaxed text-ink-muted">{t(action === "lesson" ? "Try in your own words → compare → save your own assessment" : "Try → understand the feedback → try again when needed")}</p>}
       </Card>}
     {discovery && <aside className="rounded-lg border border-line p-4">
       <p className="text-sm text-ink-soft">{t(discovery === "review" ? "You saved a phrase. Try remembering it before looking." : discovery === "content" ? "Want to use something from your own day next time?" : "Take an idea you practiced into a conversation.")}</p>
-      <div className="mt-3 flex gap-2"><Button variant="ghost" size="sm" onClick={() => {
+      <div className="mt-3 flex flex-wrap gap-2"><Button variant="ghost" size="sm" onClick={() => {
         dismissDiscovery(discovery); (discovery === "review" ? props.onStudy : discovery === "content" ? props.onDiscover : props.onSpeak)();
       }}>{t(discovery === "review" ? "Review my phrases" : discovery === "content" ? "Add content" : "Have a free conversation")}</Button><Button variant="ghost" size="sm" onClick={() => dismissDiscovery(discovery)}>{t("Not now")}</Button></div>
     </aside>}
-    <nav aria-label={t("Learning overview")} className="flex flex-wrap gap-2 border-t border-line pt-3">
+    <nav aria-label={t("Learning overview")} className="grid grid-cols-1 gap-2 rounded-xl border border-line bg-card p-2 sm:flex sm:flex-wrap">
       <Button variant="ghost" size="sm" onClick={props.onProgress}>{t("My progress")}</Button>
       <Button variant="ghost" size="sm" onClick={props.onPlan}>{t("My goal and plan")}</Button>
       {complete && <Button variant="ghost" size="sm" onClick={props.onExplore}>{t("Explore")}</Button>}

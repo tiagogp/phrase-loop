@@ -64,25 +64,25 @@ export function QuickLesson({ lessonId, phraseIndex = 0, onBack, onFullLesson }:
   return <div className="mx-auto max-w-2xl space-y-5">
     <Button variant="ghost" disabled={busy} onClick={onBack}>{t(phase === "complete" ? "Back to Today" : "Pause and go back")}</Button>
     <PageHeader eyebrow={t("A short practice · about 3 min")} title={t(phase === "complete" ? "You completed a short practice" : "Your own answer first")} description={t(lesson.topic)} />
-    <ol aria-label={t("Session steps")} className="flex flex-wrap gap-3 text-xs text-ink-muted">
-      {["Try in your own words", "Compare with examples", "Keep it for later"].map((label, index) => <li key={label} aria-current={index === ["produce", "compare", "complete"].indexOf(phase) ? "step" : undefined} className="rounded-lg border border-line px-3 py-2 aria-[current=step]:border-accent/40 aria-[current=step]:text-accent">{index + 1}. {t(label)}</li>)}
+    <ol aria-label={t("Session steps")} className="grid grid-cols-1 gap-2 text-xs text-ink-muted sm:grid-cols-3">
+      {["Try in your own words", "Compare with examples", "Keep it for later"].map((label, index) => <li key={label} aria-current={index === ["produce", "compare", "complete"].indexOf(phase) ? "step" : undefined} className="rounded-lg border border-line bg-card px-3 py-3 leading-relaxed aria-[current=step]:border-accent/40 aria-[current=step]:bg-accent/5 aria-[current=step]:font-semibold aria-[current=step]:text-accent">{index + 1}. {t(label)}</li>)}
     </ol>
     {error && <Notice tone="error">{t("Your answer could not be saved. Try again before moving on.")}</Notice>}
-    {phase === "produce" && <Card className="space-y-5 p-6">
+    {phase === "produce" && <Card className="space-y-5 p-5 sm:p-6">
       <p className="text-base text-ink">{t(lesson.productionPrompt ?? "Write a short message for a colleague about this topic.")}</p>
       <p className="text-sm text-ink-soft">{t("Try before looking at an example. A short answer is enough to start.")}</p>
-      <label className="block space-y-2 text-sm text-ink"><span>{t("Your answer in English")}</span><textarea className="w-full rounded-lg border border-line bg-surface p-3" rows={4} lang="en" value={answer} maxLength={3000} disabled={busy} onChange={e => setAnswer(e.target.value)} /></label>
+      <label className="block space-y-2 text-sm text-ink"><span>{t("Your answer in English")}</span><textarea className="w-full resize-y rounded-lg border border-line bg-surface p-3 text-base leading-relaxed outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 sm:text-sm" rows={4} lang="en" value={answer} maxLength={3000} disabled={busy} onChange={e => setAnswer(e.target.value)} /></label>
       <Button disabled={busy || !answer.trim()} onClick={() => void beginRecall()}>{t(busy ? "Saving…" : "Save my answer and compare")}</Button>
     </Card>}
-    {phase === "compare" && <Card className="space-y-5 p-6">
-      <div><h2 className="font-medium text-ink">{t("Your answer")}</h2><p className="mt-2 whitespace-pre-wrap text-sm text-ink" lang="en">{attempt?.text}</p></div>
+    {phase === "compare" && <Card className="space-y-5 p-5 sm:p-6">
+      <div><h2 className="font-medium text-ink">{t("Your answer")}</h2><p className="mt-2 whitespace-pre-wrap break-words rounded-lg bg-surface p-4 text-sm leading-relaxed text-ink" lang="en">{attempt?.text}</p></div>
       <h3 className="font-medium text-ink">{t("Examples from the lesson")}</h3>
       {(lesson.dialogue?.length ? lesson.dialogue : lesson.phrases.slice(0, 4)).map((line, i) => <div key={i}><p className="text-sm text-ink" lang="en">{line.en}</p><p className="text-xs text-ink-soft" lang="pt-BR">{line.pt}</p></div>)}
       <audio ref={audio} src={phrase.clip} preload="none" />
       <Button variant="secondary" onClick={() => { setAudioError(false); void audio.current?.play().catch(() => setAudioError(true)); }}>{t("Listen")}</Button>
       {audioError && <Notice>{t("Audio is unavailable. You can keep practicing with the text.")}</Notice>}
       <p className="text-sm text-ink-soft">{t("Different wording can work. How did your answer communicate the goal? This is your own assessment, not a checked result.")}</p>
-      <div className="flex flex-wrap gap-2">{([[Rating.Again, "needs_practice", "I need more practice"], [Rating.Hard, "partly", "I communicated part of it"], [Rating.Good, "communicated", "I communicated what I wanted"]] as const).map(([grade, assessment, label]) => <Button key={assessment} variant="secondary" disabled={busy} onClick={() => void finish(grade, assessment)}>{t(label)}</Button>)}</div>
+      <div className="grid gap-2 sm:grid-cols-3">{([[Rating.Again, "needs_practice", "I need more practice"], [Rating.Hard, "partly", "I communicated part of it"], [Rating.Good, "communicated", "I communicated what I wanted"]] as const).map(([grade, assessment, label]) => <Button key={assessment} variant="secondary" disabled={busy} onClick={() => void finish(grade, assessment)}>{t(label)}</Button>)}</div>
     </Card>}
     {phase === "complete" && <Card className="space-y-4 border-accent/25 p-6">
       <h2 className="text-xl font-semibold text-ink">{t("Your phrase and attempt are saved")}</h2>

@@ -34,7 +34,7 @@ export function GradeButtons({
 }) {
   const { t } = useT();
   return (
-    <div className="space-y-2"><p className="text-xs text-ink-muted">{t("How did remembering feel? This sets the next review.")}</p><div className="grid grid-cols-4 gap-2">
+    <div className="space-y-2"><p className="text-xs text-ink-muted">{t("How did remembering feel? This sets the next review.")}</p><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
       {GRADES.map((grade) => (
         <m.button
           key={grade}
@@ -45,12 +45,12 @@ export function GradeButtons({
           transition={springSnappy}
           onClick={() => onGrade(grade)}
           className={cn(
-            "flex cursor-pointer flex-col items-center gap-0.5 rounded border px-2 py-2 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50",
+            "flex min-h-16 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border bg-card px-3 py-3 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50",
             GRADE_TONE[grade],
           )}
         >
           <span>{t(GRADE_LABELS[grade])}</span>
-          <span className="tabular-nums opacity-70">{previewInterval(srs, grade)}</span>
+          <span className="text-xs tabular-nums opacity-80">{previewInterval(srs, grade)}</span>
         </m.button>
       ))}
     </div></div>

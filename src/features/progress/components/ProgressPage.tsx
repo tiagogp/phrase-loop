@@ -19,12 +19,12 @@ export default function ProgressPage({ onPractice, onTutor, active = true }: { o
   const { evidence, loading, error, refresh } = useLearningEvidence();
   const [details, setDetails] = useState(false);
   return (
-    <div className="space-y-5">
+    <div className="mx-auto max-w-5xl space-y-6">
       <PageHeader eyebrow={t("Your learning, made visible")} title={t("Progress")}
         description={t("What you achieved with support, recalled independently, and used in another situation.")}
         aside={<Button variant="secondary" onClick={onTutor ?? onPractice}>{t("Keep practicing")}</Button>} />
       {active && <TutorProgressCard onOpen={onTutor ?? onPractice} />}
-      <Disclosure title={t("Reviews and extra exercises · last 30 days")} contentClassName="space-y-4">
+      <Disclosure title={t("Reviews and extra exercises · last 30 days")} defaultOpen contentClassName="space-y-5">
       {loading ? <p role="status" className="text-sm text-ink-muted">{t("Loading progress…")}</p>
         : error ? <Notice tone="error">{t("Could not load your practice history.")} <Button variant="ghost" onClick={() => void refresh()}>{t("Try again")}</Button></Notice>
           : <>
@@ -55,9 +55,9 @@ export default function ProgressPage({ onPractice, onTutor, active = true }: { o
 
 function EvidenceStat({ label, value, detail }: { label: string; value: EvidenceRate; detail: string }) {
   const { t } = useT();
-  return <Card className="space-y-2 p-5">
+  return <Card variant="flat" className="min-w-0 space-y-3 p-5">
     <h2 className="text-sm font-medium text-ink">{label}</h2>
-    <p className="text-3xl font-semibold tabular-nums text-ink">{value.percent === null ? "—" : `${value.percent}%`}</p>
+    <p className="text-4xl font-semibold tracking-tight tabular-nums text-accent">{value.percent === null ? "—" : `${value.percent}%`}</p>
     <p className="text-xs text-ink-soft">{value.total ? t("{correct} of {total} checked attempts", { correct: value.correct, total: value.total }) : t("Not measured yet")}</p>
     <p className="text-xs leading-relaxed text-ink-muted">{detail}</p>
   </Card>;

@@ -129,7 +129,7 @@ export default function OnboardingDialog({ onStart }: Readonly<{ onStart: () => 
               <button
                 type="button"
                 onClick={() => setLevelCheckOpen("local")}
-                className="cursor-pointer text-xs font-medium text-accent hover:opacity-80"
+                className="min-h-11 cursor-pointer rounded-md text-left text-sm font-medium text-accent hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               >
                 {t("Not sure? Take a 5-minute check")}
               </button>
@@ -137,7 +137,7 @@ export default function OnboardingDialog({ onStart }: Readonly<{ onStart: () => 
                 <button
                   type="button"
                   onClick={() => setLevelCheckOpen("ai")}
-                  className="cursor-pointer text-xs font-medium text-ink-muted hover:opacity-80"
+                  className="min-h-11 cursor-pointer rounded-md text-left text-sm font-medium text-ink-muted hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                 >
                   {t("Or take the full {level} test with AI", { level: levelCheckTarget })}
                 </button>
@@ -191,7 +191,7 @@ export default function OnboardingDialog({ onStart }: Readonly<{ onStart: () => 
         </div>
       </Disclosure>
 
-      <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
+      <div className="mt-6 flex flex-col-reverse gap-2 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
         <Button variant="ghost" onClick={() => finish(false)}>{t("Explore on my own")}</Button>
         <Button variant="primary" disabled={loading} onClick={() => finish(true)}>{t("Start my first practice")} →</Button>
       </div>

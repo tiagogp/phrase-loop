@@ -131,19 +131,19 @@ export function TimedMonologue({
         onStart={() => void audio.startRecording()}
         onStop={audio.stopRecording}
       />
-      <Button type="button" variant="secondary" onClick={() => void save()} disabled={!text.trim() || audio.recording || audio.transcribing || saved}>
-        {saved ? t("Saved") : t("Save speaking evidence")}
-      </Button>
       <textarea
         value={text}
         onChange={(event) => setText(event.target.value)}
         rows={3}
         placeholder={t("Your transcript appears here; you can also type if the microphone is unavailable.")}
-        className="w-full resize-y rounded border border-line bg-surface px-3 py-2 text-sm text-ink"
+        className="w-full resize-y rounded border border-line bg-input px-3 py-2.5 text-base text-ink focus:outline-none focus:ring-2 focus:ring-accent/40 sm:text-sm"
         aria-label={t("Timed monologue transcript")}
       />
+      <Button type="button" variant="primary" className="w-full sm:w-auto" onClick={() => void save()} disabled={!text.trim() || audio.recording || audio.transcribing || saved}>
+        {saved ? t("Saved") : t("Save speaking evidence")}
+      </Button>
       {note && <p className="text-xs text-danger">{t(note)}</p>}
-      {saved && <p className="text-xs text-emerald-700 dark:text-emerald-300">{t("Speaking duration and word-rate evidence saved separately from study time.")}</p>}
+      {saved && <p className="text-xs text-success">{t("Speaking duration and word-rate evidence saved separately from study time.")}</p>}
     </Card>
   );
 }

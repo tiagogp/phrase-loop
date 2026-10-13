@@ -158,7 +158,7 @@ export function StudyCard({
   }
 
   return (
-    <Card className="p-6 sm:p-8">
+    <Card className="p-4 sm:p-8">
       {totalCards === 0 ? (
         <div className="space-y-1 py-8 text-center">
           <p className="text-sm font-medium text-ink">{t("No practice phrases yet")}</p>
@@ -181,7 +181,7 @@ export function StudyCard({
         </div>
       ) : (
         <div className="space-y-5">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs font-medium uppercase tracking-[0.8px] text-ink-muted">
               {t(producing && !flipped ? "Say it in English" : current.card.concept || "Practice phrase")}
             </span>
@@ -190,8 +190,8 @@ export function StudyCard({
             </span>
           </div>
 
-          <div className="flex min-h-24 flex-col items-center justify-center gap-3 text-center">
-            <p className="text-lg leading-relaxed text-ink">{current.card.front}</p>
+          <div className="flex min-h-40 flex-col items-center justify-center gap-4 rounded-xl border border-line bg-surface/70 px-4 py-6 text-center [overflow-wrap:anywhere] sm:px-6">
+            <p className="text-xl font-medium leading-relaxed tracking-[-0.01em] text-ink sm:text-2xl">{current.card.front}</p>
             {producing && !flipped && (
               <div className="w-full space-y-2">
                 <p className="text-xs text-ink-muted">{t("Produce it in English before checking.")}</p>
@@ -209,7 +209,7 @@ export function StudyCard({
                   }}
                   autoComplete="off"
                   placeholder={t("Type what you would say in English")}
-                  className="w-full rounded-lg border border-line bg-input px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent/40"
+                  className="w-full rounded-lg border border-line bg-input px-3 py-2.5 text-base text-ink sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent/40"
                 />
               </div>
             )}
@@ -287,7 +287,7 @@ export function StudyCard({
             <Button
               variant="primary"
               size="lg"
-              className="py-2.5"
+              className="w-full py-3"
               disabled={producing && !responseText.trim()}
               onClick={() => {
                 const result = producing
@@ -365,13 +365,13 @@ function ScaffoldControls({
   }
 
   return (
-    <div className="flex items-center justify-center gap-3 text-xs">
+    <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
       {hasHint &&
         (stable ? (
           <button
             type="button"
             onClick={onHint}
-            className="cursor-pointer text-ink-muted underline-offset-2 transition-opacity hover:opacity-70 hover:underline"
+            className="min-h-11 cursor-pointer rounded-lg px-2 text-ink-muted underline-offset-2 transition-opacity hover:opacity-70 hover:underline"
           >
             {t("Need a hint?")}
           </button>
@@ -384,7 +384,7 @@ function ScaffoldControls({
         <button
           type="button"
           onClick={onSlowAudio}
-          className="cursor-pointer text-ink-muted underline-offset-2 transition-opacity hover:opacity-70 hover:underline"
+          className="min-h-11 cursor-pointer rounded-lg px-2 text-ink-muted underline-offset-2 transition-opacity hover:opacity-70 hover:underline"
         >
           {t("Replay 0.75×")}
         </button>

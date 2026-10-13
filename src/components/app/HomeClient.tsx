@@ -36,6 +36,7 @@ import { useKokoroModel, type LocalModelState } from "@/features/speech/hooks/us
 import { useT } from "@/i18n/I18nProvider";
 import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Spinner } from "@/components/ui/Spinner";
 import { isStoreAvailable } from "@/lib/store/db";
 import { emitActivity } from "@/lib/store/activityLog";
 import { getCards } from "@/lib/store/repository";
@@ -44,7 +45,7 @@ import { WorkspaceActivityContext } from "@/lib/workspaceActivity";
 
 function WorkspaceLoading() {
   const { t } = useT();
-  return <div role="status" className="min-h-48 rounded-lg border border-line bg-card p-6 text-sm text-ink-muted">{t("Loading…")}</div>;
+  return <div role="status" aria-live="polite" className="flex min-h-48 items-center justify-center gap-3 rounded-panel border border-line bg-card p-6 text-sm text-ink-muted"><Spinner className="h-5 w-5 text-accent" />{t("Loading…")}</div>;
 }
 
 const C1Tab = dynamic(() => import("@/features/c1/components/C1Tab"), { loading: WorkspaceLoading });
@@ -385,12 +386,7 @@ function HomeContent() {
             ) : overlay === "c1" ? (
               <div className="h-full overflow-y-auto pb-16 app-scroll-region sm:pb-20">
                 <div className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
-                  <OverlayHeader
-                    title={t("C1 diagnosis")}
-                    description={t("Review register, naturalness, and collocation at an advanced level.")}
-                    backLabel={t("Back")}
-                    onBack={() => setOverlay(null)}
-                  />
+                  <Button variant="ghost" size="sm" onClick={() => setOverlay(null)} className="mb-4 -ml-2"><span aria-hidden="true">←</span>{t("Back")}</Button>
                   <C1Tab
                     onOpenSettings={() => openSettings()}
                   />
@@ -399,12 +395,7 @@ function HomeContent() {
             ) : overlay === "tools" ? (
               <div className="h-full overflow-y-auto pb-16 app-scroll-region sm:pb-20">
                 <div className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
-                  <OverlayHeader
-                    title={t("Audio and export")}
-                    description={t("Export to Anki, text-to-speech, and theme phrase lists.")}
-                    backLabel={t("Back")}
-                    onBack={() => setOverlay(null)}
-                  />
+                  <Button variant="ghost" size="sm" onClick={() => setOverlay(null)} className="mb-4 -ml-2"><span aria-hidden="true">←</span>{t("Back")}</Button>
                   <SpeechTab key={tool} kokoroModel={kokoro} initialTool={tool} />
                 </div>
               </div>

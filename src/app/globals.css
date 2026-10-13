@@ -93,7 +93,8 @@ textarea {
 
 
 .app-scroll-region {
-  overscroll-behavior: contain;
+  overscroll-behavior-y: none;
+  scroll-padding-block: 1rem;
   scrollbar-color: color-mix(in srgb, var(--text-muted) 38%, transparent) transparent;
   scrollbar-width: thin;
 }
@@ -133,7 +134,7 @@ textarea {
   }
 }
 
-@media (max-width: 640px) {
+@media (width < 1024px) {
   .app-header-inner {
     grid-template-columns: 1fr auto;
     gap: 0.45rem 0.75rem;
@@ -144,6 +145,14 @@ textarea {
     grid-column: 1 / -1;
     grid-row: 2;
     width: 100%;
+  }
+}
+
+/* Keep typed text legible on phones, including controls with compact utility
+   classes supplied by their screen. This also avoids focus zoom in iOS. */
+@media (width < 640px) {
+  .field-control {
+    font-size: 1rem;
   }
 }
 

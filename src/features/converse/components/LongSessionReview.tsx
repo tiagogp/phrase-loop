@@ -252,7 +252,7 @@ function Reconstruction({ conversation, onUpdate }: { conversation: Conversation
               onChange={(event) => setDrafts((prev) => ({ ...prev, [index]: { text: event.target.value, spoken: false } }))}
               placeholder={t("Say or write it again…")}
               aria-label={t("Say or write it again…")}
-              className="w-full resize-y rounded border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent/40"
+              className="w-full resize-y rounded border border-line bg-input px-3 py-2.5 text-base text-ink sm:text-sm placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent/40"
             />
             <div className="flex flex-wrap gap-2">
               <Button variant="secondary" disabled={transcribing || (mic.recording && activeGap !== index)}

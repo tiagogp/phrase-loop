@@ -563,8 +563,8 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
             <p className="mb-3 text-sm font-semibold tracking-[-0.01em] text-ink">{t("Recent long sessions")}</p>
             <ul className="space-y-2">
               {past.slice(0, 6).map((item) => (
-                <li key={item.id} className="flex items-center gap-3 py-1">
-                  <div className="min-w-0 flex-1">
+                <li key={item.id} className="flex flex-wrap items-center gap-2 rounded-xl border border-line bg-surface/50 p-3 sm:gap-3">
+                  <div className="min-w-0 basis-full sm:flex-1 sm:basis-auto">
                     <p className="truncate text-sm text-ink">{item.longSession?.label ?? item.context}</p>
                     <p className="text-xs text-ink-muted">
                       {new Date(item.startedAt).toLocaleDateString()}
@@ -587,7 +587,7 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
   const long = conversation.longSession!;
   const left = remainingMs(long, now);
   return (
-    <Card className="flex h-[calc(100dvh-12rem)] flex-col overflow-hidden border-line-strong sm:h-[calc(100dvh-13rem)]">
+    <Card className="flex h-[max(32rem,calc(100dvh-12rem))] flex-col overflow-hidden border-line-strong sm:h-[max(32rem,calc(100dvh-13rem))]">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-surface px-4 py-3 sm:px-5">
         <div className="min-w-0">
           <p className="truncate text-base font-semibold tracking-[-0.01em] text-ink">{long.label ?? conversation.context}</p>
@@ -614,7 +614,7 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
         <div ref={bottomRef} />
       </ul>
 
-      <div className="space-y-2 border-t border-line bg-surface p-3 sm:p-4">
+      <div className="shrink-0 space-y-2 border-t border-line bg-surface p-3 sm:p-4">
         {!running && <Notice>{t("Paused. The timer stops while paused; resume when you are ready.")}</Notice>}
         {timeUp && <Notice tone="warning">{t("Time is up. Finish your sentence and send it; the review comes next.")}</Notice>}
         {note && <p className="text-xs text-danger">{note}</p>}
@@ -624,7 +624,7 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
             variant="secondary"
             aria-label={t("Hold to say it in Portuguese")}
             disabled={!running || busy || stuckTranscribing || mic.recording || transcribing}
-            className={cn("h-11 touch-none select-none", stuck.recording && "border-accent text-accent")}
+            className={cn("min-h-11 touch-none select-none whitespace-normal text-left", stuck.recording && "border-accent text-accent")}
             onPointerDown={(event) => {
               event.currentTarget.setPointerCapture?.(event.pointerId);
               void startStuck();
@@ -671,9 +671,9 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
             </Button>
           </div>
         )}
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center">
           <Button variant="secondary" onClick={() => void toggleMic()} disabled={!running || transcribing || stuck.recording}
-            className={cn("h-11 shrink-0", mic.recording && "border-danger text-danger")}>
+            className={cn("col-span-2 min-h-11 shrink-0 sm:col-span-1", mic.recording && "border-danger text-danger")}>
             {transcribing ? <Spinner className="h-4 w-4" /> : mic.recording ? t("Stop") : t("Speak")}
           </Button>
           <Input
@@ -690,8 +690,9 @@ export default function LongSession({ active = true, onOpenSettings, topics = []
               }
             }}
             placeholder={t("Type your reply, or tap Speak…")}
+            aria-label={t("Your answer")}
             disabled={!running || busy}
-            className="h-11 flex-1"
+            className="h-11 min-w-0 flex-1"
           />
           <Button variant="primary" className="h-11 shrink-0 sm:min-w-24" disabled={!running || busy || !typed.trim()}
             onClick={() => void sendTurn(typed, { spoken: spokenRef.current })}>
@@ -712,7 +713,7 @@ function LongSessionBubble({ turn, items }: { turn: ConversationTurn; items: Rep
   return (
     <li className={cn("flex", isUser ? "justify-end" : "justify-start")}>
       <div className={cn(
-        "max-w-[88%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm sm:max-w-[76%]",
+        "min-w-0 max-w-[92%] whitespace-pre-wrap [overflow-wrap:anywhere] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm sm:max-w-[76%]",
         isUser ? "rounded-br-md bg-off-black text-white" : "rounded-bl-md border border-line bg-surface text-ink",
         turn.codeSwitch && "border border-dashed border-accent/60 bg-accent/10 text-ink",
       )}>

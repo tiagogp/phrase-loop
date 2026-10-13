@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Field";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { WorkflowSteps } from "@/components/ui/WorkflowSteps";
 import { Notice } from "@/components/ui/Notice";
 import { StatusPill, type StatusPillProps } from "@/components/ui/StatusPill";
 import {
@@ -412,7 +413,7 @@ export default function SettingsScreen({
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 sm:py-8">
       <div className="mb-6 space-y-4 border-b border-line pb-5">
-        <Button variant="ghost" size="sm" onClick={onBack} className="-ml-2 min-h-9">
+        <Button variant="ghost" size="sm" onClick={onBack} className="-ml-2 min-h-11">
           <span aria-hidden="true">←</span>
           {t("Back to PhraseLoop")}
         </Button>
@@ -440,17 +441,17 @@ export default function SettingsScreen({
         </Notice>
       )}
 
-      <nav aria-label={t("Settings sections")} className="mb-5 flex flex-wrap gap-2">
-        {showAdvancedAi && <a href="#settings-ai" className="inline-flex min-h-10 items-center rounded-md border border-accent/30 bg-accent/5 px-3 text-sm font-medium text-accent">{t("Connect an AI")}</a>}
-        <a href="#settings-data" className="inline-flex min-h-10 items-center rounded-md border border-line bg-card px-3 text-sm font-medium text-ink-soft transition-colors hover:border-line-strong hover:text-ink">
+      <nav aria-label={t("Settings sections")} className="mb-6 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+        {showAdvancedAi && <a href="#settings-ai" className="inline-flex min-h-11 items-center rounded-md border border-accent/30 bg-accent/5 px-3 text-sm font-medium text-accent">{t("Connect an AI")}</a>}
+        <a href="#settings-data" className="inline-flex min-h-11 items-center rounded-md border border-line bg-card px-3 text-sm font-medium text-ink-soft transition-colors hover:border-line-strong hover:text-ink">
           {t("Data and privacy")}
         </a>
         {(showAdvancedAi || onOpenTools || onOpenC1) && (
-          <a href="#settings-advanced" className="inline-flex min-h-10 items-center rounded-md border border-line bg-card px-3 text-sm font-medium text-ink-soft transition-colors hover:border-line-strong hover:text-ink">
+          <a href="#settings-advanced" className="inline-flex min-h-11 items-center rounded-md border border-line bg-card px-3 text-sm font-medium text-ink-soft transition-colors hover:border-line-strong hover:text-ink">
             {t("Tools")}
           </a>
         )}
-        <a href="#settings-profile" className="inline-flex min-h-10 items-center rounded-md border border-line bg-card px-3 text-sm font-medium text-ink-soft transition-colors hover:border-line-strong hover:text-ink">
+        <a href="#settings-profile" className="inline-flex min-h-11 items-center rounded-md border border-line bg-card px-3 text-sm font-medium text-ink-soft transition-colors hover:border-line-strong hover:text-ink">
           {t("Learner profile")}
         </a>
       </nav>
@@ -461,7 +462,13 @@ export default function SettingsScreen({
             <h2 id="connect-ai-title" className="text-xl font-semibold text-ink">{t("Connect an AI")}</h2>
             <p className="mt-2 text-sm text-ink-soft">{t("Three steps, then your first answer. You can also practice without AI.")}</p>
             <Button className="mt-3" variant="secondary" onClick={onLocalPractice}>{t("Continue without AI")}</Button>
-            <ol className="mt-4 grid grid-cols-3 gap-2 text-xs text-ink-soft" aria-label={t("AI setup steps")}>{AI_SETUP_STEPS.map((label, i) => <li key={label} className="rounded border border-line p-2" aria-current={aiSetupStep({ selected: !!selectedProvider || settings.providers.some(p => p.kind === selected && p.configured), ready: selected === "ollama" ? !!ollamaModel.trim() : !!({ openai: openaiKey, claude: anthropicKey, openrouter: openrouterKey }[selected]?.trim()) || settings.providers.some(p => p.kind === selected && p.configured), connected: connected === selected }) === i + 1 ? "step" : undefined}>{i + 1}. {t(label)}</li>)}</ol>
+            <div className="mt-4">
+              <WorkflowSteps label={t("AI setup steps")} steps={AI_SETUP_STEPS.map(label => t(label))} current={aiSetupStep({
+                selected: !!selectedProvider || settings.providers.some(p => p.kind === selected && p.configured),
+                ready: selected === "ollama" ? !!ollamaModel.trim() : !!({ openai: openaiKey, claude: anthropicKey, openrouter: openrouterKey }[selected]?.trim()) || settings.providers.some(p => p.kind === selected && p.configured),
+                connected: connected === selected,
+              })} />
+            </div>
             <h3 className="mt-4 text-sm font-medium text-ink">1. {t("Choose your AI")}</h3>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="group" aria-label={t("Choose an AI provider")}>
@@ -582,7 +589,7 @@ export default function SettingsScreen({
           <div className="mt-4 rounded-lg border border-line bg-surface p-3">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-sm font-medium text-ink">{restoreDraft.fileName}</p>
+                <p className="break-words text-sm font-medium text-ink">{restoreDraft.fileName}</p>
                 <p className="mt-0.5 text-xs text-ink-muted">
                   {restoreDraft.validation.ok
                     ? t("Dry run passed: {count} records can be restored.", {
@@ -733,7 +740,7 @@ export default function SettingsScreen({
           <Field label={t("Time for today")}><Select value={String(minutes)} options={[5, 10, 20].map(value => ({ value: String(value), label: t("{count} min", { count: value }) }))} onChange={value => saveLearningProfile({ dailyMinutes: Number(value) })} /></Field>
         </div>
         <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-lg border border-line p-4 text-sm text-ink">
-          <input type="checkbox" className="mt-1 accent-accent" checked={fullNavigation} onChange={event => setFullNavigation(event.target.checked)} />
+          <input type="checkbox" className="mt-0.5 size-5 shrink-0 accent-accent" checked={fullNavigation} onChange={event => setFullNavigation(event.target.checked)} />
           <span>{t("Show all shortcuts")}<span className="mt-1 block text-xs text-ink-muted">{t("Keep all sections in the navigation. Every tool remains available in Explore, More options, or Settings even with this turned off.")}</span></span>
         </label>
       </Card>

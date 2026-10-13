@@ -164,7 +164,7 @@ export function UnpreparedQuestion({
 
   return (
     <Card className="space-y-4 p-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-xs font-medium uppercase tracking-[0.8px] text-ink-muted">
           {t("Unprepared question")}
         </span>
@@ -220,7 +220,8 @@ export function UnpreparedQuestion({
             onChange={(event) => setText(event.target.value)}
             rows={3}
             placeholder={t("Write your sentence in English")}
-            className="w-full rounded-lg border border-line bg-input px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent/40"
+            aria-label={t("Your answer")}
+            className="w-full rounded-lg border border-line bg-input px-3 py-2.5 text-base text-ink sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent/40"
           />
           <Button
             variant="primary"

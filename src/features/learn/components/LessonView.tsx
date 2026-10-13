@@ -481,12 +481,12 @@ function LessonViewContent({
   };
 
   return (
-    <div className="space-y-4">
-      <PanelCard className="space-y-3 p-5">
+    <div className="mx-auto max-w-5xl space-y-5">
+      <PanelCard className="space-y-3 border-accent/20 bg-gradient-to-br from-accent/5 to-card p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs uppercase tracking-[0.7px] text-accent">{t(lesson.level)} · {t(lesson.topic)}</p>
-            <h2 className="mt-1 text-xl font-semibold tracking-[-0.01em] text-ink">{t(lesson.title)}</h2>
+            <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-[-0.035em] text-ink sm:text-3xl">{t(lesson.title)}</h1>
             <p className="mt-1 text-sm text-ink-soft">
               {lesson.objective
                 ? t(lesson.objective)
@@ -512,7 +512,7 @@ function LessonViewContent({
                 : done}
             </span>
             {onStudyNow && (
-              <button type="button" onClick={onStudyNow} className="font-medium underline hover:no-underline">
+              <button type="button" onClick={onStudyNow} className="inline-flex min-h-11 items-center rounded-lg px-2 font-medium underline hover:no-underline focus-visible:outline-2 focus-visible:outline-accent">
                 {t("Review now")}
               </button>
             )}
@@ -540,7 +540,7 @@ function LessonViewContent({
           </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {learnSet.map((phrase) => (
-              <div key={phrase.en} className="space-y-2 rounded border border-line bg-surface p-3">
+              <div key={phrase.en} className="min-w-0 space-y-3 rounded-xl border border-line bg-surface p-4">
                 <p className="text-sm font-semibold text-ink">{phrase.en}</p>
                 <p className="text-sm text-ink-soft">{phrase.pt}</p>
                 <div className="border-t border-line pt-2">
@@ -656,7 +656,7 @@ function LessonViewContent({
                       aria-pressed={comprehensionAnswers[questionIndex] === option}
                       onClick={() => chooseComprehensionAnswer(questionIndex, option)}
                       className={cn(
-                        "rounded border px-3 py-2 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+                        "min-h-11 rounded-lg border px-3 py-3 text-left text-sm leading-relaxed transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50",
                         comprehensionAnswers[questionIndex] === option
                           ? "border-accent bg-accent/8 text-ink"
                           : "border-line bg-card text-ink-soft hover:border-line-strong",

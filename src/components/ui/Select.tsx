@@ -24,7 +24,7 @@ export default function Select({ value, onChange, options, disabled, ...props }:
       <RadixSelect.Trigger
         {...field}
         {...props}
-        className="flex min-h-11 w-full min-w-0 items-center justify-between gap-2 rounded-md border border-line bg-input px-3 py-2 text-left text-sm text-ink outline-none transition-colors focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/30 aria-[invalid=true]:border-danger data-disabled:cursor-not-allowed data-disabled:opacity-50 [&>span:first-child]:truncate"
+        className="field-control flex min-h-11 w-full min-w-0 items-center justify-between gap-2 rounded-lg border border-line bg-input px-3 py-2 text-left text-sm text-ink outline-none transition-colors focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/30 aria-[invalid=true]:border-danger data-disabled:cursor-not-allowed data-disabled:opacity-50 [&>span:first-child]:truncate"
       >
         <RadixSelect.Value />
         <RadixSelect.Icon>
@@ -51,7 +51,7 @@ export default function Select({ value, onChange, options, disabled, ...props }:
               <RadixSelect.Item
                 key={opt.value}
                 value={opt.value}
-                className="flex min-h-11 cursor-pointer select-none items-center gap-2 rounded px-3 py-2 text-ink outline-none transition-colors data-highlighted:bg-accent/10"
+                className="field-control flex min-h-11 cursor-pointer select-none items-center gap-2 rounded px-3 py-2 text-ink outline-none transition-colors data-highlighted:bg-accent/10"
               >
                 <RadixSelect.ItemText>{opt.label}</RadixSelect.ItemText>
                 <RadixSelect.ItemIndicator className="ml-auto">

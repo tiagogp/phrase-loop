@@ -439,6 +439,8 @@ export function MistakeStep({
 
       <div className="space-y-2">
         <textarea
+          aria-label={t("Your answer in English")}
+          lang="en"
           value={sentence}
           onChange={(event) => {
             spokenRef.current = false;
@@ -453,7 +455,7 @@ export function MistakeStep({
           }}
           rows={2}
           placeholder={voiceFirst ? t("Speak, or write your sentence here…") : t("Write your sentence here…")}
-          className="w-full resize-none rounded border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent/40"
+          className="w-full resize-y rounded-lg border border-line bg-surface px-3 py-3 text-base leading-relaxed text-ink sm:text-sm placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent/40"
           disabled={saving || checking}
         />
         <div className="flex flex-wrap items-center gap-2">
@@ -514,7 +516,7 @@ export function MistakeStep({
               rows={2}
               placeholder={t("Write your second attempt here…")}
               aria-label={t("Second attempt")}
-              className="w-full resize-none rounded border border-line bg-card px-3 py-2 text-sm text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent/40"
+              className="w-full resize-y rounded-lg border border-line bg-card px-3 py-3 text-base leading-relaxed text-ink sm:text-sm placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent/40"
               disabled={saving || checkingRetry}
             />
             <div className="flex flex-wrap items-center gap-2">
@@ -666,7 +668,7 @@ function FeedbackIssues({ issues }: { issues: LocalCorrectionIssue[] }) {
       </p>
       <ul className="space-y-2">
         {focused.map((issue) => (
-          <li key={issue.id} className="flex items-start gap-2 text-xs text-ink-muted">
+          <li key={issue.id} className="flex flex-wrap items-start gap-2 rounded-lg border border-line bg-card p-3 text-sm leading-relaxed text-ink-soft">
             <span className="mt-0.5 rounded border border-line px-1.5 py-0.5 text-[10px] uppercase tracking-[0.4px] text-ink-soft">
               {t(FEEDBACK_CATEGORY_LABEL[issue.category])}
             </span>

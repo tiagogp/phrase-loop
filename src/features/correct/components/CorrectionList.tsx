@@ -65,7 +65,7 @@ export function CorrectionList({
           <Button
             variant={generating ? "secondary" : "primary"}
             size="sm"
-            className={cn("shrink-0", generating && "border-danger text-danger")}
+            className={cn("min-h-11 w-full shrink-0 sm:w-auto", generating && "border-danger text-danger")}
             onClick={generating ? onCancel : onGenerate}
             disabled={!generating && !providerReady}
           >
@@ -123,7 +123,7 @@ export function CorrectionList({
           </div>
         )}
 
-        <ul className="max-h-[28rem] overflow-y-auto">
+        <ul className="max-h-[28rem] overflow-y-auto overscroll-contain">
           <AnimatePresence initial={false}>
             {visible.map((issue) => (
               <m.li
@@ -150,7 +150,7 @@ export function CorrectionList({
                   <p className="text-xs text-ink-muted">{t(issue.suggestedRetrySupport)}</p>
                 </div>
                 <Chip
-                  className="mt-0.5 shrink-0"
+                  className="min-h-11 shrink-0"
                   disabled={generating}
                   aria-label={t("Remove correction")}
                   onClick={() => onRemove(issue.event.id)}

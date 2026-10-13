@@ -696,7 +696,7 @@ export default function DiscoverTab({
               <Button
                 variant="primary"
                 size="lg"
-                className="flex min-h-11 items-center justify-center gap-2 sm:w-auto"
+                className="flex min-h-11 w-full items-center justify-center gap-2 sm:w-auto"
                 onClick={extract}
                 disabled={loading || !canRun}
               >

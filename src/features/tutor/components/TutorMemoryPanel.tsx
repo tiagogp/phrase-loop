@@ -9,7 +9,7 @@ import { Notice } from "@/components/ui/Notice";
 import { saveTutorPreferences, type TutorMemory } from "../store";
 import type { TutorPreferences } from "../types";
 
-export const tutorInputClass = "w-full rounded-md border border-line bg-input px-3 py-2.5 text-sm text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-60";
+export const tutorInputClass = "min-h-11 w-full min-w-0 rounded-md border border-line bg-input px-3 py-2.5 text-base text-ink sm:text-sm outline-none focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-60";
 
 export function TutorMemoryPanel({ memory }: { memory: TutorMemory }) {
   const { t, lang, localize } = useTutorTranslation();
@@ -34,12 +34,12 @@ export function TutorMemoryPanel({ memory }: { memory: TutorMemory }) {
     {message && <p role="status" className="text-sm text-ink-soft">{localize(message)}</p>}
     <h3 className="border-t border-line pt-4 text-sm font-medium text-ink">{t("Recent observations and their sources")}</h3>
     {!memory.observations.length && <p className="text-sm text-ink-muted">{t("No answers recorded yet. The tutor starts with the goal and level you provided.")}</p>}
-    <ul className="max-h-96 space-y-3 overflow-y-auto">
+    <ul className="max-h-96 space-y-3 overflow-y-auto overscroll-contain">
       {memory.observations.slice(0, 12).map(observation => {
         const ignored = memory.preferences.ignoredEvidenceIds.includes(observation.id);
         return <li key={observation.id} className="rounded border border-line p-3 text-sm">
           <p className="font-medium text-ink">{localize(observation.label)} · {new Date(observation.createdAt).toLocaleDateString(lang === "pt" ? "pt-BR" : "en-US")}</p>
-          <p className="mt-1 whitespace-pre-wrap text-ink-soft" lang="en">{observation.text}</p>
+          <p className="mt-1 whitespace-pre-wrap break-words text-ink-soft" lang="en">{observation.text}</p>
           <p className="mt-2 text-xs text-ink-muted">{localizeTutorObservationDetail(observation.detail, observation.kind, lang)} · {observation.supported === null ? t("Support not recorded") : observation.supported ? t("With support") : t("No support recorded")}</p>
           <Button variant="ghost" size="sm" disabled={saving} onClick={() => void save({ ...memory.preferences, ignoredEvidenceIds: ignored ? memory.preferences.ignoredEvidenceIds.filter(id => id !== observation.id) : [...memory.preferences.ignoredEvidenceIds, observation.id] })}>{ignored ? t("Allow the tutor to use this again") : t("Do not use in tutoring")}</Button>
         </li>;

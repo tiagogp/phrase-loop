@@ -48,6 +48,18 @@ html[data-electron="true"] .app-header > div:first-child {
   justify-self: center;
 }
 
+/* Keep the wordmark clear of macOS traffic lights when the centered shell
+   reaches the window edge. The navigation's second row keeps its full width. */
+@media (width < 1200px) {
+  html[data-electron-platform="darwin"] .app-header-inner > div:first-child {
+    padding-left: 4.5rem;
+  }
+}
+
+html[data-electron-platform="win32"] .app-header-inner {
+  padding-right: 9rem;
+}
+
 .app-explore > summary::-webkit-details-marker {
   display: none;
 }

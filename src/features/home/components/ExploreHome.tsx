@@ -45,17 +45,17 @@ export function ExploreHome(props: ExploreActions) {
       ["Generate audio", "Listen to English text with a voice you choose.", () => props.onTools("audio")],
     ] },
   ] as const;
-  return <div className="space-y-8">
+  return <div className="mx-auto max-w-5xl space-y-8">
     <PageHeader title={t("Explore")} description={t("Choose something specific. Today always has a practice ready for you.")} />
     {groups.map(group => <section key={group.title} className="space-y-3">
-      <h2 className="text-sm font-semibold text-ink">{t(group.title)}</h2>
+      <h2 className="flex items-center gap-3 text-xs font-semibold uppercase tracking-wider text-ink-muted">{t(group.title)}<span aria-hidden="true" className="h-px flex-1 bg-line" /></h2>
       <div className="grid gap-3 sm:grid-cols-2">{group.items.map(([title, detail, action]) => <button key={title} type="button" onClick={action}
-        className="rounded-lg border border-line bg-card p-4 text-left transition-colors hover:border-accent/40 focus-visible:outline-2 focus-visible:outline-accent">
-        <span className="flex justify-between gap-3 font-medium text-ink">{t(title)}<span aria-hidden="true">→</span></span>
-        <span className="mt-2 block text-sm leading-relaxed text-ink-muted">{t(detail)}</span>
+        className="group flex min-w-0 flex-col rounded-xl border border-line bg-card p-5 text-left transition-colors hover:border-accent/40 hover:bg-accent/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+        <span className="flex w-full items-center justify-between gap-4 text-base font-semibold tracking-tight text-ink">{t(title)}<span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface text-ink-muted transition-colors group-hover:bg-accent/10 group-hover:text-accent">→</span></span>
+        <span className="mt-2 block max-w-md text-sm leading-relaxed text-ink-soft">{t(detail)}</span>
       </button>)}</div>
     </section>)}
-    <div className="border-t border-line pt-4"><Button variant="ghost" onClick={() => setFullNavigation(!fullNavigation)}>{t(fullNavigation ? "Use simple navigation" : "Show all shortcuts")}</Button>
+    <div className="rounded-xl border border-line bg-surface p-4"><Button variant="secondary" aria-pressed={fullNavigation} onClick={() => setFullNavigation(!fullNavigation)}>{t(fullNavigation ? "Use simple navigation" : "Show all shortcuts")}</Button>
       <p className="mt-2 text-xs text-ink-muted">{t("Shortcuts change the navigation only. Today stays focused.")}</p></div>
   </div>;
 }

@@ -14,6 +14,7 @@ import { Card } from "@/components/ui/Card";
 import { LoadingStatus } from "@/components/ui/LoadingStatus";
 import { Notice } from "@/components/ui/Notice";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { WorkflowSteps } from "@/components/ui/WorkflowSteps";
 import { ProviderPicker } from "@/features/cards/components/ProviderPicker";
 import { useProviderSelection } from "@/features/cards/hooks/useProviderSelection";
 import { synthesizeSpeech } from "@/features/converse/api";
@@ -135,15 +136,13 @@ export function TutorPractice({ initial, memory, onNew, ...props }: TutorWorkspa
   }
 
   if (!exposureReady) return <div className="space-y-3"><p role="status">{error ? localize(error) : t("Opening the session…")}</p><Button onClick={props.onBack}>{t("Back")}</Button></div>;
-  return <div className="space-y-5">
+  return <div className="min-w-0 space-y-5 [overflow-wrap:anywhere]">
     <div className="flex flex-wrap items-center justify-between gap-2">
       <Button variant="ghost" onClick={props.onBack} disabled={saving || audio.recording || audio.transcribing}>{session.phase === "complete" ? t("← Back") : t("← Pause and go back")}</Button>
       <span className="text-xs text-ink-muted">{fatal ? t("Could not save") : saving ? t("Saving…") : t("Session saved in this browser")}</span>
     </div>
     <PageHeader eyebrow={t("Your tutor · {minutes} min · {level}", { minutes: session.minutes, level: session.level })} title={localize(session.task.goal)} description={localize(session.reason)} />
-    <ol className="grid grid-cols-3 gap-2 text-xs text-ink-muted" aria-label={t("Session steps")}>
-      {[t("Your answer"), t("Feedback and another attempt"), t("Revisit later")].map((label, i) => <li key={label} aria-current={(session.phase === "practice" ? 0 : session.phase === "feedback" ? 1 : 2) === i ? "step" : undefined} className={`rounded border p-3 ${(session.phase === "practice" ? 0 : session.phase === "feedback" ? 1 : 2) === i ? "border-accent/40 bg-accent/5 text-accent" : "border-line"}`}>{i + 1}. {label}</li>)}
-    </ol>
+    <WorkflowSteps label={t("Session steps")} steps={[t("Your answer"), t("Feedback and another attempt"), t("Revisit later")]} current={session.phase === "practice" ? 1 : session.phase === "feedback" ? 2 : 3} />
     {error && <Notice tone="error" role="alert">{localize(error)}{" "}{!fatal && t("You can try again; your text is still saved.")}
       {!fatal && props.onLocalPractice && <div className="mt-3"><Button variant="secondary" disabled={blocked} onClick={props.onLocalPractice}>{t("Continue with a local practice")}</Button><p className="mt-2 text-xs">{t("Your tutor session stays saved. You can return to it later.")}</p></div>}
     </Notice>}

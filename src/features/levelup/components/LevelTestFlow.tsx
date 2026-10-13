@@ -140,7 +140,7 @@ export function LevelTestFlow({ currentLevel, targetLevel, focusGaps, onClose }:
   }, [stage, t]);
 
   return (
-    <UiCard className="space-y-4 p-5">
+    <UiCard className="space-y-5 p-5 sm:p-6">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold tracking-[-0.01em] text-ink">
@@ -152,14 +152,14 @@ export function LevelTestFlow({ currentLevel, targetLevel, focusGaps, onClose }:
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 cursor-pointer text-xs font-medium text-ink-muted transition-opacity hover:opacity-80"
+            className="min-h-11 shrink-0 cursor-pointer rounded-lg px-3 text-sm font-medium text-ink-soft transition-colors hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-accent"
           >
             {stage === "result" ? t("Close") : t("Cancel")}
           </button>
         )}
       </div>
 
-      {error && <p className="text-xs text-danger">{error}</p>}
+      {error && <p role="alert" className="rounded-lg border border-danger/20 bg-danger/5 p-3 text-sm text-danger">{error}</p>}
 
       {stage === "intro" && (
         <div className="space-y-3">
@@ -191,7 +191,7 @@ export function LevelTestFlow({ currentLevel, targetLevel, focusGaps, onClose }:
               <p className="text-sm text-ink">{question.prompt}</p>
               <div className="space-y-1">
                 {question.options.map((option, oi) => (
-                  <label key={oi} className="flex cursor-pointer items-center gap-2 text-sm text-ink-soft">
+                  <label key={oi} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-line px-3 py-3 text-sm text-ink-soft transition-colors hover:bg-accent/5 has-checked:border-accent/50 has-checked:bg-accent/5">
                     <input
                       type="radio"
                       name={`comprehension-${qi}`}
@@ -220,11 +220,13 @@ export function LevelTestFlow({ currentLevel, targetLevel, focusGaps, onClose }:
               <p className="text-sm text-ink">{question.sentence}</p>
               <input
                 type="text"
+                aria-label={question.sentence}
+                lang="en"
                 value={fillIn[qi]}
                 onChange={(event) =>
                   setFillIn((prev) => prev.map((answer, i) => (i === qi ? event.target.value : answer)))
                 }
-                className="w-full rounded border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-accent"
+                className="w-full rounded-lg border border-line bg-surface px-3 py-3 text-base leading-relaxed text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 sm:text-sm"
               />
             </div>
           ))}
@@ -238,10 +240,12 @@ export function LevelTestFlow({ currentLevel, targetLevel, focusGaps, onClose }:
         <div className="space-y-3">
           <p className="text-sm text-ink">{test.writing.prompt}</p>
           <textarea
+            aria-label={test.writing.prompt}
+            lang="en"
             value={writingText}
             onChange={(event) => setWritingText(event.target.value)}
             rows={6}
-            className="w-full rounded border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-accent"
+            className="w-full rounded-lg border border-line bg-surface px-3 py-3 text-base leading-relaxed text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 sm:text-sm"
             placeholder={t("Write 3-6 sentences…")}
           />
           <Button size="sm" disabled={!writingReady} onClick={() => void submit()}>

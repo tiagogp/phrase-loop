@@ -109,7 +109,7 @@ export function RetentionProofCard({ onCompleted }: { onCompleted?: () => void }
 
   return (
     <Card className="space-y-4 p-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-xs font-medium uppercase tracking-[0.8px] text-ink-muted">
           {t("Day {days} check", { days: current.candidate.targetDays })}
         </span>
@@ -152,7 +152,7 @@ export function RetentionProofCard({ onCompleted }: { onCompleted?: () => void }
             onKeyDown={(event) => { if (event.key === "Enter" && value.trim()) void submit(); }}
             autoComplete="off"
             placeholder={t("Type what you would say in English")}
-            className="w-full rounded-lg border border-line bg-input px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent/40"
+            className="w-full rounded-lg border border-line bg-input px-3 py-2.5 text-base text-ink sm:text-sm focus:outline-none focus:ring-2 focus:ring-accent/40"
           />
           <Button
             variant="primary"

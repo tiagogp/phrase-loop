@@ -50,7 +50,7 @@ export function AiEvaluateForm({
 }: AiEvaluateFormProps) {
   const { t } = useT();
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <Textarea
         aria-label={t("English text")}
         value={value}
@@ -72,9 +72,9 @@ export function AiEvaluateForm({
       <LocalModelNotice model={whisper} />
       <div className="flex flex-wrap items-center gap-2">
         {recording || transcribing ? (
-          <MicButton compact className="min-w-64 flex-1" recording={recording} transcribing={transcribing} elapsedMs={elapsedMs} level={level} onStart={onToggleRecord} onStop={onToggleRecord} />
+          <MicButton compact className="w-full min-w-0 sm:flex-1" recording={recording} transcribing={transcribing} elapsedMs={elapsedMs} level={level} onStart={onToggleRecord} onStop={onToggleRecord} />
         ) : (
-          <Button variant="secondary" onClick={onToggleRecord} disabled={evaluating} className="h-10 gap-2">
+          <Button variant="secondary" onClick={onToggleRecord} disabled={evaluating} className="min-h-11 flex-1 gap-2 sm:flex-none">
             <MicrophoneIcon />
             {t("Record speech")}
           </Button>
@@ -84,7 +84,7 @@ export function AiEvaluateForm({
           variant="secondary"
           onClick={() => fileInputRef.current?.click()}
           disabled={recording || evaluating || transcribing}
-          className="h-10 gap-2"
+          className="min-h-11 flex-1 gap-2 sm:flex-none"
         >
           <UploadIcon />
           {t("Upload audio")}
@@ -93,7 +93,7 @@ export function AiEvaluateForm({
           variant="primary"
           onClick={onEvaluate}
           disabled={!value.trim() || evaluating || transcribing || evaluatorHint !== null}
-          className="ml-auto h-10"
+          className="min-h-11 w-full sm:ml-auto sm:w-auto"
         >
           {evaluating ? t("Evaluating…") : t("Check with AI →")}
         </Button>

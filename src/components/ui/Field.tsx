@@ -4,7 +4,7 @@ import { createContext, forwardRef, useContext, useId, type ComponentProps, type
 import { cn } from "@/lib/cn";
 
 const control =
-  "min-h-11 w-full min-w-0 rounded-md border border-line bg-input px-3 py-2 text-ink outline-none transition-colors placeholder:text-ink-muted focus:border-accent focus:ring-2 focus:ring-accent/30 aria-[invalid=true]:border-danger disabled:cursor-not-allowed disabled:opacity-55";
+  "field-control min-h-11 w-full min-w-0 rounded-lg border border-line bg-input px-3 py-2 text-base sm:text-sm text-ink outline-none transition-colors placeholder:text-ink-muted hover:border-line-strong focus:border-accent focus:ring-2 focus:ring-accent/30 aria-[invalid=true]:border-danger disabled:cursor-not-allowed disabled:opacity-55";
 
 const FieldContext = createContext<{ id: string; describedBy?: string; invalid?: boolean } | null>(null);
 
@@ -31,7 +31,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, ComponentProps<"textarea
 Textarea.displayName = "Textarea";
 
 export function Label({ className, ...props }: ComponentProps<"label">) {
-  return <label className={cn("mb-1.5 block text-xs font-medium text-ink-muted", className)} {...props} />;
+  return <label className={cn("mb-2 block text-sm font-medium text-ink-soft", className)} {...props} />;
 }
 
 export interface FieldProps {
@@ -52,7 +52,7 @@ export function Field({ label, htmlFor, hint, error, className, children, group 
   return (
     <div className={cn("min-w-0", className)} role={group ? "group" : undefined} aria-labelledby={group && label ? `${id}-label` : undefined} aria-describedby={group ? descriptionId : undefined}>
       {label && (group
-        ? <p id={`${id}-label`} className="mb-1.5 text-xs font-medium text-ink-muted">{label}</p>
+        ? <p id={`${id}-label`} className="mb-2 text-sm font-medium text-ink-soft">{label}</p>
         : <Label htmlFor={id}>{label}</Label>)}
       <FieldContext.Provider value={group ? null : { id, describedBy: descriptionId, invalid: Boolean(error) }}>{children}</FieldContext.Provider>
       {hint && !error && <p id={descriptionId} className="mt-1 text-xs text-ink-muted">{hint}</p>}

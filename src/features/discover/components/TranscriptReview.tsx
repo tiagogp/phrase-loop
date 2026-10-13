@@ -63,7 +63,7 @@ export function TranscriptReview({
   const showSettingsLink = Boolean(genError && settingsHint.test(genError) && onOpenSettings);
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="min-w-0 overflow-hidden">
       {result.hasAudio && renderAudio && (
         <audio
           key={result.sourceId}
@@ -81,7 +81,7 @@ export function TranscriptReview({
 
       <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-line bg-card px-5 py-3">
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-ink">{t(result.title)}</p>
+          <p className="break-words text-base font-semibold text-ink">{t(result.title)}</p>
           <p className="text-xs text-ink-muted">
             {t("{segments} phrases · {kept} saved", { segments: result.segments.length, kept: kept.size })}
             {curationNote ? ` · ${curationNote}` : ""}
@@ -90,7 +90,7 @@ export function TranscriptReview({
         <Button
           variant="primary"
           size="sm"
-          className="shrink-0"
+          className="min-h-11 w-full shrink-0 sm:w-auto"
           onClick={generating ? onCancel : onGenerate}
           disabled={!generating && kept.size === 0}
         >
@@ -139,7 +139,7 @@ export function TranscriptReview({
         </div>
       )}
 
-      <ul className="max-h-[28rem] overflow-y-auto">
+      <ul className="max-h-[28rem] overflow-y-auto overscroll-contain">
         {result.segments.map((segment, index) => (
           <SegmentRow
             key={index}
@@ -170,7 +170,7 @@ interface SegmentRowProps {
 function SegmentRow({ index, segment, hasAudio, isKept, isPlaying, onPlay, onToggleKeep }: SegmentRowProps) {
   const { t } = useT();
   return (
-    <li className={cn("flex items-start gap-3 border-b border-line px-5 py-2.5 transition-colors", isKept && "bg-surface")}>
+    <li className={cn("flex items-start gap-2 border-b border-line px-3 py-3 transition-colors sm:gap-3 sm:px-5", isKept && "bg-surface")}>
       {hasAudio && (
         <button
           type="button"
@@ -178,7 +178,7 @@ function SegmentRow({ index, segment, hasAudio, isKept, isPlaying, onPlay, onTog
           aria-label={isPlaying ? t("Pause clip") : t("Play clip")}
           aria-pressed={isPlaying}
           className={cn(
-            "mt-0.5 flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded border border-line transition-colors hover:border-line-strong",
+            "flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-md border border-line transition-colors hover:border-line-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
             isPlaying ? "text-accent" : "text-ink-muted",
           )}
         >
@@ -195,11 +195,11 @@ function SegmentRow({ index, segment, hasAudio, isKept, isPlaying, onPlay, onTog
       )}
 
       <div className="min-w-0 flex-1">
-        <p className="text-sm leading-relaxed text-ink">{segment.text}</p>
+        <p className="break-words text-sm leading-relaxed text-ink">{segment.text}</p>
         {hasAudio && <span className="text-xs tabular-nums text-ink-muted">{formatTime(segment.startMs)}</span>}
       </div>
 
-      <Chip active={isKept} className="mt-0.5 shrink-0" onClick={() => onToggleKeep(index)}>
+      <Chip active={isKept} className="min-h-11 shrink-0" onClick={() => onToggleKeep(index)}>
         {isKept ? t("Saved") : t("Save")}
       </Chip>
     </li>

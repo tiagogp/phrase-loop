@@ -141,7 +141,7 @@ export function PlanOnboarding({
             />
           </Field>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t("Current level")}>
               <Select
                 value={currentLevel}
@@ -174,7 +174,7 @@ export function PlanOnboarding({
             </Notice>
           )}
 
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <Button variant="ghost" onClick={onClose}>
               {t("Cancel")}
             </Button>
@@ -206,7 +206,7 @@ export function PlanOnboarding({
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t("Daily availability")}>
               <Select
                 value={String(availabilityMinutes)}
@@ -240,7 +240,7 @@ export function PlanOnboarding({
             </p>
           )}
 
-          <div className="flex justify-between gap-2">
+          <div className="flex flex-wrap justify-between gap-2">
             <Button variant="ghost" onClick={() => setStep("goal")}>
               {t("Back")}
             </Button>
