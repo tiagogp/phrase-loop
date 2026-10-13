@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { MicButton } from "@/components/ui/MicButton";
 import { Notice } from "@/components/ui/Notice";
 import { useT } from "@/i18n/I18nProvider";
 import type { ProviderKind } from "@/lib/cards/provider";
@@ -123,14 +124,17 @@ export function RepertoireRecall({
       />
       <LocalModelNotice model={whisper} />
       <div className="flex flex-wrap gap-2">
-        <Button
-          variant={audio.recording ? "primary" : "secondary"}
-          onClick={() => (audio.recording ? audio.stopRecording() : void audio.startRecording())}
-          disabled={checking || audio.transcribing}
-          aria-pressed={audio.recording}
-        >
-          {audio.transcribing ? t("Transcribing…") : audio.recording ? t("Stop recording") : t("Say it")}
-        </Button>
+        <MicButton
+          className="w-full"
+          recording={audio.recording}
+          transcribing={audio.transcribing}
+          elapsedMs={audio.recordingElapsedMs}
+          maxMs={audio.maxDurationMs}
+          level={audio.level}
+          disabled={checking}
+          onStart={() => void audio.startRecording()}
+          onStop={audio.stopRecording}
+        />
         <Button variant="secondary" onClick={() => void check()} loading={checking} disabled={!text.trim() || checking}>
           {checking ? t("Checking…") : t("Check")}
         </Button>

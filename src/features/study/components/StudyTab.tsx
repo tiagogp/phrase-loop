@@ -71,7 +71,16 @@ export default function StudyTab({ onHome, onTools, onDiscover, onConversation, 
             <p>{t("Phrase {current} of {total} in this session", { current: sessionResults.length + 1, total: sessionResults.length + queue.length })}</p>
             <Button variant="ghost" size="sm" onClick={session.stopSession} disabled={session.grading}>{t("Pause here")}</Button>
           </div>
-          <progress className="h-1.5 w-full accent-accent" aria-label={t("Session progress")} value={sessionResults.length} max={sessionResults.length + queue.length} />
+          <div
+            role="progressbar"
+            aria-label={t("Session progress")}
+            aria-valuemin={0}
+            aria-valuemax={sessionResults.length + queue.length}
+            aria-valuenow={sessionResults.length}
+            className="h-1.5 w-full overflow-hidden rounded-full bg-line"
+          >
+            <div className="h-full rounded-full bg-accent transition-[width] duration-300 motion-reduce:transition-none" style={{ width: `${(sessionResults.length / Math.max(1, sessionResults.length + queue.length)) * 100}%` }} />
+          </div>
         </div>}
         {session.reinforcing && <Notice>{t("Reinforcing")} {session.reinforcing.label}</Notice>}
         {session.cooldown && <Card className="flex flex-wrap items-center justify-between gap-3 p-4">

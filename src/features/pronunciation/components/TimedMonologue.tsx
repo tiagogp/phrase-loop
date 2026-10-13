@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { MicButton } from "@/components/ui/MicButton";
 import { Card } from "@/components/ui/Card";
-import { Spinner } from "@/components/ui/Spinner";
 import { useCorrectionAudio } from "@/features/correct/hooks/useCorrectionAudio";
 import { useStageTimer } from "@/features/method/useStageTimer";
 import { saveAudioRecording, saveProductionAttempt } from "@/lib/store/repository";
@@ -120,18 +120,20 @@ export function TimedMonologue({
         <h3 className="mt-1 text-lg font-semibold text-ink">{t("Keep speaking for {seconds} seconds", { seconds: targetSeconds })}</h3>
         <p className="mt-1 text-sm text-ink-soft">{t(prompt)}</p>
       </div>
-      <div className="flex flex-wrap items-center gap-2 text-xs text-ink-muted">
-        <span>{Math.round(audio.recordingElapsedMs / 1000)}s / {targetSeconds}s</span>
-        {audio.transcribing && <span className="inline-flex items-center gap-1"><Spinner className="h-3 w-3" /> {t("Transcribing…")}</span>}
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <Button type="button" variant={audio.recording ? "secondary" : "primary"} onClick={audio.recording ? audio.stopRecording : audio.startRecording} disabled={audio.transcribing || saved}>
-          {audio.recording ? t("Stop recording") : t("Start recording")}
-        </Button>
-        <Button type="button" variant="secondary" onClick={() => void save()} disabled={!text.trim() || audio.recording || audio.transcribing || saved}>
-          {saved ? t("Saved") : t("Save speaking evidence")}
-        </Button>
-      </div>
+      <MicButton
+        recording={audio.recording}
+        transcribing={audio.transcribing}
+        elapsedMs={audio.recordingElapsedMs}
+        maxMs={targetSeconds * 1000}
+        level={audio.level}
+        disabled={saved}
+        idleHint={t("Keep speaking for {seconds} seconds", { seconds: targetSeconds })}
+        onStart={() => void audio.startRecording()}
+        onStop={audio.stopRecording}
+      />
+      <Button type="button" variant="secondary" onClick={() => void save()} disabled={!text.trim() || audio.recording || audio.transcribing || saved}>
+        {saved ? t("Saved") : t("Save speaking evidence")}
+      </Button>
       <textarea
         value={text}
         onChange={(event) => setText(event.target.value)}

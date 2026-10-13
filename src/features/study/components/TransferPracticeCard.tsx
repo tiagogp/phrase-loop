@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { MicButton } from "@/components/ui/MicButton";
 import { Card } from "@/components/ui/Card";
 import { Notice } from "@/components/ui/Notice";
 import { getCards, getConversations, getErrorEvents, saveAudioRecording, saveErrorEvents, saveProductionAttempt } from "@/lib/store/repository";
@@ -445,21 +446,20 @@ export function TransferPracticeCard({ onCompleted, onOpenSettings }: { onComple
         />
       </div>
       {activity.spoken && (
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant={audio.recording ? "primary" : "secondary"}
-            onClick={audio.recording ? audio.stopRecording : () => void audio.startRecording()}
-            disabled={audio.transcribing || checking || Boolean(pendingAttempt)}
-          >
-            {audio.recording ? t("Stop recording") : t("Record response")}
-          </Button>
-          <span className="text-xs text-ink-muted">
-            {t("You can also type your response.")}
-          </span>
-        </div>
+        <MicButton
+          recording={audio.recording}
+          transcribing={audio.transcribing}
+          elapsedMs={audio.recordingElapsedMs}
+          maxMs={audio.maxDurationMs}
+          level={audio.level}
+          disabled={checking || Boolean(pendingAttempt)}
+          idleHint={t("You can also type your response.")}
+          error={audioNote ? t(audioNote) : null}
+          onStart={() => void audio.startRecording()}
+          onStop={audio.stopRecording}
+        />
       )}
-      {audioNote && <p className="text-xs text-danger">{t(audioNote)}</p>}
+      {audioNote && !activity.spoken && <p role="alert" className="text-xs text-danger">{t(audioNote)}</p>}
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="primary" loading={checking} onClick={() => void submit()} disabled={!value.trim() || Boolean(pendingAttempt) || checking || audio.recording || audio.transcribing}>
           {checking ? t("Checking…") : t("Check response")}

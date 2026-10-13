@@ -138,7 +138,7 @@ export default function AppHeader({
                 onClick={() => onTabChange(tab.id)}
                 onKeyDown={(event) => onTabKeyDown(event, index)}
                 className="app-tab relative flex min-h-12 min-w-0 items-center justify-center gap-1 px-1.5 py-3 text-xs font-medium transition-colors duration-200 sm:text-sm"
-                data-active={active}
+                data-active={active && !settingsOpen}
                 role="tab"
                 aria-selected={active && !settingsOpen}
                 aria-controls={`panel-${active ? activeTab : tab.id}`}

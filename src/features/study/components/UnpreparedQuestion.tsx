@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { LevelMeter } from "@/components/ui/MicButton";
 import { Card } from "@/components/ui/Card";
 import { useCorrectionAudio } from "@/features/correct/hooks/useCorrectionAudio";
 import { getProductionAttempts, saveAudioRecording, saveProductionAttempt } from "@/lib/store/repository";
@@ -197,6 +198,11 @@ export function UnpreparedQuestion({
         <>
           {/* Hidden on purpose: with the question on screen this is reading, not recall. */}
           <p className="text-sm text-ink-soft">{t("Speak now — the question is hidden on purpose.")}</p>
+          <div role="status" className="flex items-center gap-3 rounded-xl border border-danger/40 bg-danger/5 p-3">
+            <span aria-hidden className="h-3 w-3 shrink-0 rounded-full bg-danger" style={{ transform: `scale(${1 + audio.level * 0.6})` }} />
+            <LevelMeter level={audio.level} />
+            <span className="ml-auto text-sm font-medium tabular-nums text-ink">{t("Recording — {seconds}s left", { seconds: remaining })}</span>
+          </div>
           {revealed && <p className="text-sm text-ink-muted">{t(prompt.question)}</p>}
           {!revealed && (
             <Button variant="secondary" size="sm" onClick={() => setRevealed(true)}>

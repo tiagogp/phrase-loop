@@ -3,7 +3,7 @@
 import { type ChangeEvent, type RefObject } from "react";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Field";
-import { Spinner } from "@/components/ui/Spinner";
+import { MicButton } from "@/components/ui/MicButton";
 import { cn } from "@/lib/cn";
 import { useT } from "@/i18n/I18nProvider";
 import LocalModelNotice from "@/features/speech/components/LocalModelNotice";
@@ -15,6 +15,9 @@ interface AiEvaluateFormProps {
   evaluating: boolean;
   transcribing: boolean;
   recording: boolean;
+  elapsedMs: number;
+  /** Live input level, 0..1. */
+  level: number;
   /** Speech recognition — recording and uploaded audio both go through it. */
   whisper: LocalModelState;
   note: string | null;
@@ -33,6 +36,8 @@ export function AiEvaluateForm({
   evaluating,
   transcribing,
   recording,
+  elapsedMs,
+  level,
   whisper,
   note,
   evaluatorHint,
@@ -66,29 +71,14 @@ export function AiEvaluateForm({
       )}
       <LocalModelNotice model={whisper} />
       <div className="flex flex-wrap items-center gap-2">
-        <Button
-          variant="secondary"
-          onClick={onToggleRecord}
-          disabled={evaluating || transcribing}
-          className={cn("h-10 gap-2", recording && "border-danger text-danger")}
-        >
-          {recording ? (
-            <>
-              <span className="h-2 w-2 animate-pulse rounded-full bg-danger" />
-              {t("Stop recording")}
-            </>
-          ) : transcribing ? (
-            <>
-              <Spinner className="h-4 w-4" />
-              {t("Transcribing…")}
-            </>
-          ) : (
-            <>
-              <MicrophoneIcon />
-              {t("Record speech")}
-            </>
-          )}
-        </Button>
+        {recording || transcribing ? (
+          <MicButton compact className="min-w-64 flex-1" recording={recording} transcribing={transcribing} elapsedMs={elapsedMs} level={level} onStart={onToggleRecord} onStop={onToggleRecord} />
+        ) : (
+          <Button variant="secondary" onClick={onToggleRecord} disabled={evaluating} className="h-10 gap-2">
+            <MicrophoneIcon />
+            {t("Record speech")}
+          </Button>
+        )}
         <input ref={fileInputRef} type="file" accept="audio/*" className="hidden" onChange={onPickFile} />
         <Button
           variant="secondary"

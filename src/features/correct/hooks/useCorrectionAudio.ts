@@ -4,6 +4,8 @@ import { type ChangeEvent, useCallback, useEffect, useRef, useState } from "reac
 import { requestActiveMicrophone } from "@/features/converse/mediaRun";
 import { transcribeAudio } from "@/features/correct/api";
 import { MAX_CORRECTION_UPLOAD_BYTES } from "@/features/correct/constants";
+import { useT } from "@/i18n/I18nProvider";
+import { useInputLevel } from "./useInputLevel";
 
 interface UseCorrectionAudioOptions {
   active?: boolean;
@@ -16,6 +18,7 @@ interface UseCorrectionAudioOptions {
 }
 
 export function useCorrectionAudio({ onNote, onText, onBlob, maxDurationMs, active = true }: UseCorrectionAudioOptions) {
+  const { t } = useT();
   const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
   const [previousActive, setPreviousActive] = useState(active);
@@ -24,6 +27,8 @@ export function useCorrectionAudio({ onNote, onText, onBlob, maxDurationMs, acti
     if (!active) setRecording(false);
   }
   const [recordingElapsedMs, setRecordingElapsedMs] = useState(0);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const level = useInputLevel(recording ? stream : null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const generationRef = useRef(0);
   const activeRef = useRef(active);
@@ -61,16 +66,16 @@ export function useCorrectionAudio({ onNote, onText, onBlob, maxDurationMs, acti
       const text = await transcribeAudio(blob, filename);
       if (!activeRef.current || generation !== generationRef.current) return;
       if (!text) {
-        onNote("Couldn't make out any speech in that clip.");
+        onNote(t("Couldn't make out any speech in that clip."));
         return;
       }
       onText((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text));
     } catch (err: unknown) {
-      if (activeRef.current && generation === generationRef.current) onNote(err instanceof Error ? err.message : "Transcription failed.");
+      if (activeRef.current && generation === generationRef.current) onNote(err instanceof Error ? err.message : t("Transcription failed."));
     } finally {
       setTranscribing(false);
     }
-  }, [onNote, onText]);
+  }, [onNote, onText, t]);
 
   const startRecording = useCallback(async () => {
     const generation = generationRef.current;
@@ -79,6 +84,7 @@ export function useCorrectionAudio({ onNote, onText, onBlob, maxDurationMs, acti
     try {
       const stream = await requestActiveMicrophone(() => activeRef.current && generation === generationRef.current);
       if (!stream) return;
+      setStream(stream);
       const recorder = new MediaRecorder(stream);
       chunksRef.current = [];
       recorder.ondataavailable = (event) => {
@@ -114,9 +120,9 @@ export function useCorrectionAudio({ onNote, onText, onBlob, maxDurationMs, acti
       setRecording(true);
     } catch {
       if (!activeRef.current || generation !== generationRef.current) return;
-      onNote("Couldn't access the microphone. Check the browser's permission.");
+      onNote(t("Couldn't access the microphone. Check the browser's permission."));
     }
-  }, [clearRecordingTimers, maxDurationMs, onBlob, onNote, transcribeBlob]);
+  }, [clearRecordingTimers, maxDurationMs, onBlob, onNote, t, transcribeBlob]);
 
   const stopRecording = useCallback(() => {
     recorderRef.current?.stop();
@@ -133,19 +139,20 @@ export function useCorrectionAudio({ onNote, onText, onBlob, maxDurationMs, acti
       event.target.value = "";
       if (!file) return;
       if (file.size > MAX_CORRECTION_UPLOAD_BYTES) {
-        onNote("Audio file too large (max 25 MB).");
+        onNote(t("Audio file too large (max 25 MB)."));
         return;
       }
       onBlob?.(file);
       void transcribeBlob(file, file.name);
     },
-    [onBlob, onNote, transcribeBlob],
+    [onBlob, onNote, t, transcribeBlob],
   );
 
   return {
     fileInputRef,
     recording,
     recordingElapsedMs,
+    level,
     maxDurationMs,
     transcribing,
     startRecording,

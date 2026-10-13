@@ -3,7 +3,8 @@
 import { createMediaRun, requestActiveMicrophone } from "@/features/converse/mediaRun";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { Spinner } from "@/components/ui/Spinner";
+import { MicButton } from "@/components/ui/MicButton";
+import { useInputLevel } from "@/features/correct/hooks/useInputLevel";
 import { cn } from "@/lib/cn";
 import { assessPronunciation } from "@/features/pronunciation/api";
 import { synthesizeSpeech } from "@/features/converse/api";
@@ -72,6 +73,15 @@ export function PronunciationCoach({
   // beats letting Record answer with "model not ready".
   const whisper = useWhisperModel();
   const [recording, setRecording] = useState(false);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const level = useInputLevel(recording ? stream : null);
+  const [elapsedMs, setElapsedMs] = useState(0);
+  useEffect(() => {
+    if (!recording) return;
+    const startedAt = Date.now();
+    const timer = window.setInterval(() => setElapsedMs(Date.now() - startedAt), 250);
+    return () => window.clearInterval(timer);
+  }, [recording]);
   const [assessing, setAssessing] = useState(false);
   const [playingReference, setPlayingReference] = useState(false);
   const [previousActive, setPreviousActive] = useState(active);
@@ -247,6 +257,7 @@ export function PronunciationCoach({
       };
       recorderRef.current = recorder;
       recorder.start();
+      setStream(stream);
       setRecording(true);
     } catch {
       if (!current()) return;
@@ -337,27 +348,18 @@ export function PronunciationCoach({
         >
           {playingReference ? t("Playing...") : t("Listen")}
         </Button>
-        <Button
-          type="button"
-          variant={recording ? "secondary" : "primary"}
-          size="sm"
-          onClick={recording ? stopRecording : () => void startRecording()}
-          disabled={assessing}
-        >
-          {assessing ? (
-            <>
-              <Spinner className="h-3.5 w-3.5" />
-              {t("Checking...")}
-            </>
-          ) : recording ? (
-            t("Stop")
-          ) : assessment ? (
-            t("Try again")
-          ) : (
-            t("Record")
-          )}
-        </Button>
       </div>
+      <MicButton
+        compact
+        recording={recording}
+        transcribing={assessing}
+        level={level}
+        elapsedMs={elapsedMs}
+        disabled={assessing}
+        idleHint={assessment ? t("Try again") : undefined}
+        onStart={() => void startRecording()}
+        onStop={stopRecording}
+      />
 
       {(allowTypedFallback || micFallbackAvailable({ allowTypedFallback, micDenied })) && !fallbackUsed && (
         <div className="space-y-2 rounded border border-accent/30 bg-accent/5 p-3">

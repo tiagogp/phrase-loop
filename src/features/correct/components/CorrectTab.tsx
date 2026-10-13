@@ -114,6 +114,8 @@ export default function CorrectTab({
   const {
     fileInputRef,
     recording,
+    recordingElapsedMs,
+    level,
     transcribing,
     startRecording,
     stopRecording,
@@ -659,6 +661,8 @@ export default function CorrectTab({
                 evaluating={evaluating}
                 transcribing={transcribing}
                 recording={recording}
+                elapsedMs={recordingElapsedMs}
+                level={level}
                 whisper={whisper}
                 note={aiNote}
                 evaluatorHint={evaluatorHint}

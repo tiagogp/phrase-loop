@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { MicButton } from "@/components/ui/MicButton";
 import { Card as PanelCard } from "@/components/ui/Card";
 import { Notice } from "@/components/ui/Notice";
 import {
@@ -460,8 +461,6 @@ export function MistakeStep({
             audio={productionAudio}
             disabled={saving || checking}
             label={t("Say your sentence")}
-            // Speaking is the method's stage 5; typing is the fallback, not the default.
-            variant={voiceFirst ? "primary" : "secondary"}
           />
           <Button
             variant={voiceFirst ? "secondary" : "primary"}
@@ -570,31 +569,24 @@ function VoiceButton({
   audio,
   disabled,
   label,
-  variant = "secondary",
 }: {
   audio: ReturnType<typeof useCorrectionAudio>;
   disabled: boolean;
   label: string;
-  variant?: "primary" | "secondary";
 }) {
-  const { t } = useT();
-  const { recording, transcribing, startRecording, stopRecording, recordingElapsedMs, maxDurationMs } = audio;
-  const elapsedSeconds = Math.floor(recordingElapsedMs / 1000);
-  const limitSeconds = maxDurationMs ? Math.ceil(maxDurationMs / 1000) : undefined;
-
   return (
-    <Button
-      variant={variant}
-      onClick={() => (recording ? stopRecording() : void startRecording())}
-      disabled={disabled || transcribing}
-      aria-pressed={recording}
-    >
-      {transcribing
-        ? t("Transcribing…")
-        : recording
-          ? t("Stop recording · {elapsed}/{limit}s", { elapsed: elapsedSeconds, limit: limitSeconds ?? elapsedSeconds })
-          : label}
-    </Button>
+    <MicButton
+      className="w-full"
+      recording={audio.recording}
+      transcribing={audio.transcribing}
+      elapsedMs={audio.recordingElapsedMs}
+      maxMs={audio.maxDurationMs}
+      level={audio.level}
+      disabled={disabled}
+      idleHint={label}
+      onStart={() => void audio.startRecording()}
+      onStop={audio.stopRecording}
+    />
   );
 }
 

@@ -8,6 +8,7 @@ import Disclosure from "@/components/ui/Disclosure";
 import { useTutorTranslation } from "../useTutorTranslation";
 
 import { useEffect, useRef, useState } from "react";
+import { MicButton } from "@/components/ui/MicButton";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { LoadingStatus } from "@/components/ui/LoadingStatus";
@@ -152,9 +153,9 @@ export function TutorPractice({ initial, memory, onNew, ...props }: TutorWorkspa
       <div><h2 ref={phaseHeading} tabIndex={-1} className="text-xs font-semibold uppercase tracking-wider text-accent">{session.attempts.length ? t("Rebuild your answer") : session.parentSessionId ? t("First, try to recall") : t("Your situation")}</h2><p className="mt-3 whitespace-pre-wrap text-base leading-relaxed text-ink">{localize(session.task.situation)}</p></div>
       <p className="text-sm leading-relaxed text-ink-soft">{localize(session.task.instruction)}</p>
       {last && <Notice>{last.feedback.retryInstruction}</Notice>}
-      <div className="grid grid-cols-2 gap-3" role="group" aria-label={t("How would you like to answer?")}>
+      <div className="space-y-3" role="group" aria-label={t("How would you like to answer?")}>
+        <MicButton recording={audio.recording} transcribing={audio.transcribing} elapsedMs={audio.recordingElapsedMs} maxMs={audio.maxDurationMs} level={audio.level} disabled={busy || fatal} idleHint={t("Speak your answer in English. You can edit the transcript.")} error={audioNote} onStart={() => void audio.startRecording()} onStop={audio.stopRecording} />
         <Button variant="secondary" disabled={blocked} onClick={() => updateDraft(session.draft, false)}>{t("Write my answer")}</Button>
-        <Button variant="secondary" disabled={busy || fatal || audio.transcribing} onClick={() => audio.recording ? audio.stopRecording() : void audio.startRecording()}>{audio.recording ? t("Stop recording") : audio.transcribing ? t("Transcribing…") : t("Speak my answer")}</Button>
       </div>
       <p className="text-xs text-ink-soft">{t("Speak or write. You can edit the transcript. Feedback checks the text, not pronunciation.")}</p>
       <label className="flex flex-col gap-2 text-sm font-medium text-ink"><span>{t("Your answer in English")}</span><textarea value={session.draft} onChange={e => updateDraft(e.target.value)} maxLength={3000} rows={5} className={tutorInputClass} readOnly={blocked} placeholder={t("Write in your own way, even if you are still missing some words.")} lang="en" /></label>
@@ -164,7 +165,6 @@ export function TutorPractice({ initial, memory, onNew, ...props }: TutorWorkspa
       </div>
       {busy && (pendingAction === "evaluate" || helpSource === "hint") && <LoadingStatus action={<Button variant="ghost" size="sm" onClick={cancel}>{t("Cancel request")}</Button>}>{pendingAction === "evaluate" ? t("The tutor is analyzing your answer…") : t("The tutor is preparing a hint…")}</LoadingStatus>}
       <p className="text-xs text-ink-muted">{session.supportUsed ? t("This attempt will be recorded as supported.") : t("Try before asking for a hint. Any support used is recorded.")} {t("Speak or write. You can edit the transcript. Feedback checks the text, not pronunciation.")}</p>
-      {audioNote && <p role="status" className="text-sm text-ink-soft">{audioNote}</p>}
     </Card>}
 
     {session.phase === "feedback" && last && <Card className="space-y-5 p-5 sm:p-7" aria-label={t("Tutor feedback")}>

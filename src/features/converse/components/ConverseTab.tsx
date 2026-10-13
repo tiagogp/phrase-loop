@@ -8,6 +8,8 @@ import { Chip } from "@/components/ui/Chip";
 import { Field, Input } from "@/components/ui/Field";
 import { Segmented } from "@/components/ui/Segmented";
 import { Spinner } from "@/components/ui/Spinner";
+import { LevelMeter } from "@/components/ui/MicButton";
+import { useInputLevel } from "@/features/correct/hooks/useInputLevel";
 import { Notice } from "@/components/ui/Notice";
 import Disclosure from "@/components/ui/Disclosure";
 import ProviderBadge from "@/components/ui/ProviderBadge";
@@ -128,6 +130,8 @@ export default function ConverseTab({
   const mediaRun = useRef(createMediaRun());
   const replyRequestRef = useRef(0);
   const [recording, setRecording] = useState(false);
+  const [micStream, setMicStream] = useState<MediaStream | null>(null);
+  const inputLevel = useInputLevel(recording ? micStream : null);
   const [transcribing, setTranscribing] = useState(false);
   // Speaking a turn goes through Whisper; free talk depends on it entirely. Show
   // the one-time install next to the mic instead of failing the first turn.
@@ -573,6 +577,7 @@ export default function ConverseTab({
       };
       recorderRef.current = recorder;
       recorder.start();
+      setMicStream(stream);
       setRecording(true);
     } catch {
       if (!current()) return;
@@ -607,6 +612,7 @@ export default function ConverseTab({
       };
       recorderRef.current = recorder;
       recorder.start();
+      setMicStream(stream);
       setRecording(true);
 
       const ctx = new AudioContext();
@@ -1383,7 +1389,7 @@ export default function ConverseTab({
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm text-ink">{c.context}</p>
                     <p className="text-xs text-ink-muted">
-                      {t("{count} turns", { count: c.turns.length })} · {formatWhen(c.startedAt, t)}
+                      {c.turns.length === 1 ? t("1 turn") : t("{count} turns", { count: c.turns.length })} · {formatWhen(c.startedAt, t)}
                       {c.endedAt ? "" : ` · ${t("in progress")}`}
                     </p>
                   </div>
@@ -1417,8 +1423,8 @@ export default function ConverseTab({
               {conversation.context}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-1.5 text-xs text-ink-muted">
-            <span>{t("{count} turns", { count: conversation.turns.length })}</span>
+          <div className="flex flex-wrap items-center gap-1.5 text-xs text-ink-muted [&>span+span]:before:mr-1.5 [&>span+span]:before:content-['·']">
+            <span>{conversation.turns.length === 1 ? t("1 turn") : t("{count} turns", { count: conversation.turns.length })}</span>
             {conversation.level && <span>{t("Level {level}", { level: conversation.level })}</span>}
             <span>{activeProvider?.label ?? t("AI partner")}</span>
             {conversation.challenge && <span className="text-accent">{t("Challenging")}</span>}
@@ -1467,18 +1473,18 @@ export default function ConverseTab({
           {t("{used}/{total} speaking turns", {
             used: conversation.turns.filter((turn) => turn.role === "user").length,
             total: progressionSupport.conversation.maxTurns,
-          })} · {progressionSupport.conversation.promptStyle}
+          })} · {t(progressionSupport.conversation.promptStyle)}
         </p>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Button
-            variant="secondary"
+            variant={recording ? "secondary" : "primary"}
             onClick={recording ? stopRecording : freeTalk ? startListening : startRecording}
             disabled={busy || transcribing}
-            className={cn("h-11 shrink-0 gap-2 sm:w-auto", recording && "border-danger text-danger")}
+            className={cn("h-11 shrink-0 gap-2 sm:w-auto", recording && "border-danger bg-danger/10 text-danger")}
           >
             {recording ? (
               <>
-                <span className="h-2 w-2 animate-pulse rounded-full bg-danger" />
+                <LevelMeter level={inputLevel} className="h-4" />
                 {/* A 3s pause is long enough to read as a freeze, so show the turn closing. */}
                 {freeTalk
                   ? silenceCountdown !== null

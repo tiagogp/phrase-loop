@@ -378,7 +378,7 @@ function HomeContent() {
             ) : overlay === "correct" ? (
               <div className="h-full overflow-y-auto app-scroll-region">
                 <div className="mx-auto max-w-5xl px-4 py-6">
-                  <Button variant="ghost" onClick={() => setOverlay(null)}>{t("Back")}</Button>
+                  <Button variant="ghost" size="sm" onClick={() => setOverlay(null)} className="-ml-2 min-h-9"><span aria-hidden="true">←</span>{t("Back")}</Button>
                   <CorrectTab onOpenSettings={() => openSettings()} onStudyNow={openPractice} kokoroModel={kokoro} />
                 </div>
               </div>
