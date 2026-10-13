@@ -1,10 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ComponentProps } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { m } from "motion/react";
-import { createWorkspace } from "@/components/app/createWorkspace";
 import { BLUR, springSoft } from "@/lib/motion";
-import { preloadWorkspaces } from "@/components/app/preloadWorkspaces";
 import AppHeader from "@/components/app/AppHeader";
 import { type HomeTab } from "@/components/app/homeTabs";
 import AppProviders from "@/components/app/AppProviders";
@@ -37,36 +35,24 @@ import { useKokoroModel, type LocalModelState } from "@/features/speech/hooks/us
 import { useT } from "@/i18n/I18nProvider";
 import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { Spinner } from "@/components/ui/Spinner";
 import { isStoreAvailable } from "@/lib/store/db";
 import { emitActivity } from "@/lib/store/activityLog";
 import { getCards } from "@/lib/store/repository";
 import { refreshMethodProgression } from "@/features/method/progressionPersistence";
 import { WorkspaceActivityContext } from "@/lib/workspaceActivity";
 
-function WorkspaceLoading() {
-  const { t } = useT();
-  return <div role="status" aria-live="polite" className="flex min-h-48 items-center justify-center gap-3 rounded-panel border border-line bg-card p-6 text-sm text-ink-muted"><Spinner className="h-5 w-5 text-accent" />{t("Loading…")}</div>;
-}
-
-const { Screen: C1Tab, preload: preloadC1Tab } = createWorkspace(() => import("@/features/c1/components/C1Tab"), WorkspaceLoading);
-const { Screen: ConversationTab, preload: preloadConversationTab } = createWorkspace(() => import("@/features/converse/components/ConversationTab"), WorkspaceLoading);
-const { Screen: CorrectTab, preload: preloadCorrectTab } = createWorkspace(() => import("@/features/correct/components/CorrectTab"), WorkspaceLoading);
-const { Screen: DiscoverTab, preload: preloadDiscoverTab } = createWorkspace(() => import("@/features/discover/components/DiscoverTab"), WorkspaceLoading);
-const { Screen: SettingsScreen, preload: preloadSettingsScreen } = createWorkspace(() => import("@/features/settings/components/SettingsScreen"), WorkspaceLoading);
-const { Screen: SpeechTab, preload: preloadSpeechTab } = createWorkspace<NonNullable<ComponentProps<typeof import("@/features/speech/components/SpeechTab").default>>>(() => import("@/features/speech/components/SpeechTab"), WorkspaceLoading);
-const { Screen: StudyTab, preload: preloadStudyTab } = createWorkspace(() => import("@/features/study/components/StudyTab"), WorkspaceLoading);
-const { Screen: ProgressPage, preload: preloadProgressPage } = createWorkspace(() => import("@/features/progress/components/ProgressPage"), WorkspaceLoading);
-const { Screen: TutorWorkspace, preload: preloadTutorWorkspace } = createWorkspace(() => import("@/features/tutor/components/TutorWorkspace"), WorkspaceLoading);
-const { Screen: LessonView, preload: preloadLessonView } = createWorkspace(async () => ({ default: (await import("@/features/learn/components/LessonView")).LessonView }), WorkspaceLoading);
-const { Screen: PlanOnboarding, preload: preloadPlanOnboarding } = createWorkspace(async () => ({ default: (await import("@/features/plan/components/PlanOnboarding")).PlanOnboarding }), WorkspaceLoading);
-
-// Warm code in idle turns without mounting screens or starting their effects.
-const workspaceLoaders = [
-  preloadStudyTab, preloadConversationTab, preloadDiscoverTab, preloadProgressPage,
-  preloadSettingsScreen, preloadTutorWorkspace, preloadLessonView, preloadCorrectTab,
-  preloadSpeechTab, preloadC1Tab, preloadPlanOnboarding,
-];
+// Screen UI ships with the shell: navigation must not suspend on a chunk download.
+import C1Tab from "@/features/c1/components/C1Tab";
+import ConversationTab from "@/features/converse/components/ConversationTab";
+import CorrectTab from "@/features/correct/components/CorrectTab";
+import DiscoverTab from "@/features/discover/components/DiscoverTab";
+import SettingsScreen from "@/features/settings/components/SettingsScreen";
+import SpeechTab from "@/features/speech/components/SpeechTab";
+import StudyTab from "@/features/study/components/StudyTab";
+import ProgressPage from "@/features/progress/components/ProgressPage";
+import TutorWorkspace from "@/features/tutor/components/TutorWorkspace";
+import { LessonView } from "@/features/learn/components/LessonView";
+import { PlanOnboarding } from "@/features/plan/components/PlanOnboarding";
 
 async function recommendedLessonId(): Promise<string> {
   const profile = getLearningProfile();
@@ -197,7 +183,8 @@ function HomeContent() {
   const [tab, setTab] = useState<HomeTab>("hoje");
   const [studyView, setStudyView] = useState<ReviewView>("library");
   const [reviewRequest, setReviewRequest] = useState(0);
-  const [visitedTabs, setVisitedTabs] = useState<Set<HomeTab>>(() => new Set(["hoje"]));
+  // Prepare local library/history data during startup, with practice timers inactive.
+  const [visitedTabs, setVisitedTabs] = useState<Set<HomeTab>>(() => new Set(["hoje", "study", "progress"]));
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [tutorRequest, setTutorRequest] = useState<{ intent: "recommended" | "new" | "extra"; sourceCardId?: string; nonce: number }>({ intent: "recommended", nonce: 0 });
   const [quickLesson, setQuickLesson] = useState(false);
@@ -230,8 +217,6 @@ function HomeContent() {
   const { fullNavigation } = useExperiencePreferences();
   const { settings } = useAiSettings();
   useDockDueBadge();
-
-  useEffect(() => preloadWorkspaces(workspaceLoaders), []);
 
   // Attempt records are the source of truth for support level. Refresh their
   // derived snapshot immediately after IndexedDB confirms a write, rather than

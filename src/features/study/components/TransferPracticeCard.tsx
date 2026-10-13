@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { MicButton } from "@/components/ui/MicButton";
 import { Card } from "@/components/ui/Card";
 import { Notice } from "@/components/ui/Notice";
-import { getCards, getConversations, getErrorEvents, saveAudioRecording, saveErrorEvents, saveProductionAttempt } from "@/lib/store/repository";
+import { type Conversation, saveAudioRecording, saveErrorEvents, saveProductionAttempt } from "@/lib/store/repository";
 import { emitActivity } from "@/lib/store/activityLog";
 import { buildTransferActivities, type TransferActivity } from "../transfer";
 import { useT } from "@/i18n/I18nProvider";
@@ -19,16 +19,24 @@ import { evaluateRecall } from "../responseEvaluation";
 import { checkOpenResponse } from "../openResponse";
 import { LOCAL_JUDGE, modelJudge, type JudgeStamp } from "@/lib/evaluation/judge";
 import { verifyTransfer } from "../transferVerification";
-import type { ErrorEvent } from "@/lib/cards/schema";
+import type { Card as PracticeCard, ErrorEvent } from "@/lib/cards/schema";
 
 /**
  * A bounded transfer check. Fixed-pattern prompts have a conservative local evaluator;
  * a configured evaluator additionally checks open task completion and general language.
  */
-export function TransferPracticeCard({ onCompleted, onOpenSettings }: { onCompleted?: () => void; onOpenSettings?: () => void } = {}) {
+export function TransferPracticeCard({ cards, errors, conversations, onCompleted, onOpenSettings }: {
+  cards: PracticeCard[];
+  errors: ErrorEvent[];
+  conversations: Conversation[];
+  onCompleted?: () => void;
+  onOpenSettings?: () => void;
+}) {
   const { t } = useT();
   const responseId = useId();
-  const [activities, setActivities] = useState<TransferActivity[]>([]);
+  // The library has already loaded these inputs. Freeze this prompt set for
+  // the attempt instead of doing another read and flashing a loading screen.
+  const [activities] = useState(() => buildTransferActivities(cards, errors, conversations));
   const [index, setIndex] = useState(0);
   const [value, setValue] = useState("");
   const [saved, setSaved] = useState(false);
@@ -41,38 +49,19 @@ export function TransferPracticeCard({ onCompleted, onOpenSettings }: { onComple
     notes: string[];
   } | null>(null);
   const [checking, setChecking] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const busyRef = useRef(false);
   const [retryOf, setRetryOf] = useState<string | undefined>();
   const [recordingBlob, setRecordingBlob] = useState<Blob | null>(null);
   const [audioNote, setAudioNote] = useState<string | null>(null);
   const promptStartedAtRef = useRef(0);
+  useEffect(() => { promptStartedAtRef.current = Date.now(); }, []);
   const { provider, selectedModel, hasEvaluator } = useProviderSelection({ fallbackToEvaluator: true });
   const audio = useCorrectionAudio({
     onNote: setAudioNote,
     onText: (updater) => setValue(updater),
     onBlob: setRecordingBlob,
   });
-
-  const load = useCallback(async () => {
-    try {
-      const [cards, errors, conversations] = await Promise.all([getCards(), getErrorEvents(), getConversations()]);
-      setActivities(buildTransferActivities(cards, errors, conversations));
-      setError(null);
-      promptStartedAtRef.current = Date.now();
-    } catch {
-      setError("Could not load your practice history.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    // Keep this set of prompts stable while the learner answers and retries.
-    const run = async () => { await load(); };
-    void run();
-  }, [load]);
 
   const activity = activities[index];
 
@@ -389,8 +378,7 @@ export function TransferPracticeCard({ onCompleted, onOpenSettings }: { onComple
     }
   };
 
-  if (loading) return <p role="status" className="text-sm text-ink-muted">{t("Loading…")}</p>;
-  if (!activity) return <Notice tone={error ? "error" : undefined}>{t(error ?? "Save a phrase from a lesson or your own content to practice it here.")}{error && <Button variant="ghost" onClick={() => { setLoading(true); void load(); }}>{t("Try again")}</Button>}</Notice>;
+  if (!activity) return <Notice>{t("Save a phrase from a lesson or your own content to practice it here.")}</Notice>;
 
   return (
     <Card className="space-y-4 p-5">

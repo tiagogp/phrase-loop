@@ -158,6 +158,12 @@ export function useStudySession(reviewRequest = 0, active = true) {
   // lessons, Discover, or Correct. Pick those up when they happen — but only
   // while idle, so a running queue or an end-of-session summary is never
   // reshuffled underneath the learner.
+  const reviewStarted = useRef(false);
+  useEffect(() => {
+    if (active && !loading) reviewStarted.current = true;
+  }, [active, loading]);
+  // Startup warms the library without starting a review. Keep its snapshot
+  // current until the learner actually enters a review; then freeze the queue.
   const idle = queue.length === 0 && sessionResults.length === 0 && !reinforcing && !loading;
   const idleRef = useRef(idle);
   useEffect(() => {
@@ -165,7 +171,7 @@ export function useStudySession(reviewRequest = 0, active = true) {
   }, [idle]);
   useEffect(() => {
     const handle = () => {
-      if (idleRef.current && isStoreAvailable()) void refresh().catch(() => undefined);
+      if ((idleRef.current || !reviewStarted.current) && isStoreAvailable()) void refresh().catch(() => undefined);
     };
     window.addEventListener("phraseloop:activity", handle);
     window.addEventListener("phraseloop:lesson-saved", handle);
@@ -476,6 +482,8 @@ export function useStudySession(reviewRequest = 0, active = true) {
     reviews,
     counts,
     cards,
+    errorEvents,
+    conversations,
     sessionResults,
     // Gate on sessionEnded so a fresh queue never renders last session's preview.
     tomorrow: sessionEnded ? tomorrow : null,

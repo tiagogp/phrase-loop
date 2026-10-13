@@ -47,7 +47,7 @@ export default function ProgressPage({ onPractice, onTutor, active = true }: { o
       <Button variant="ghost" onClick={() => setDetails(!details)} aria-expanded={details} aria-controls="progress-details">
         {t(details ? "Hide detailed stats" : "Show detailed stats")}
       </Button>
-      {details && <div id="progress-details"><ProgressOverview showCheckIn /></div>}
+      <div id="progress-details" hidden={!details}><ProgressOverview showCheckIn /></div>
       </Disclosure>
     </div>
   );

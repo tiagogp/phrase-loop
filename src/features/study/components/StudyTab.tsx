@@ -118,7 +118,7 @@ export default function StudyTab({ onHome, onTools, onDiscover, onConversation, 
             {onHome ? <Button variant="primary" onClick={onHome}>{t("Finish for today")}</Button> : onProgress && <Button variant="primary" onClick={onProgress}>{t("See my progress")}</Button>}
             <Button variant="ghost" onClick={() => setTransferComplete(false)}>{t("Try another situation")}</Button>
           </div>
-        </Card> : counts.cards > 0 ? <TransferPracticeCard onCompleted={() => setTransferComplete(true)} onOpenSettings={onOpenSettings} />
+        </Card> : counts.cards > 0 ? <TransferPracticeCard cards={session.cards} errors={session.errorEvents} conversations={session.conversations} onCompleted={() => setTransferComplete(true)} onOpenSettings={onOpenSettings} />
           : <Card className="space-y-3 p-5"><p className="text-sm text-ink-soft">{t("Save a phrase from a lesson or your own content to practice it here.")}</p>{onLesson && <Button variant="primary" onClick={onLesson}>{t("Start first lesson")}</Button>}</Card>}
         <div className="flex flex-wrap gap-2">
           {onConversation && <Button variant="secondary" onClick={onConversation}>{t("Use it in conversation")}</Button>}

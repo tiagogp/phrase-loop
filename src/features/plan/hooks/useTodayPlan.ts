@@ -1,11 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { isStoreAvailable } from "@/lib/store/db";
+import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 import type { DailyTask, LearningPlan } from "../schema";
-import { getActivePlan, getTodayTasks, updateDayTask } from "../store";
-import { getActivitySince, type ActivityEvent } from "@/lib/store/activityLog";
-import { countTaskEvidence, taskEvidenceMeetsTarget } from "../evidence";
+import { updateDayTask } from "../store";
+import { todayPlanResource as resource } from "../todayPlanResource";
+import { dateString } from "../utils";
 
 export interface TodayPlanState {
   loading: boolean;
@@ -19,80 +18,27 @@ export interface TodayPlanState {
 }
 
 export function useTodayPlan(): TodayPlanState {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [plan, setPlan] = useState<LearningPlan | null>(null);
-  const [today, setToday] = useState<DailyTask | null>(null);
-
-  const refresh = useCallback(async () => {
-    if (!isStoreAvailable()) { setLoading(false); return; }
-    try {
-      setError(false);
-      const activePlan = await getActivePlan();
-      setPlan(activePlan);
-      if (activePlan) {
-        let todayTasks = await getTodayTasks(activePlan.id);
-        if (todayTasks) {
-          const dayStart = new Date(`${todayTasks.date}T00:00:00`).getTime();
-          const events = await getActivitySince(dayStart).catch(() => [] as ActivityEvent[]);
-          for (const task of todayTasks.tasks) {
-            if (task.completedAt != null) continue;
-            if (taskEvidenceMeetsTarget(task, events)) {
-              const count = countTaskEvidence(task, events);
-              await updateDayTask(activePlan.id, todayTasks.date, task.id, Date.now(), { at: Date.now(), count });
-            }
-          }
-          todayTasks = await getTodayTasks(activePlan.id);
-        }
-        setToday(todayTasks);
-      } else {
-        setToday(null);
-      }
-    } catch { setError(true); }
-    finally { setLoading(false); }
-  }, []);
-
+  const { data: { plan, today }, loading, error, now } = useSyncExternalStore(resource.subscribe, resource.getSnapshot, resource.getServerSnapshot);
+  const currentDate = now ? dateString(new Date(now)) : null;
+  const previousDate = useRef(currentDate);
   useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      await refresh();
-      if (!cancelled) setLoading(false);
-    };
-    void load();
-    const onPlanUpdated = () => void refresh();
-    window.addEventListener("phraseloop:plan-updated", onPlanUpdated);
-    // Task completion is evidence-driven, so a lesson, speaking attempt, review,
-    // or transfer must re-check today's tasks without requiring a page reload.
-    window.addEventListener("phraseloop:activity", onPlanUpdated);
-    return () => {
-      cancelled = true;
-      window.removeEventListener("phraseloop:plan-updated", onPlanUpdated);
-      window.removeEventListener("phraseloop:activity", onPlanUpdated);
-    };
-  }, [refresh]);
+    const changedDay = previousDate.current !== null && previousDate.current !== currentDate;
+    previousDate.current = currentDate;
+    if (changedDay) void resource.refresh();
+  }, [currentDate]);
 
-  const completeTask = useCallback(
-    async (taskId: string) => {
-      if (!plan || !today) return;
-      const now = Date.now();
-      await updateDayTask(plan.id, today.date, taskId, now);
-      // Optimistic update
-      setToday((prev) => {
-        if (!prev) return prev;
-        const tasks = prev.tasks.map((t) => (t.id === taskId ? { ...t, completedAt: now } : t));
-        const allDone = tasks.every((t) => t.completedAt != null);
-        return { ...prev, tasks, completedAt: allDone ? now : undefined };
-      });
-    },
-    [plan, today],
-  );
+  const completeTask = useCallback(async (taskId: string) => {
+    if (!plan || !today) return;
+    await updateDayTask(plan.id, today.date, taskId, Date.now());
+    await resource.refresh();
+  }, [plan, today]);
 
-  const currentDate = new Date().toISOString().slice(0, 10);
   const isPlanConcluded =
+    currentDate != null &&
     plan != null &&
     today == null &&
     plan.days.length > 0 &&
     plan.days[plan.days.length - 1].date < currentDate;
 
-  return { loading, error, plan, today, isPlanConcluded, completeTask, refresh };
+  return { loading, error: Boolean(error), plan, today, isPlanConcluded, completeTask, refresh: resource.refresh };
 }
