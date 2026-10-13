@@ -154,7 +154,7 @@ export function TutorPractice({ initial, memory, onNew, ...props }: TutorWorkspa
       {last && <Notice>{last.feedback.retryInstruction}</Notice>}
       <div className="space-y-3" role="group" aria-label={t("How would you like to answer?")}>
         <MicButton recording={audio.recording} transcribing={audio.transcribing} elapsedMs={audio.recordingElapsedMs} maxMs={audio.maxDurationMs} level={audio.level} disabled={busy || fatal} idleHint={t("Speak your answer in English. You can edit the transcript.")} error={audioNote} onStart={() => void audio.startRecording()} onStop={audio.stopRecording} />
-        <Button variant="secondary" disabled={blocked} onClick={() => updateDraft(session.draft, false)}>{t("Write my answer")}</Button>
+        <Button variant="secondary" size="sm" disabled={blocked} onClick={() => updateDraft(session.draft, false)}>{t("Write my answer")}</Button>
       </div>
       <p className="text-xs text-ink-soft">{t("Speak or write. You can edit the transcript. Feedback checks the text, not pronunciation.")}</p>
       <label className="flex flex-col gap-2 text-sm font-medium text-ink"><span>{t("Your answer in English")}</span><textarea value={session.draft} onChange={e => updateDraft(e.target.value)} maxLength={3000} rows={5} className={tutorInputClass} readOnly={blocked} placeholder={t("Write in your own way, even if you are still missing some words.")} lang="en" /></label>

@@ -44,10 +44,10 @@ export function TodayPlanCard({
   const { loading, error, plan, today, isPlanConcluded, refresh } = useTodayPlan();
 
   if (loading) return <p role="status">{t("Loading…")}</p>;
-  if (error) return <Card className="space-y-3 p-5"><p role="alert">{t("Could not load your plan. Your practice is still available in Today.")}</p><Button onClick={() => void refresh()}>{t("Try again")}</Button></Card>;
+  if (error) return <Card className="space-y-3 p-4"><p role="alert">{t("Could not load your plan. Your practice is still available in Today.")}</p><Button onClick={() => void refresh()}>{t("Try again")}</Button></Card>;
   if (!plan || isPlanConcluded || !today) {
     return (
-      <Card className="space-y-3 p-5">
+      <Card className="space-y-3 p-4">
         <div>
           <p className="text-xs uppercase tracking-[0.7px] text-accent">{t("Learning plan")}</p>
           <p className="mt-1 text-sm text-ink-soft">
@@ -66,13 +66,13 @@ export function TodayPlanCard({
   const completed = today.tasks.filter(task => task.completedAt != null).length;
 
   return (
-    <Card className="space-y-3 p-5">
+    <Card className="space-y-3 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.7px] text-accent">{t("Today’s plan")}</p>
           <p className="mt-1 text-sm text-ink-soft">{t("Do an activity and it is checked off for you.")}</p>
         </div>
-        <span className="rounded-full border border-line bg-surface px-3 py-1.5 text-xs tabular-nums text-ink-soft">{today.estimatedMinutes} min</span>
+        <span className="rounded-full border border-line bg-surface px-2.5 py-1 text-xs tabular-nums text-ink-soft">{today.estimatedMinutes} min</span>
       </div>
       <div role="progressbar" aria-label={t("Today’s plan")} aria-valuemin={0} aria-valuemax={today.tasks.length || 1} aria-valuenow={completed} className="h-1.5 overflow-hidden rounded-full bg-line">
         <div className="h-full rounded-full bg-accent" style={{ width: `${today.tasks.length ? completed / today.tasks.length * 100 : 0}%` }} />

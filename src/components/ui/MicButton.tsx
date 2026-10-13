@@ -32,7 +32,7 @@ function clock(ms: number) {
 
 function MicIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <rect x="9" y="3" width="6" height="11" rx="3" />
       <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
     </svg>
@@ -51,7 +51,7 @@ export function LevelMeter({ level, className }: { level: number; className?: st
   );
 }
 
-/** Large record control: idle → recording (live level + timer) → transcribing. */
+/** Record control: idle → recording (live level + timer) → transcribing. */
 export function MicButton({ recording, transcribing = false, elapsedMs = 0, maxMs, level = 0, disabled, onStart, onStop, idleHint, error, compact = false, className }: MicButtonProps) {
   const { t } = useT();
   const busy = transcribing && !recording;
@@ -62,11 +62,11 @@ export function MicButton({ recording, transcribing = false, elapsedMs = 0, maxM
       <div
         className={cn(
           "flex items-center border transition-colors motion-reduce:transition-none",
-          compact ? "gap-3 rounded-lg p-2.5" : "gap-4 rounded-xl p-4",
+          compact ? "gap-3 rounded-lg p-2.5" : "gap-3 rounded-lg p-3",
           recording ? "border-danger/40 bg-danger/5" : "border-line bg-input",
         )}
       >
-        <div className={cn("relative shrink-0", compact ? "h-11 w-11" : "h-16 w-16")}>
+        <div className={cn("relative shrink-0", compact ? "h-11 w-11" : "h-12 w-12")}>
           <span
             aria-hidden
             className={cn("absolute inset-0 rounded-full bg-danger/25 transition-transform duration-100 motion-reduce:transition-none", !recording && "opacity-0")}
@@ -80,7 +80,7 @@ export function MicButton({ recording, transcribing = false, elapsedMs = 0, maxM
             aria-label={recording ? t("Stop recording") : t("Start recording")}
             className={cn(
               "relative flex items-center justify-center rounded-full shadow-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 enabled:cursor-pointer enabled:active:scale-95",
-              compact ? "h-11 w-11" : "h-16 w-16",
+              compact ? "h-11 w-11" : "h-12 w-12",
               recording ? "bg-danger text-white" : "bg-accent text-accent-contrast enabled:hover:brightness-95",
             )}
           >
@@ -88,7 +88,7 @@ export function MicButton({ recording, transcribing = false, elapsedMs = 0, maxM
           </button>
         </div>
 
-        <div className="min-w-0 flex-1 space-y-1.5">
+        <div className="min-w-0 flex-1 space-y-1">
           <p role="status" className="text-sm font-semibold text-ink">{title}</p>
           {recording ? (
             <>
