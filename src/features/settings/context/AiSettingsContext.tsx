@@ -51,10 +51,12 @@ export function AiSettingsProvider({ children }: { children: React.ReactNode }) 
   const minimumVersionRef = useRef(EMPTY_SETTINGS.version);
   // Prevents focus/visibility refreshes from overwriting settings while a save is in flight.
   const saveInflightRef = useRef(false);
+  const loadedRef = useRef(false);
 
   const applySettings = useCallback((next: PublicAiSettings, minimumVersion = minimumVersionRef.current) => {
     if (next.version < minimumVersion || next.version < latestVersionRef.current) return false;
     latestVersionRef.current = next.version;
+    loadedRef.current = true;
     setSettings(next);
     return true;
   }, []);
@@ -70,7 +72,9 @@ export function AiSettingsProvider({ children }: { children: React.ReactNode }) 
       if (saveInflightRef.current && !allowDuringSave) return;
       applySettings((await response.json()) as PublicAiSettings, minimumVersion);
     } catch {
-      if (!saveInflightRef.current) {
+      // A failed focus refresh keeps the last known providers; dropping them would
+      // disable every AI action until the next window focus.
+      if (!saveInflightRef.current && !loadedRef.current) {
         latestVersionRef.current = EMPTY_SETTINGS.version;
         minimumVersionRef.current = EMPTY_SETTINGS.version;
         setSettings(EMPTY_SETTINGS);

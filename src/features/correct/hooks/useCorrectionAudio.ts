@@ -92,6 +92,14 @@ export function useCorrectionAudio({ onNote, onText, onBlob, maxDurationMs, acti
       };
       recorder.onstop = () => {
         stream.getTracks().forEach((track) => track.stop());
+        // The browser can end the recording itself (mic unplugged or revoked);
+        // without this, `recording` stays true and blocks every answer action.
+        if (recorderRef.current === recorder) {
+          recorderRef.current = null;
+          clearRecordingTimers();
+          recordingStartedAtRef.current = null;
+          setRecording(false);
+        }
         const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
         if (activeRef.current && generation === generationRef.current && blob.size > 0) {
           onBlob?.(blob);

@@ -136,6 +136,9 @@ export function TutorPractice({ initial, memory, onNew, ...props }: TutorWorkspa
   }
 
   if (!exposureReady) return <div className="space-y-3"><p role="status">{error ? localize(error) : t("Opening the session…")}</p><Button onClick={props.onBack}>{t("Back")}</Button></div>;
+  const errorNotice = error && <Notice tone="error" role="alert">{localize(error)}{" "}{!fatal && t("You can try again; your text is still saved.")}
+    {!fatal && props.onLocalPractice && <div className="mt-3"><Button variant="secondary" disabled={blocked} onClick={props.onLocalPractice}>{t("Continue with a local practice")}</Button><p className="mt-2 text-xs">{t("Your tutor session stays saved. You can return to it later.")}</p></div>}
+  </Notice>;
   return <div className="min-w-0 space-y-5 [overflow-wrap:anywhere]">
     <div className="flex flex-wrap items-center justify-between gap-2">
       <Button variant="ghost" onClick={props.onBack} disabled={saving || audio.recording || audio.transcribing}>{session.phase === "complete" ? t("← Back") : t("← Pause and go back")}</Button>
@@ -143,9 +146,8 @@ export function TutorPractice({ initial, memory, onNew, ...props }: TutorWorkspa
     </div>
     <PageHeader eyebrow={t("Your tutor · {minutes} min · {level}", { minutes: session.minutes, level: session.level })} title={localize(session.task.goal)} description={localize(session.reason)} />
     <WorkflowSteps label={t("Session steps")} steps={[t("Your answer"), t("Feedback and another attempt"), t("Revisit later")]} current={session.phase === "practice" ? 1 : session.phase === "feedback" ? 2 : 3} />
-    {error && <Notice tone="error" role="alert">{localize(error)}{" "}{!fatal && t("You can try again; your text is still saved.")}
-      {!fatal && props.onLocalPractice && <div className="mt-3"><Button variant="secondary" disabled={blocked} onClick={props.onLocalPractice}>{t("Continue with a local practice")}</Button><p className="mt-2 text-xs">{t("Your tutor session stays saved. You can return to it later.")}</p></div>}
-    </Notice>}
+    {/* While answering, the error sits beside "Get feedback"; up here it scrolls out of view. */}
+    {session.phase !== "practice" && errorNotice}
     {!selection.providerReady && session.phase !== "complete" && <Notice>{t("AI is unavailable. You can save your answer, connect an AI, or return to reviews.")}<div className="mt-3 flex flex-wrap gap-2"><Button onClick={props.onSettings} disabled={saving}>{t("Set up AI")}</Button><Button variant="secondary" onClick={props.onPractice} disabled={saving}>{t("Go to reviews")}</Button></div></Notice>}
 
     {session.phase === "practice" && <Card className="space-y-5 p-5 sm:p-7">
@@ -162,6 +164,7 @@ export function TutorPractice({ initial, memory, onNew, ...props }: TutorWorkspa
         <Button loading={pendingAction === "evaluate"} disabled={blocked || !selection.providerReady || !session.draft.trim()} onClick={() => void evaluate()}>{pendingAction === "evaluate" ? t("Analyzing your answer…") : t("Get feedback")}</Button>
         <Button variant="secondary" loading={pendingAction === "help" && helpSource === "hint"} disabled={blocked || !selection.providerReady || session.help.length >= 20} onClick={() => void ask(t("Give me a small hint to get started, without showing the full answer."), "hint")}>{pendingAction === "help" && helpSource === "hint" ? t("Preparing a hint…") : t("I need a hint")}</Button>
       </div>
+      {errorNotice}
       {busy && (pendingAction === "evaluate" || helpSource === "hint") && <LoadingStatus action={<Button variant="ghost" size="sm" onClick={cancel}>{t("Cancel request")}</Button>}>{pendingAction === "evaluate" ? t("The tutor is analyzing your answer…") : t("The tutor is preparing a hint…")}</LoadingStatus>}
       <p className="text-xs text-ink-muted">{session.supportUsed ? t("This attempt will be recorded as supported.") : t("Try before asking for a hint. Any support used is recorded.")} {t("Speak or write. You can edit the transcript. Feedback checks the text, not pronunciation.")}</p>
     </Card>}

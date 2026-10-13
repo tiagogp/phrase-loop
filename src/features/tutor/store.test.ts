@@ -2,7 +2,7 @@ import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
 import { clearAll, getAll, STORES } from "@/lib/store/db";
 import { exportLocalBackup, getProductionAttempts, restoreLocalBackup, validateLocalBackup } from "@/lib/store/repository";
-import { getTutorSessions, recordTutorExposure, saveTutorPreferences, saveTutorSession } from "./store";
+import { defaultExplanationLanguage, getTutorPreferences, getTutorSessions, recordTutorExposure, saveTutorPreferences, saveTutorSession } from "./store";
 import { tutorSkillEvidence } from "./model";
 import { tutorAttempt, tutorSession, durationHistory } from "./testFixtures";
 
@@ -72,6 +72,15 @@ describe("tutor persistence", () => {
     expect(await getAll(STORES.tutorPreferences)).toHaveLength(0);
     expect((await restoreLocalBackup(backup)).ok).toBe(true);
     expect(await getAll(STORES.tutorPreferences)).toEqual(backup.stores.tutorPreferences);
+  });
+  it("starts B1+ learners with English explanations, even under a Portuguese interface", async () => {
+    expect(defaultExplanationLanguage({ level: "A2", nativeLang: "pt" })).toBe("pt");
+    expect(defaultExplanationLanguage({ level: "A2", nativeLang: "pt", interfaceLang: "en" })).toBe("en");
+    for (const level of ["B1", "B2", "C1", "C2"] as const) {
+      expect(defaultExplanationLanguage({ level, nativeLang: "pt", interfaceLang: "pt" })).toBe("en");
+    }
+    await saveTutorPreferences({ id: "preferences", goal: "", explanationLanguage: "pt", ignoredEvidenceIds: [] });
+    expect((await getTutorPreferences()).explanationLanguage).toBe("pt");
   });
 });
 

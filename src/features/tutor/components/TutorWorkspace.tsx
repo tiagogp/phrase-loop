@@ -20,7 +20,7 @@ import { ENGLISH_LEVELS } from "@/features/discover/constants";
 import type { EnglishLevel } from "@/features/discover/types";
 import { createTutorSession, selectTutorEvidence, tutorRecommendation } from "../model";
 import { chooseTutorScenario, TUTOR_CONCEPTS, isTutorConceptId, tutorConceptForTask } from "../catalog";
-import { getTutorSessions, loadTutorMemory, recordTutorExposure, type TutorMemory } from "../store";
+import { getTutorSession, getTutorSessions, loadTutorMemory, recordTutorExposure, type TutorMemory } from "../store";
 import type { TutorSession } from "../types";
 import { useTutorMemory } from "../useTutorMemory";
 import { useTutorSession } from "../useTutorSession";
@@ -49,14 +49,26 @@ export default function TutorWorkspace(props: TutorWorkspaceProps) {
 
 function TutorBody({ memory, ...props }: TutorWorkspaceProps & { memory: TutorMemory }) {
   const { t, lang, localize } = useTutorTranslation();
-  const [selected, setSelected] = useState<TutorSession | null>(() => props.intent !== "new" && props.intent !== "extra" && !props.sourceCardId
+  const [resume] = useState(() => props.intent !== "new" && props.intent !== "extra" && !props.sourceCardId
     ? tutorRecommendation(memory.sessions, memory.preferences, getLearningProfile(), Date.now(), lang).active ?? null : null);
+  const [selected, setSelected] = useState<TutorSession | null>(null);
+  const [resuming, setResuming] = useState(resume !== null);
   const [launchSource, setLaunchSource] = useState(props.sourceCardId);
   const [launchMode, setLaunchMode] = useState(props.intent ?? "recommended");
   const [autoStart, setAutoStart] = useState(props.intent !== "new" || !!props.sourceCardId);
   const [showMemory, setShowMemory] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [opening, setOpening] = useState(false);
+  useEffect(() => {
+    if (!resume) return;
+    let cancelled = false;
+    // Shared memory skips draft-only saves, so its revision can be stale. Resuming
+    // from it makes the first save conflict and locks the session.
+    getTutorSession(resume.id)
+      .then(saved => { if (!cancelled) setSelected(saved ?? null); }, e => { if (!cancelled) setError(String(e)); })
+      .finally(() => { if (!cancelled) setResuming(false); });
+    return () => { cancelled = true; };
+  }, [resume]);
   async function openHistory(session: TutorSession) {
     setOpening(true); setError(null);
     try {
@@ -73,6 +85,7 @@ function TutorBody({ memory, ...props }: TutorWorkspaceProps & { memory: TutorMe
     catch (e) { setError(String(e)); }
     finally { setOpening(false); }
   }
+  if (resuming) return <p role="status" className="text-sm text-ink-muted">{t("Loading your practice…")}</p>;
   return <div className="space-y-6">
     {selected ? <TutorPractice key={selected.id} initial={selected} memory={memory} {...props} onNew={() => { setSelected(null); setShowMemory(false); setLaunchSource(undefined); setLaunchMode("extra"); setAutoStart(true); }} /> : <>
       <Button variant="ghost" onClick={props.onBack}>{t("← Back")}</Button>

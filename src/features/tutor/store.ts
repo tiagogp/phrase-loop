@@ -1,5 +1,6 @@
 import { resolveInterfaceLang } from "@/i18n/config";
-import { getLearningProfile } from "@/features/settings/learningProfile";
+import { isLevelAtLeast } from "@/features/discover/levels";
+import { getLearningProfile, type LearningProfile } from "@/features/settings/learningProfile";
 import { get, getAll, openDb, put, STORES } from "@/lib/store/db";
 import { getCards, getProductionAttempts, getReviews } from "@/lib/store/repository";
 import { isTutorPreferences, isTutorSession } from "./contract";
@@ -12,9 +13,22 @@ export async function getTutorSessions(): Promise<TutorSession[]> {
   return rows.sort((a, b) => b.updatedAt - a.updatedAt);
 }
 
+export async function getTutorSession(id: string): Promise<TutorSession | undefined> {
+  const row = await get<unknown>(STORES.tutorSessions, id);
+  if (row === undefined) return undefined;
+  if (!isTutorSession(row)) throw new Error("Um registro do tutor não pôde ser lido. Restaure um backup válido antes de continuar.");
+  return row;
+}
+
+/** B1+ starts with English coaching even under a Portuguese interface; below B1 it follows the interface. */
+export function defaultExplanationLanguage(profile: Pick<LearningProfile, "level" | "nativeLang" | "interfaceLang"> = getLearningProfile()): TutorPreferences["explanationLanguage"] {
+  if (isLevelAtLeast(profile.level, "B1")) return "en";
+  return resolveInterfaceLang(profile) === "pt" ? "pt" : "en";
+}
+
 export async function getTutorPreferences(): Promise<TutorPreferences> {
   const row = await get<unknown>(STORES.tutorPreferences, "preferences");
-  if (row === undefined) return { ...DEFAULT_TUTOR_PREFERENCES, explanationLanguage: resolveInterfaceLang(getLearningProfile()) === "pt" ? "pt" : "en", ignoredEvidenceIds: [] };
+  if (row === undefined) return { ...DEFAULT_TUTOR_PREFERENCES, explanationLanguage: defaultExplanationLanguage(), ignoredEvidenceIds: [] };
   if (!isTutorPreferences(row)) throw new Error("Não foi possível ler as preferências do tutor.");
   return row;
 }
