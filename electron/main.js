@@ -3,7 +3,7 @@
 //
 // Boot sequence: native-capable Next server -> BrowserWindow.
 
-const { app, BrowserWindow, ipcMain, Menu, shell, utilityProcess } = require("electron");
+const { app, BrowserWindow, ipcMain, Menu, nativeTheme, screen, shell, utilityProcess } = require("electron");
 const { spawn, spawnSync } = require("node:child_process");
 const crypto = require("node:crypto");
 const http = require("node:http");
@@ -13,6 +13,10 @@ const fs = require("node:fs");
 const { createAiSettingsStore, localSecret } = require("./ai-settings");
 
 app.setName("PhraseLoop");
+
+// Two instances would fight over the same data dir and port 3000.
+const hasInstanceLock = app.requestSingleInstanceLock();
+if (!hasInstanceLock) app.quit();
 
 // In development, run from the repo. In the packaged app, run from resources
 // copied by electron-builder so the app does not depend on a source checkout.
@@ -29,6 +33,7 @@ const PRELOAD_JS = path.join(__dirname, "preload.js");
 const USER_ENV_FILE = path.join(app.getPath("userData"), "phraseloop.env");
 const AI_SETTINGS_FALLBACK_FILE = path.join(app.getPath("userData"), "ai-settings.json");
 const APKG_DEBUG_LOG_FILE = path.join(app.getPath("userData"), "logs", "apkg-debug.jsonl");
+const WINDOW_STATE_FILE = path.join(app.getPath("userData"), "window-state.json");
 const SETTINGS_TOKEN = crypto.randomBytes(32).toString("hex");
 const LEGACY_DATA_DIRS = [
   path.join(os.homedir(), "Library", "Application Support", "text-to-speech"),
@@ -345,30 +350,100 @@ async function waitFor(url, label, timeoutMs = 120000) {
   throw new Error(`${label} did not become ready within ${timeoutMs / 1000}s`);
 }
 
+// Window chrome follows the system theme; colors mirror --surface in globals.css.
+function chromeColors() {
+  return nativeTheme.shouldUseDarkColors
+    ? { background: "#1a1918", symbol: "#f0ede8" }
+    : { background: "#faf9f6", symbol: "#111111" };
+}
+
+function applyChromeColors(window) {
+  if (window.isDestroyed()) return;
+  const { background, symbol } = chromeColors();
+  window.setBackgroundColor(background);
+  if (process.platform === "win32") {
+    window.setTitleBarOverlay({ color: background, symbolColor: symbol, height: 40 });
+  }
+}
+
+function readWindowState() {
+  try {
+    const saved = JSON.parse(fs.readFileSync(WINDOW_STATE_FILE, "utf8"));
+    const { x, y, width, height } = saved.bounds ?? {};
+    if (![x, y, width, height].every(Number.isFinite)) return null;
+    // A disconnected monitor must not leave the window off-screen.
+    const visible = screen.getAllDisplays().some(({ workArea }) =>
+      x < workArea.x + workArea.width && x + width > workArea.x &&
+      y < workArea.y + workArea.height && y + height > workArea.y);
+    if (!visible) return null;
+    return {
+      bounds: { x, y, width, height },
+      maximized: saved.maximized === true,
+      fullScreen: saved.fullScreen === true,
+    };
+  } catch {
+    return null; // first run or unreadable file
+  }
+}
+
+function trackWindowState(window) {
+  let timer = null;
+  const save = () => {
+    if (window.isDestroyed()) return;
+    const state = {
+      bounds: window.getNormalBounds(),
+      maximized: window.isMaximized(),
+      fullScreen: window.isFullScreen(),
+    };
+    fs.promises.writeFile(WINDOW_STATE_FILE, JSON.stringify(state)).catch(() => {});
+  };
+  const schedule = () => {
+    clearTimeout(timer);
+    timer = setTimeout(save, 400);
+  };
+  for (const event of ["resize", "move", "maximize", "unmaximize", "enter-full-screen", "leave-full-screen"]) {
+    window.on(event, schedule);
+  }
+  window.on("close", () => {
+    clearTimeout(timer);
+    save();
+  });
+}
+
 function createWindow() {
   const isMac = process.platform === "darwin";
   const isWindows = process.platform === "win32";
 
+  const savedState = readWindowState();
+  const { background, symbol } = chromeColors();
+
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 850,
+    ...savedState?.bounds,
     show: false,
     minWidth: 800,
     minHeight: 600,
     title: "PhraseLoop",
     icon: APP_ICON_PNG,
-    backgroundColor: "#0a0a0a",
+    backgroundColor: background,
     titleBarStyle: isMac ? "hiddenInset" : isWindows ? "hidden" : "default",
     trafficLightPosition: isMac ? { x: 18, y: 18 } : undefined,
     titleBarOverlay: isWindows
-      ? { color: "#0a0a0a", symbolColor: "#e5e5e5", height: 40 }
+      ? { color: background, symbolColor: symbol, height: 40 }
       : undefined,
     webPreferences: { contextIsolation: true, preload: PRELOAD_JS },
   });
 
   const window = mainWindow;
+  trackWindowState(window);
+  const onThemeChange = () => applyChromeColors(window);
+  nativeTheme.on("updated", onThemeChange);
+  window.on("closed", () => nativeTheme.off("updated", onThemeChange));
   window.once("ready-to-show", () => {
-    window.maximize();
+    // Only first run (no saved state) starts maximized.
+    if (!savedState || savedState.maximized) window.maximize();
+    if (savedState?.fullScreen) window.setFullScreen(true);
     window.show();
   });
 
@@ -625,7 +700,15 @@ async function boot() {
   }
 }
 
+app.on("second-instance", () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.show();
+  mainWindow.focus();
+});
+
 app.whenReady().then(() => {
+  if (!hasInstanceLock) return;
   if (process.platform === "darwin" && fs.existsSync(APP_ICON_PNG)) {
     app.dock.setIcon(APP_ICON_PNG);
   }
