@@ -86,6 +86,17 @@ textarea {
   font-family: inherit;
 }
 
+/* Native buttons and custom triggers share the same clickable affordance. */
+@layer base {
+  :is(button, [role="button"], summary, select, input[type="button"], input[type="submit"], input[type="reset"]):not(:disabled):not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  :is(button, [role="button"], summary, select, input[type="button"], input[type="submit"], input[type="reset"]):is(:disabled, [aria-disabled="true"]) {
+    cursor: not-allowed;
+  }
+}
+
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
