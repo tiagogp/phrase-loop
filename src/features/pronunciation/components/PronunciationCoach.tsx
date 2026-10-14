@@ -10,7 +10,7 @@ import { assessPronunciation } from "@/features/pronunciation/api";
 import { synthesizeSpeech } from "@/features/converse/api";
 import { getPronunciationAttempts, saveAudioRecording, savePronunciationAttempt, saveProductionAttempt } from "@/lib/store/repository";
 import type { ProductionAttempt } from "@/lib/performance/types";
-import { RecordingComparison } from "@/features/pronunciation/components/RecordingComparison";
+import { comparableAttemptPair, RecordingComparison } from "@/features/pronunciation/components/RecordingComparison";
 import LocalModelNotice from "@/features/speech/components/LocalModelNotice";
 import { useWhisperModel } from "@/features/speech/hooks/useLocalModel";
 import { emitActivity } from "@/lib/store/activityLog";
@@ -316,46 +316,36 @@ export function PronunciationCoach({
   }, []);
 
   return (
-    <div className={cn("rounded-xl border border-line bg-surface/60 p-4 [overflow-wrap:anywhere]", compact ? "space-y-2" : "space-y-3")}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="min-w-0">
+    <div className={cn("space-y-3 rounded-xl border border-line bg-surface/60 text-left [overflow-wrap:anywhere]", compact ? "p-3" : "p-3 sm:p-4")}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0 flex-1">
           <p className="text-xs font-medium uppercase tracking-[0.7px] text-ink-muted">{t("Pronunciation")}</p>
           {!compact && (
             <p className="mt-0.5 text-sm text-ink-soft">{t("Listen, repeat, then check what was heard.")}</p>
           )}
-          {!compact && (
-            <p className="mt-0.5 text-xs text-ink-muted">
-              {t("This is a transcript-alignment signal, not phonemic pronunciation scoring.")}
-            </p>
-          )}
         </div>
-        {assessment && (
-          <span className={cn("text-sm font-semibold tabular-nums", scoreTone(assessment.scores.overall))}>
-            {assessment.scores.overall}%
-          </span>
-        )}
-      </div>
-
-      <LocalModelNotice model={whisper} />
-
-      <div className="flex flex-wrap gap-2">
         <Button
           type="button"
           variant="secondary"
           size="sm"
           onClick={() => void playReference()}
           disabled={playingReference || recording || assessing}
+          className="min-h-11 shrink-0 gap-2 rounded-full px-3.5"
         >
+          <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m11 5-6 4H2v6h3l6 4V5Z" /><path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14" />
+          </svg>
           {playingReference ? t("Playing...") : t("Listen")}
         </Button>
       </div>
+      <LocalModelNotice model={whisper} />
       <MicButton
         compact
         recording={recording}
         transcribing={assessing}
         level={level}
         elapsedMs={elapsedMs}
-        disabled={assessing}
+        disabled={assessing || playingReference}
         idleHint={assessment ? t("Try again") : undefined}
         onStart={() => void startRecording()}
         onStop={stopRecording}
@@ -386,17 +376,25 @@ export function PronunciationCoach({
       )}
 
       {assessment && (
-        <div className="space-y-2">
-          <div className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-3">
-            <Score label={t("Accuracy")} value={assessment.scores.accuracy} />
-            <Score label={t("Completeness")} value={assessment.scores.completeness} />
-            <Score label={t("Rhythm")} value={assessment.scores.fluency} />
+        <div className="space-y-3" aria-label={t("Latest result")}>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl bg-card p-3">
+            <div className="min-w-24">
+              <p className="text-xs text-ink-muted">{t("Latest result")}</p>
+              <p className={cn("mt-1 text-4xl font-semibold tracking-tight tabular-nums", scoreTone(assessment.scores.overall))}>
+                {assessment.scores.overall}<span className="ml-0.5 text-lg font-normal">%</span>
+              </p>
+            </div>
+            <div className="grid min-w-0 flex-1 basis-64 grid-cols-3 gap-3 text-xs">
+              <Score label={t("Accuracy")} value={assessment.scores.accuracy} />
+              <Score label={t("Completeness")} value={assessment.scores.completeness} />
+              <Score label={t("Rhythm")} value={assessment.scores.fluency} />
+            </div>
           </div>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1.5" aria-label={t("Word match")}>
             {assessment.words.map((word, index) => (
               <span
                 key={`${word.target ?? word.spoken}-${index}`}
-                className={cn("rounded border px-2 py-1 text-xs", wordClass(word))}
+                className={cn("rounded-md border px-2 py-1 text-sm", wordClass(word))}
                 title={word.status}
               >
                 {word.target ?? word.spoken}
@@ -404,20 +402,21 @@ export function PronunciationCoach({
             ))}
           </div>
           {assessment.transcript && (
-            <p className="text-xs text-ink-muted">{t("Heard: {transcript}", { transcript: assessment.transcript })}</p>
+            <p className="text-xs leading-relaxed text-ink-muted">{t("Heard: {transcript}", { transcript: assessment.transcript })}</p>
           )}
-          <p className="text-xs text-ink-muted">
-            {t("Use the score to compare your own attempts over time; it does not judge individual sounds or accent.")}
-          </p>
-          <ul className="space-y-1 text-xs text-ink-soft">
+          {assessment.tips.length > 0 && <ul className="space-y-1 border-l-2 border-accent/50 pl-3 text-sm leading-relaxed text-ink-soft">
             {assessment.tips.map((tip) => (
               <li key={tip}>{tip}</li>
             ))}
-          </ul>
+          </ul>}
         </div>
       )}
 
-      <RecordingComparison attempts={history} />
+      <RecordingComparison attempts={history} playbackDisabled={!active || recording || assessing || playingReference} />
+
+      {assessment && !comparableAttemptPair(history) && <p className="max-w-prose text-xs leading-relaxed text-ink-muted">
+        {t("Use the score to compare your own attempts over time; it does not judge individual sounds or accent.")}
+      </p>}
 
       {note && <p className="text-xs text-danger">{note}</p>}
     </div>
@@ -426,9 +425,12 @@ export function PronunciationCoach({
 
 function Score({ label, value }: { label: string; value: number }) {
   return (
-    <div className="flex items-center justify-between gap-2 rounded-lg border border-line bg-card px-3 py-2 sm:block">
+    <div className="min-w-0 space-y-1.5">
       <p className="text-ink-muted">{label}</p>
-      <p className={cn("font-semibold tabular-nums", scoreTone(value))}>{value}%</p>
+      <p className={cn("text-lg font-semibold tabular-nums", scoreTone(value))}>{value}%</p>
+      <div aria-hidden="true" className="h-1 overflow-hidden rounded-full bg-line">
+        <div className={cn("h-full rounded-full bg-current", scoreTone(value))} style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
+      </div>
     </div>
   );
 }

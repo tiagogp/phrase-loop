@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useT } from "@/i18n/I18nProvider";
 import { getAudioRecording } from "@/lib/store/repository";
+import { cn } from "@/lib/cn";
+import { RecordingPlayer } from "./RecordingPlayer";
 import type { PronunciationAttempt } from "@/lib/pronunciation/types";
 
 export function comparableAttemptPair(attempts: PronunciationAttempt[]): {
@@ -48,7 +50,7 @@ function seconds(durationMs?: number): string {
  * A deliberately descriptive comparison: it shows two samples and their evidence,
  * without claiming that the later sample caused the score change.
  */
-export function RecordingComparison({ attempts }: { attempts: PronunciationAttempt[] }) {
+export function RecordingComparison({ attempts, playbackDisabled = false }: { attempts: PronunciationAttempt[]; playbackDisabled?: boolean }) {
   const { t } = useT();
   const pair = comparableAttemptPair(attempts);
   const earlier = pair?.earlier;
@@ -57,61 +59,82 @@ export function RecordingComparison({ attempts }: { attempts: PronunciationAttem
   const laterId = later?.id;
   const earlierRecordingId = earlier?.recordingId;
   const laterRecordingId = later?.recordingId;
-  const [urls, setUrls] = useState<{ earlier?: string; later?: string }>({});
+  const [urls, setUrls] = useState<{ earlierId?: string; laterId?: string; earlier?: string; later?: string }>({});
 
   useEffect(() => {
     let cancelled = false;
+    const ownedUrls: string[] = [];
     const load = async () => {
       const entries = await Promise.all(
         [earlierRecordingId, laterRecordingId].map(async (recordingId) => {
           if (!recordingId) return undefined;
-          const recording = await getAudioRecording(recordingId);
-          return recording ? URL.createObjectURL(recording.blob) : undefined;
+          const recording = await getAudioRecording(recordingId).catch(() => undefined);
+          if (cancelled || !recording) return undefined;
+          const url = URL.createObjectURL(recording.blob);
+          ownedUrls.push(url);
+          return url;
         }),
       );
-      if (cancelled) {
-        entries.forEach((url) => url && URL.revokeObjectURL(url));
-        return;
-      }
-      setUrls({ earlier: entries[0], later: entries[1] });
+      if (!cancelled) setUrls({ earlierId, laterId, earlier: entries[0], later: entries[1] });
     };
     void load();
     return () => {
       cancelled = true;
-      setUrls((current) => {
-        if (current.earlier) URL.revokeObjectURL(current.earlier);
-        if (current.later) URL.revokeObjectURL(current.later);
-        return {};
-      });
+      ownedUrls.forEach((url) => URL.revokeObjectURL(url));
     };
   }, [earlierId, laterId, earlierRecordingId, laterRecordingId]);
 
   if (!earlier || !later) return null;
+  const loaded = urls.earlierId === earlierId && urls.laterId === laterId;
+  const overallChange = later.scores.overall - earlier.scores.overall;
 
   return (
-    <div className="space-y-2 rounded border border-line bg-surface/60 p-3 text-xs">
-      <p className="font-medium text-ink">Compare attempts</p>
-      <div className="grid gap-3 sm:grid-cols-2">
+    <section aria-label={t("Compare attempts")} className="space-y-2 border-t border-line pt-3 text-left"
+      onPlayCapture={(event) => {
+        // Listening to the second take should never mix it with the first.
+        event.currentTarget.querySelectorAll("audio").forEach((audio) => {
+          if (audio !== event.target) audio.pause();
+        });
+      }}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold text-ink">{t("Compare attempts")}</h3>
+        <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium tabular-nums",
+          overallChange > 0 ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-card text-ink-soft")}>
+          {t("{change} pts overall", { change: signedDelta(overallChange) })}
+        </span>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2">
         {([
-          ["Earlier", earlier, urls.earlier],
-          ["Later", later, urls.later],
+          ["Earlier", earlier, loaded ? urls.earlier : undefined],
+          ["Latest", later, loaded ? urls.later : undefined],
         ] as const).map(([label, attempt, url]) => (
-          <div key={label} className="space-y-1.5">
-            <p className="font-medium text-ink-soft">{label}</p>
-            {url ? <audio controls preload="metadata" src={url} className="w-full" /> : <p className="text-ink-muted">Audio is no longer available.</p>}
-            <p className="text-ink-muted">
-              Overall {attempt.scores.overall}% · completeness {attempt.scores.completeness}% · rhythm {attempt.scores.fluency}% · {seconds(attempt.durationMs)}
-            </p>
-            <p className="text-ink-soft">{attempt.transcript || "No transcript"}</p>
+          <div key={label} className="min-w-0 space-y-2 rounded-xl border border-line bg-card p-3">
+            <div className="flex items-center justify-between gap-3">
+              <h4 className="text-xs font-medium text-ink-muted">{t(label)}</h4>
+              <p className="text-xl font-semibold tabular-nums tracking-tight text-ink">
+                <span className="sr-only">{t("Overall")} </span>{attempt.scores.overall}<span className="ml-0.5 text-xs font-normal text-ink-muted">%</span>
+              </p>
+            </div>
+            {url
+              ? <RecordingPlayer key={url} audioUrl={url} label={t(label)} durationMs={attempt.durationMs} disabled={playbackDisabled} />
+              : <p role="status" className="py-3 text-xs text-ink-muted">{t(loaded ? "Audio is no longer available." : "Loading recording…")}</p>}
+            <p className="text-sm leading-relaxed text-ink-soft [overflow-wrap:anywhere]">{attempt.transcript || t("No transcript")}</p>
+            <dl className="flex flex-wrap gap-x-4 gap-y-2 border-t border-line pt-2 text-xs">
+              <div><dt className="text-ink-muted">{t("Completeness")}</dt><dd className="mt-1 font-medium tabular-nums text-ink-soft">{attempt.scores.completeness}%</dd></div>
+              <div><dt className="text-ink-muted">{t("Rhythm")}</dt><dd className="mt-1 font-medium tabular-nums text-ink-soft">{attempt.scores.fluency}%</dd></div>
+              <div><dt className="text-ink-muted">{t("Duration")}</dt><dd className="mt-1 font-medium tabular-nums text-ink-soft">{seconds(attempt.durationMs)}</dd></div>
+            </dl>
           </div>
         ))}
       </div>
-      <p className="text-ink-muted">
-        Change: overall {signedDelta(later.scores.overall - earlier.scores.overall)} · completeness {signedDelta(later.scores.completeness - earlier.scores.completeness)} · rhythm {signedDelta(later.scores.fluency - earlier.scores.fluency)} · duration {seconds(earlier.durationMs)} → {seconds(later.durationMs)}
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs leading-relaxed text-ink-muted">
+        <span>{t("Completeness")} <span className="font-medium tabular-nums text-ink-soft">{signedDelta(later.scores.completeness - earlier.scores.completeness)}</span></span>
+        <span>{t("Rhythm")} <span className="font-medium tabular-nums text-ink-soft">{signedDelta(later.scores.fluency - earlier.scores.fluency)}</span></span>
+        <span>{t("Duration")} <span className="tabular-nums text-ink-soft">{seconds(earlier.durationMs)} → {seconds(later.durationMs)}</span></span>
+      </div>
+      <p className="max-w-prose text-xs leading-relaxed text-ink-muted">
+        {t("Comparison is based on the transcript and recording length, not individual sounds or accent.")}
       </p>
-      <p className="text-ink-muted">
-        {t("This comparison uses transcript alignment and recording length only; it is a longitudinal practice signal, not a phonemic pronunciation diagnosis.")}
-      </p>
-    </div>
+    </section>
   );
 }
