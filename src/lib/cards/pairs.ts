@@ -25,8 +25,9 @@ function sourceMap(sources: CardSource[]): Map<string, CardSource> {
 }
 
 function productiveCue(card: Card, source?: CardSource): string {
-  if (source?.kind === "error") {
-    return `Corrija esta frase em inglês sem ver o modelo: “${source.event.original}”`;
+  if (card.source.kind === "error") {
+    // Reverse the corrected phrase/meaning pair, not the learner's original mistake.
+    return meaningTextOfCard(card).trim();
   }
   if (source?.kind === "phrase" && source.candidate.translation?.trim()) {
     return source.candidate.translation.trim();
@@ -43,6 +44,23 @@ function productiveCue(card: Card, source?: CardSource): string {
   return `Recupere esta expressão em inglês pela inicial: ${target.slice(0, 1)}____`;
 }
 
+/** Identify only the old auto-generated correction cue, not authored practice prompts. */
+export function isLegacyCorrectionCard(card: Card): boolean {
+  return card.source.kind === "error" && card.direction === "production"
+    && /^Corrija (?:esta|essa) frase em inglês sem ver o modelo:\s*[“"]/.test(card.front);
+}
+
+/** Repair saved reverse cards from their matching recognition sibling, preserving IDs/SRS. */
+export function repairCorrectionCardPairs(cards: Card[], siblings: Card[] = cards): Card[] {
+  const key = (card: Card) => JSON.stringify([card.source.kind, card.source.id, targetTextOfCard(card).trim()]);
+  const meanings = new Map(siblings.filter(card => card.source.kind === "error" && card.direction !== "production")
+    .map(card => [key(card), meaningTextOfCard(card).trim()]));
+  return cards.map(card => {
+    const meaning = isLegacyCorrectionCard(card) ? meanings.get(key(card)) : undefined;
+    return meaning ? { ...card, front: meaning } : card;
+  });
+}
+
 /**
  * Turn provider cards into explicit receptive/productive pairs. Explicitly directed cards
  * (including guided-lesson cards) are preserved: their author already chose the retrieval
@@ -54,7 +72,7 @@ export function buildProductiveCardPairs(cards: Card[], sources: CardSource[] = 
   const output: Card[] = [];
   const ids = new Set(cards.map((card) => card.id));
 
-  for (const card of cards) {
+  for (const card of repairCorrectionCardPairs(cards)) {
     const target = targetTextOfCard(card).trim();
     const patternId = card.patternId || slug(card.concept || target) || card.source.id;
     const contexts = card.context ? [card.context] : undefined;

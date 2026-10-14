@@ -4,6 +4,8 @@ import JSZip from "jszip";
 import type initSqlJsType from "sql.js";
 import { wav } from "./audio";
 import { buildCardsDeck, buildCsvDeck } from "./apkg";
+import { buildProductiveCardPairs } from "@/lib/cards/pairs";
+import { targetTextOfCard } from "@/lib/cards/orientation";
 
 const require = createRequire(import.meta.url);
 const initSqlJs = require("sql.js/dist/sql-asm.js") as typeof initSqlJsType;
@@ -32,6 +34,25 @@ async function noteTypesFromApkg(packageBytes: Buffer): Promise<Array<{
 }
 
 describe("Anki package generation", () => {
+  it("stores only corrected English and its translation in the correction card faces", async () => {
+    const en = "I need to travel next month";
+    const pt = "preciso viajar no próximo mês";
+    const cards = buildProductiveCardPairs([{ id: "travel", front: en, back: pt, concept: "travel",
+      source: { kind: "error", id: "error-1" }, createdAt: 1 }]);
+    const synthesizer = vi.fn<(input: { text: string }) => Promise<Buffer>>(async () => wav(new Float32Array(240), 24_000));
+    const packageBytes = await buildCardsDeck({ cards: cards.map(card => ({ ...card, audioText: targetTextOfCard(card) })),
+      deck: "Correction fixture", voice: "af_heart", synthesizer });
+    const zip = await JSZip.loadAsync(packageBytes);
+    const SQL = await initSqlJs();
+    const db = new SQL.Database(await zip.file("collection.anki2")!.async("uint8array"));
+    try {
+      const fields = db.exec("select flds from notes order by id")[0].values.map(([value]) => String(value).split("\x1f"));
+      expect(fields.map(row => row.slice(0, 2))).toEqual([[en, pt], [pt, en]]);
+      expect(synthesizer.mock.calls.every(([input]) => input.text === en)).toBe(true);
+    } finally {
+      db.close();
+    }
+  });
   it("turns header CSV into an APKG without Python or native SQLite", async () => {
     const synthesizer = vi.fn(async () => wav(new Float32Array(240), 24_000));
     const packageBytes = await buildCsvDeck({

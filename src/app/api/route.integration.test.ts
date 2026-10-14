@@ -158,6 +158,27 @@ describe("API route integration", () => {
     );
   });
 
+  it("exports conversation corrections as English/translation pairs with English audio on both directions", async () => {
+    const card: Card = { id: "travel", front: "I need to travel next month", back: "preciso viajar no próximo mês",
+      concept: "travel plans", source: { kind: "error", id: "error-1" }, createdAt: 1 };
+    generateDeck.mockResolvedValueOnce({ cards: [card], failures: 0 });
+    localJson.mockResolvedValueOnce(localResponse(Buffer.from("apkg")));
+    const { POST } = await import("@/app/api/cards/generate/route");
+    const response = await POST(jsonRequest("/api/cards/generate", { provider: "ollama", persist: true,
+      errors: [{ id: "error-1", original: "I need travel in one month", corrected: card.front,
+        sourceLang: "pt", targetLang: "en", errorTypes: ["preposition"], createdAt: 1 }],
+    }) as never);
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data.cards.map(({ front, back }: Card) => ({ front, back }))).toEqual([
+      { front: card.front, back: card.back }, { front: card.back, back: card.front },
+    ]);
+    expect(localJson).toHaveBeenCalledWith("/cards/apkg", expect.objectContaining({ cards: [
+      expect.objectContaining({ front: card.front, back: card.back, audioText: card.front }),
+      expect.objectContaining({ front: card.back, back: card.front, audioText: card.front }),
+    ] }), expect.any(Object));
+  });
+
   it("/api/cards/generate orients inverted cards before exporting and returning them", async () => {
     const card: Card = {
       id: "card-1",

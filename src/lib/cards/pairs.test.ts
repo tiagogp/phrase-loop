@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Card, PhraseCandidate } from "./schema";
-import { buildProductiveCardPairs } from "./pairs";
+import { buildProductiveCardPairs, repairCorrectionCardPairs } from "./pairs";
 
 const candidate: PhraseCandidate = {
   id: "phrase-1",
@@ -21,6 +21,31 @@ const card: Card = {
 };
 
 describe("buildProductiveCardPairs", () => {
+  it("reverses a corrected English phrase and its translation without adding correction instructions", () => {
+    const correction: Card = { ...card, source: { kind: "error", id: "error-1" }, front: "I need to travel next month", back: "preciso viajar no próximo mês" };
+    const result = buildProductiveCardPairs([correction], [{ kind: "error", event: {
+      id: "error-1", original: "I need travel in one month", corrected: correction.front,
+      sourceLang: "pt", targetLang: "en", errorTypes: ["preposition"], createdAt: 1,
+    } }]);
+    expect(result.map(({ front, back }) => ({ front, back }))).toEqual([
+      { front: correction.front, back: correction.back }, { front: correction.back, back: correction.front },
+    ]);
+    // The storage path may receive only cards, without their source events.
+    expect(buildProductiveCardPairs([correction])).toEqual(result);
+  });
+
+  it("repairs each saved correction sibling using its exact English phrase, not just a shared error ID", () => {
+    const recognition: Card = { ...card, source: { kind: "error", id: "error-1" }, direction: "recognition" };
+    const other = { ...recognition, id: "other", front: "I need to travel next month", back: "preciso viajar no próximo mês" };
+    const legacy: Card = { ...other, id: "other--production", direction: "production", back: other.front,
+      front: 'Corrija esta frase em inglês sem ver o modelo: “I need travel in one month”' };
+    const authored: Card = { ...legacy, id: "authored", front: "Describe your travel plans." };
+    const result = repairCorrectionCardPairs([recognition, other, legacy, authored]);
+    expect(result[2]).toEqual({ ...legacy, front: other.back });
+    expect(result[3]).toEqual(authored);
+    expect(repairCorrectionCardPairs(result)).toEqual(result);
+    expect(repairCorrectionCardPairs([legacy])).toEqual([legacy]);
+  });
   it("adds an explicit production sibling without exposing the answer", () => {
     const result = buildProductiveCardPairs([card], [{ kind: "phrase", candidate }]);
     expect(result).toHaveLength(2);

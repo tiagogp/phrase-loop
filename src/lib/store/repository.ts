@@ -14,7 +14,7 @@ import type {
 } from "@/lib/cards/schema";
 import type { JudgeStamp } from "@/lib/evaluation/judge";
 import { orientCardsForTargetFront } from "@/lib/cards/orientation";
-import { buildProductiveCardPairs } from "@/lib/cards/pairs";
+import { buildProductiveCardPairs, isLegacyCorrectionCard, repairCorrectionCardPairs } from "@/lib/cards/pairs";
 import type { PronunciationAttempt } from "@/lib/pronunciation/types";
 import type { StoredProgressAssessment } from "@/features/progress/model";
 import type { C1Diagnosis } from "@/features/c1/types";
@@ -153,7 +153,16 @@ async function getSourcesForCards(cards: Card[]): Promise<CardSource[]> {
 
 async function orientStoredCards(cards: Card[]): Promise<Card[]> {
   if (cards.length === 0) return cards;
-  return orientCardsForTargetFront(cards, await getSourcesForCards(cards), "en");
+  const sources = await getSourcesForCards(cards);
+  // Single-card/due-card reads may omit the recognition sibling needed to repair
+  // an old correction cue. Fetch only those known sibling IDs, never the full store.
+  const ids = new Set(cards.map(card => card.id));
+  const siblingIds = [...new Set(cards.filter(isLegacyCorrectionCard)
+    .map(card => card.id.replace(/--production(?:-\d+)?$/, ""))
+    .filter(id => !ids.has(id)))];
+  const siblings = (await getMany<Card>(STORES.cards, siblingIds)).filter((card): card is Card => !!card);
+  const oriented = orientCardsForTargetFront(cards, sources, "en");
+  return repairCorrectionCardPairs(oriented, [...oriented, ...orientCardsForTargetFront(siblings, sources, "en")]);
 }
 
 /** One-time/idempotent upgrade for decks saved before explicit production siblings existed. */
