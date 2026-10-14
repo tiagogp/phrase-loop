@@ -19,6 +19,7 @@ import { ollamaRoot } from "@/server/integrations/ollama";
 import { extractJson, logUsage, requestOptions } from "./util";
 import type {
   CardGenerationProvider,
+  CompletionOptions,
   CorrectionResult,
   ConversationTurn,
   ConverseOptions,
@@ -251,13 +252,21 @@ export class OllamaProvider implements CardGenerationProvider {
 
   async complete(
     prompt: string,
-    options: GenerationRunOptions = {},
+    options: CompletionOptions = {},
   ): Promise<string> {
     const res = await this.client.chat.completions.create(
       {
         model: this.model,
         temperature: 0,
         max_tokens: 15000,
+        // JSON mode alone allows invalid enums and missing fields. Tutor calls
+        // supply a schema so Ollama constrains those while generating the answer.
+        response_format: options.responseSchema
+          ? { type: "json_schema", json_schema: { ...options.responseSchema, strict: true } }
+          : { type: "json_object" },
+        // Thinking models (qwen3-style) otherwise reason for minutes before the JSON and hit the timeout.
+        // Ignored by models without a thinking mode.
+        reasoning_effort: "none",
         messages: [{ role: "user", content: prompt }],
       },
       requestOptions(options),

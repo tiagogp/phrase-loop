@@ -26,6 +26,11 @@ export interface GenerationRunOptions {
   debug?: (event: string, details?: Record<string, unknown>) => void;
 }
 
+export interface CompletionOptions extends GenerationRunOptions {
+  /** Enforce the output shape on backends supporting JSON Schema (currently Ollama). */
+  responseSchema?: { name: string; schema: Record<string, unknown> };
+}
+
 /** What `correct()` needs to tag the resulting ErrorEvents with the right language pair. */
 export interface CorrectOptions {
   /** Learner's first language, for the rationale. Default from the provider. */
@@ -211,7 +216,7 @@ export interface CardGenerationProvider {
    */
   complete?(
     prompt: string,
-    options?: GenerationRunOptions,
+    options?: CompletionOptions,
   ): Promise<string>;
 
   /**

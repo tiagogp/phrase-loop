@@ -11,7 +11,9 @@ export function isTutorTask(v: unknown): v is TutorTask {
 }
 
 export function isTutorFeedback(v: unknown): v is TutorFeedback {
-  return object(v) && ["met", "partial", "not_met", "uncertain"].includes(String(v.status)) && str(v.feedback, 1200)
+  // The prompt asks for 1200 characters; allow bounded headroom because local
+  // models do not count characters reliably. Preserve the complete explanation.
+  return object(v) && ["met", "partial", "not_met", "uncertain"].includes(String(v.status)) && str(v.feedback, 2400)
     && Array.isArray(v.points) && v.points.length <= 2 && v.points.every(p => object(p) && str(p.original, 500) && str(p.revised, 500) && str(p.explanation, 800))
     && object(v.example) && str(v.example.english, 500) && str(v.example.meaning, 500) && str(v.retryInstruction, 600)
     && (v.skill === undefined || (object(v.skill) && str(v.skill.label, 120) && ["demonstrated", "needs_work", "uncertain"].includes(String(v.skill.result))
@@ -74,4 +76,15 @@ export function isTutorSession(v: unknown): v is TutorSession {
   if (v.provider !== undefined && !["openai", "claude", "openrouter", "ollama"].includes(String(v.provider))) return false;
   if (v.model !== undefined && !str(v.model, 100)) return false;
   return !(v.phase === "feedback" && v.attempts.length === 0);
+}
+
+/**
+ * Find `quote` in `text` ignoring case, spacing and punctuation, returning the exact span of `text`.
+ * Speech transcripts lack the capitals and commas a model tends to add when it quotes them.
+ */
+export function locateExcerpt(text: string, quote: string): string | null {
+  if (text.includes(quote)) return quote;
+  const words = quote.match(/[\p{L}\p{N}']+/gu);
+  if (!words) return null;
+  return text.match(new RegExp(words.join("[^\\p{L}\\p{N}']+"), "iu"))?.[0] ?? null;
 }
