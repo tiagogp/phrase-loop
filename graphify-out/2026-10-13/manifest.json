@@ -965,8 +965,8 @@
     "semantic_hash": ""
   },
   "src/lib/cards/providers/ollama.ts": {
-    "mtime": 1790713419.5919175,
-    "ast_hash": "aa496c2f6da041f996c5012ac78b4ad4",
+    "mtime": 1791934646.8683052,
+    "ast_hash": "9d34f158c392a2d9c7cb89baedf61b56",
     "semantic_hash": ""
   },
   "src/lib/cards/providers/openai.ts": {
@@ -2350,8 +2350,8 @@
     "semantic_hash": ""
   },
   "src/app/api/tutor/route.ts": {
-    "mtime": 1790739002.159623,
-    "ast_hash": "45b5c8a8ca1d86aae33641d93c279641",
+    "mtime": 1791934651.5359128,
+    "ast_hash": "3c377194d7306393c296c4869e08d3a6",
     "semantic_hash": ""
   },
   "src/features/tutor/api.ts": {
@@ -2405,13 +2405,13 @@
     "semantic_hash": ""
   },
   "src/features/tutor/store.test.ts": {
-    "mtime": 1790830816.9721575,
-    "ast_hash": "8a21af3c19eeaeb9457d387340a6b4f4",
+    "mtime": 1791933072.7243247,
+    "ast_hash": "613ec614185a54d0fe46d5a0c7e1d943",
     "semantic_hash": ""
   },
   "src/features/tutor/store.ts": {
-    "mtime": 1791932788.4824498,
-    "ast_hash": "6f30398dbfddfd6e4244ae3bf21b13cf",
+    "mtime": 1791933077.6114328,
+    "ast_hash": "8eeffc5412fd15f26d1059b411648fdf",
     "semantic_hash": ""
   },
   "src/features/tutor/testFixtures.ts": {
